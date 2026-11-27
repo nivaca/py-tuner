@@ -7,6 +7,8 @@ the wheel and the source, are on
 
 ## Unreleased
 
+- The window no longer crashes as it closes (SIGBUS or SIGABRT at exit):
+  it is deleted while Qt is still whole.
 - The noise of the room, learned while nothing plays: what doesn't stand
   10 dB over it is ignored (it can be turned off). On the guitar
   recordings, no false note left in guitar mode.

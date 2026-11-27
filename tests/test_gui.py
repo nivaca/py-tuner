@@ -144,3 +144,20 @@ def test_window_with_a_file(make, tmp_path):
     finally:
         win.live.stop()
     
+
+def test_the_program_quits_cleanly(tmp_path):
+    # El programa entero, en otro proceso: se abre la ventana, se cierra, y el proceso termina sin caer (antes
+    # caía al salir, con SIGBUS o SIGABRT, al destruir Python la ventana después de la aplicación de Qt).
+    import os
+    import subprocess
+    import sys
+
+    write_wav(tmp_path / "a.wav", string(110.0, seconds=2.0))
+    code = ("import sys; from PySide6.QtCore import QTimer; from PySide6.QtWidgets import QApplication; "
+            "from py_tuner.gui import window; from py_tuner.settings import Settings; "
+            "app = QApplication(sys.argv[:1]); "
+            "QTimer.singleShot(1500, lambda: [w.close() for w in app.topLevelWidgets()]); "
+            "sys.exit(window.run(Settings(needle_scale='fine', show_spectrum=True), sys.argv[1]))")
+    done = subprocess.run([sys.executable, "-c", code, str(tmp_path / "a.wav")], capture_output=True, text=True,
+                          timeout=60, env={**os.environ, "XDG_CONFIG_HOME": str(tmp_path / "config")})
+    assert done.returncode == 0, done.stderr[-2000:]

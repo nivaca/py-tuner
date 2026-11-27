@@ -7,6 +7,8 @@ AppImage, el wheel y el código, están en
 
 ## Sin publicar
 
+- La ventana ya no cae al cerrarse (SIGBUS o SIGABRT al salir): se borra
+  mientras Qt sigue entero.
 - El ruido del cuarto, aprendido mientras no suena nada: lo que no lo supera
   en 10 dB se ignora (se puede quitar). En las grabaciones de guitarra, ya
   ninguna nota falsa en modo guitarra.

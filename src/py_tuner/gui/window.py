@@ -570,4 +570,12 @@ def run(s: Settings, file: str | None = None) -> int:
     win.show()
     if not win.start():
         QMessageBox.warning(win, "py-tuner", win.status.text())
-    return app.exec()
+    code = app.exec()
+    # La ventana se borra aquí, con Qt entero: sus conexiones con lambdas forman ciclos de referencias, y sin esto
+    # Python la destruía al salir, después de la aplicación, y el proceso caía (SIGBUS o SIGABRT) al cerrarse.
+    if win.live is not None:
+        win.live.stop()
+    import shiboken6
+
+    shiboken6.delete(win)
+    return code
