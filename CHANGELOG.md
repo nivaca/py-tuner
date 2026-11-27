@@ -19,5 +19,4 @@ The first version.
   (curses) and on the command line, which also measures a WAV recording
   note by note.
 - Note names in English, Latin or German, with sharps, flats or both
-  (F♯/G♭); the
-  interface in English or Spanish.
+  (F♯/G♭); the interface in English or Spanish.
