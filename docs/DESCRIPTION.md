@@ -171,7 +171,7 @@ published.
 Testing
 -------
 
-The program has 165 tests, which run all at once with `tools/test.py`,
+The program has 167 tests, which run all at once with `tools/test.py`,
 each file in a process of its own, in about eight seconds.  Most of them
 measure: the open strings of the four instruments must come out within a
 tenth of a cent of their known pitch, with noise the mean error must stay

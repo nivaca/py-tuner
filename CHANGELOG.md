@@ -5,6 +5,15 @@ the wheel and the source, are on
 [Codeberg](https://codeberg.org/nivaca/py-tuner/releases) and
 [GitHub](https://github.com/nivaca/py-tuner/releases).
 
+## Unreleased
+
+- `--once` waits for a dozen frames before it takes a reading as steady
+  (with one or two, a wrong one could pass, as on a slow machine), and a
+  frame shorter than the analysis needs, or whose harmonics disagree with
+  its period, gives no reading instead of a poor one.
+- Pictures of the terminal interface and of the command line, in the
+  READMEs and the manuals (tools/terminal_images.py).
+
 ## 0.1.0 — 2026-11-27
 
 The first version.

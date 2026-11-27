@@ -19,6 +19,8 @@ from .tuner import LiveTuner, Reading, Tuner
 
 # Una nota de un archivo cuenta si se sostiene al menos esto (segundos).
 MIN_NOTE = 0.15
+# Los cuadros que --once espera antes de dar una lectura por estable
+ONCE_FRAMES = 12
 # Los primeros instantes de una cuerda pulsada suenan algo altos: se saltan.
 ATTACK = 0.1
 
@@ -89,7 +91,7 @@ def report_file(s: Settings, path: str) -> int:
         target = tr("(target {frequency})", frequency=display.freq_text(n["target"]))
         span = number(f"{n['start']:7.2f}-{n['end']:7.2f}")
         print(f"{span} s  {name:5} {display.freq_text(n['frequency']):>9} Hz  "
-              f"{target}  {number(format(n['cents'], '+6.2f'))} {tr('cents')}  ±{number(format(n['spread'], '.2f'))}"
+              f"{target}  {number(format(n['cents'] + 0.0 if round(n['cents'], 2) else 0.0, '+6.2f'))} {tr('cents')}  ±{number(format(n['spread'], '.2f'))}"
               f"{string}")
     return 0
 
@@ -119,7 +121,8 @@ def run(s: Settings, file: str | None = None, once: bool = False, realtime: bool
         while True:
             time.sleep(0.05)
             r = live.reading
-            if once and r.active and r.spread <= s.tolerance / 2 and r.time > 0.3:
+            # (una lectura de uno o dos cuadros no tiene dispersión: hace falta una docena para fiarse)
+            if once and r.active and r.count >= ONCE_FRAMES and r.spread <= s.tolerance / 2:
                 print(line(r, s), file=out)
                 return 0
             now = time.monotonic()

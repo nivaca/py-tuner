@@ -130,7 +130,7 @@
 \date{2026-11-27}
 
 % The pictures, made by tools/manual_images.py
-\graphicspath{{img/manual/}}
+\graphicspath{{img/manual/}{img/}}
 \usepackage{longtable}
 
 % the title and the author in the PDF's own metadata
@@ -461,34 +461,7 @@ the command line share the same settings.
 the note in large letters, the frequency and the deviation, a needle of
 text, the strobe, the strings, and the level.
 
-{\footnotesize
-\begin{verbatim}
- py-tuner  Guitar · Standard · A4 = 440.0 Hz
-
-                                   ███ ███
-                                  █       █
-                                  █ ██  ██
-                                  █  █    █
-                                   ███ ███
-
-            196.04 Hz    target 196.00 Hz    +0.4 cents    in tune
-
- -50                                                                      +50
-  ┬──────┬───────┬──────┬───────┬──────█──────┬───────┬──────┬───────┬──────┬
-                                       ▲
-
-   ████    ████    ████    ████    ████    ████    ████    ████    ████    █
-   ████    ████    ████    ████    ████    ████    ████    ████    ████    █
-    ████    ████    ████    ████    ████    ████    ████    ████    ████
-
-  strings  E2   A2   D3   G3   B3   E4   (auto)
-
-  level   ██████████████████████░░░░░░░░   -25 dBFS
-
- q quit   ←→ A4 ±0.1 Hz   ↑↓ A4 ±1 Hz   0 A4 = 440   i instrument   t tuning
- s string   n names   b accidentals   v view   l language
-\end{verbatim}
-}
+\shot{tui_en}{0.9}{The terminal interface, with the G string of a guitar 0.4 cents sharp}
 
 \noindent It is driven with these keys, and each change is saved in the
 settings:
@@ -526,6 +499,8 @@ A2       109.52 Hz   -7.5 cents  [---------*|----------]  string 2
 \noindent \texttt{-{}-once} waits for the first steady reading, writes it
 and ends, for use in scripts.
 
+\shot{cli_en}{0.95}{The command line: a recording measured note by note, and the first steady reading}
+
 \index{recordings}\index{wav@WAV}%
 With a WAV file, \texttt{py-tuner cli -{}-file FILE.wav} analyses the whole
 recording at once and writes a line for each note heard in it: when it
@@ -534,7 +509,7 @@ deviation and its spread:
 
 {\footnotesize
 \begin{verbatim}
-0.03-   1.77 s  E2  82.550 Hz  (target 82.407)  +3.00 cents  ±0.02  string 1
+0.20-   1.77 s  E2  82.550 Hz  (target 82.407)  +3.00 cents  ±0.02  string 1
 1.80-   3.52 s  A2  109.52 Hz  (target 110.00)  -7.50 cents  ±0.03  string 2
 \end{verbatim}
 }

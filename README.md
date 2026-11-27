@@ -97,6 +97,10 @@ one line for each note heard in it, with its frequency and its deviation in
 cents. `py-tuner cli --once` waits for the first steady reading, prints it
 and exits.
 
+![The terminal interface](docs/img/tui_en.png)
+
+![The command line: a recording measured note by note, and one steady reading](docs/img/cli_en.png)
+
 In the terminal, the arrow keys change A4 (left and right by 0.1 Hz, up and
 down by 1 Hz), `0` puts it back to 440, `i` changes the instrument, `t` the
 tuning, `s` locks a string, `n` the note names, `b` sharps, flats or both, `v` the

@@ -5,7 +5,8 @@
 
 Escribe docs/img/main_IDIOMA.png (la del README y de los metadatos de AppStream) y docs/img/manual/NOMBRE_IDIOMA.png:
 la ventana con una cuerda afinada y con una desafinada, el modo cromático con nombres latinos, la cuerda fija,
-solo el estroboscopio y el diálogo de configuración. Las lecturas son fijas (no hace falta sonido), las ventanas
+solo el estroboscopio y el diálogo de configuración; y, con tools/terminal_images.py, docs/img/tui_IDIOMA.png y
+docs/img/cli_IDIOMA.png. Las lecturas son fijas (no hace falta sonido), las ventanas
 se dibujan fuera de la pantalla, y la configuración del usuario no se lee ni se escribe (XDG_CONFIG_HOME apunta a
 una carpeta temporal).
 """
@@ -20,6 +21,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT / "tools"))
 OUT = ROOT / "docs" / "img" / "manual"
 SIZE = (720, 640)
 
@@ -83,6 +85,10 @@ def main() -> int:
         dlg.close()
         shiboken6.delete(dlg)
     interface.use("en")
+    # la terminal y la línea de órdenes (tools/terminal_images.py, que necesita pyte, de las dependencias de desarrollo)
+    import terminal_images
+
+    terminal_images.main()
     return 0
 
 

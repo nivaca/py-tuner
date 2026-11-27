@@ -21,7 +21,7 @@ def test_manual(lang):
     shots = re.findall(r"\\shot\{([^}]+)\}", tex)
     assert shots and all(name.endswith(f"_{lang}") for name in shots)
     for name in shots:
-        assert (DOCS / "img" / "manual" / f"{name}.png").is_file(), name
+        assert (DOCS / "img" / "manual" / f"{name}.png").is_file() or (DOCS / "img" / f"{name}.png").is_file(), name
     assert (DOCS / f"MANUAL_{lang}.pdf").read_bytes()[:5] == b"%PDF-"
 
 

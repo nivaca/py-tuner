@@ -305,9 +305,13 @@ class Detector:
         if period <= 0 or clarity < self.min_clarity:
             return Estimate(0.0, clarity, level)
         guess = self.rate / period
-        size = min(len(x), self.fine_size(guess))
+        size = self.fine_size(guess)
+        if len(x) < size:
+            # Sin un cuadro fino entero (al empezar a escuchar, o en una máquina lenta) la estimación sería
+            # pobre: mejor ninguna, hasta que haya muestras.
+            return Estimate(0.0, clarity, level)
         freq, b, partials = refine(x[-size:], self.rate, guess, self.max_harmonics)
-        # El refinamiento no debe alejarse del período: si lo hace, algo lo engañó.
+        # El refinamiento no debe alejarse del período: si lo hace, algo lo engañó, y el cuadro no dice nada.
         if freq <= 0 or abs(1200 * np.log2(freq / guess)) > 60:
-            return Estimate(guess, clarity, level)
+            return Estimate(0.0, clarity, level)
         return Estimate(freq, clarity, level, b, len(partials), tuple(partials))

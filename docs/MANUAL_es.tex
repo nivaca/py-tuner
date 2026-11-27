@@ -130,7 +130,7 @@
 \date{2026-11-27}
 
 % The pictures, made by tools/manual_images.py
-\graphicspath{{img/manual/}}
+\graphicspath{{img/manual/}{img/}}
 \usepackage{longtable}
 
 % the title and the author in the PDF's own metadata
@@ -463,34 +463,7 @@ línea de órdenes comparten la misma configuración.
 ventana: la nota en letras grandes, la frecuencia y la desviación, una
 aguja de texto, el estroboscopio, las cuerdas y el nivel.
 
-{\footnotesize
-\begin{verbatim}
- py-tuner  Guitarra · Estándar · A4 = 440,0 Hz
-
-                                   ███ ███
-                                  █       █
-                                  █ ██  ██
-                                  █  █    █
-                                   ███ ███
-
-           196,04 Hz    objetivo 196,00 Hz    +0,4 cents    afinada
-
- -50                                                                      +50
-  ┬──────┬───────┬──────┬───────┬──────█──────┬───────┬──────┬───────┬──────┬
-                                       ▲
-
-  ██    ████    ████    ████    ████    ████    ████    ████    ████    ████
-     ████    ████    ████    ████    ████    ████    ████    ████    ████
-  ██    ████    ████    ████    ████    ████    ████    ████    ████    ████
-
-  cuerdas  E2   A2   D3   G3   B3   E4   (automática)
-
-  nivel   ██████████████████████░░░░░░░░   -25 dBFS
-
- q salir   ←→ A4 ±0,1 Hz   ↑↓ A4 ±1 Hz   0 A4 = 440   i instrumento
- t afinación   s cuerda   n nombres   b alteraciones   v vista   l idioma
-\end{verbatim}
-}
+\shot{tui_es}{0.9}{La interfaz de terminal, con la cuerda Sol de una guitarra 0,4 cents alta}
 
 \noindent Se maneja con estas teclas, y cada cambio se guarda en la
 configuración:
@@ -528,6 +501,8 @@ A2       109,52 Hz   -7,5 cents  [---------*|----------]  cuerda 2
 \noindent \texttt{-{}-once} espera la primera lectura estable, la escribe y
 termina, para usarla en guiones.
 
+\shot{cli_es}{0.95}{La línea de órdenes: una grabación medida nota por nota, y la primera lectura estable}
+
 \index{grabaciones}\index{wav@WAV}%
 Con un archivo WAV, \texttt{py-tuner cli -{}-file ARCHIVO.wav} analiza toda
 la grabación de una vez y escribe una línea por cada nota que suena en
@@ -536,7 +511,7 @@ desviación y su dispersión:
 
 {\footnotesize
 \begin{verbatim}
-0,03-   1,77 s  E2  82,550 Hz  (objetivo 82,407)  +3,00 cents  ±0,02  cuerda 1
+0,20-   1,77 s  E2  82,550 Hz  (objetivo 82,407)  +3,00 cents  ±0,02  cuerda 1
 1,80-   3,52 s  A2  109,52 Hz  (objetivo 110,00)  -7,50 cents  ±0,03  cuerda 2
 \end{verbatim}
 }

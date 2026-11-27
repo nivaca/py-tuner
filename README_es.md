@@ -98,6 +98,10 @@ escribe una línea por cada nota que suena en ella, con su frecuencia y su
 desviación en cents. `py-tuner cli --once` espera la primera lectura
 estable, la escribe y termina.
 
+![La interfaz de terminal](docs/img/tui_es.png)
+
+![La línea de órdenes: una grabación medida nota por nota, y una lectura estable](docs/img/cli_es.png)
+
 En la terminal, las flechas cambian el La (izquierda y derecha, 0,1 Hz;
 arriba y abajo, 1 Hz), `0` lo devuelve a 440, `i` cambia el instrumento,
 `t` la afinación, `s` fija una cuerda, `n` los nombres de las notas, `b`

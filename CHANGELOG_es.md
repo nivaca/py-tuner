@@ -5,6 +5,16 @@ AppImage, el wheel y el código, están en
 [Codeberg](https://codeberg.org/nivaca/py-tuner/releases) y en
 [GitHub](https://github.com/nivaca/py-tuner/releases).
 
+## Sin publicar
+
+- `--once` espera una docena de cuadros antes de dar una lectura por
+  estable (con uno o dos, una errada podía pasar, como en una máquina
+  lenta), y un cuadro más corto de lo que pide el análisis, o cuyos
+  armónicos no concuerdan con su período, no da lectura en vez de dar una
+  mala.
+- Imágenes de la interfaz de terminal y de la línea de órdenes, en los
+  README y los manuales (tools/terminal_images.py).
+
 ## 0.1.0 — 2026-11-27
 
 La primera versión.

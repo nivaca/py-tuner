@@ -54,7 +54,7 @@ def test_desktop_file():
 
 def test_scripts_parse():
     assert subprocess.run(["bash", "-n", str(ROOT / "packaging/build-rpm.sh")]).returncode == 0
-    for tool in ("release.py", "bundle-appimage.py", "build-libs.py", "icons.py", "manual_images.py", "manpage.py",
+    for tool in ("release.py", "bundle-appimage.py", "build-libs.py", "icons.py", "manual_images.py", "terminal_images.py", "manpage.py",
                  "sign_release.py", "zenodo.py"):
         compile((ROOT / "tools" / tool).read_text(), tool, "exec")
 

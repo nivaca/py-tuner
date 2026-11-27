@@ -130,3 +130,10 @@ def test_live_tuner_thread():
         live.stop()
     assert not src.started
     assert live.error is None
+
+
+def test_readings_count_their_frames():
+    tuner = Tuner(Settings(), RATE)
+    readings = [r for r in tuner.analyze_all(string(220.0, seconds=1.0)) if r.active]
+    assert readings[0].count == 1
+    assert readings[-1].count > 12

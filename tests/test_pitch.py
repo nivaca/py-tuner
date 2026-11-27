@@ -151,3 +151,11 @@ def test_frame_sizes():
     assert det.fine_size(1000) == pitch.MIN_FINE
     assert det.fine_size(40) == 19200
     assert det.history >= det.coarse_size
+
+
+def test_no_pitch_without_a_whole_fine_frame():
+    # Al empezar a escuchar el búfer tiene pocas muestras: un cuadro corto no da altura, en vez de una mala.
+    det = Detector(rate=RATE)
+    x = string(110.0, seconds=1.0)
+    assert not det.analyze(x[-(det.fine_size(110.0) - 100):]).found
+    assert det.analyze(x[-det.fine_size(110.0):]).found

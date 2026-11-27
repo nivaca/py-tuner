@@ -45,6 +45,7 @@ class Reading:
     cents: float = 0.0
     string: int | None = None
     spread: float = 0.0
+    count: int = 0
     level: float = float("-inf")
     clarity: float = 0.0
     inharmonicity: float = 0.0
@@ -111,7 +112,7 @@ class Tuner:
         target = notes.frequency(midi, self.settings.a4)
         c = notes.cents(smooth.frequency, target)
         return Reading(frequency=smooth.frequency, raw=est.frequency, target_midi=midi,
-                       target_frequency=target, cents=c, string=string, spread=smooth.spread,
+                       target_frequency=target, cents=c, string=string, spread=smooth.spread, count=smooth.count,
                        level=est.level, clarity=est.clarity, inharmonicity=est.inharmonicity,
                        harmonics=est.harmonics, in_tune=abs(c) <= self.settings.tolerance, time=now)
 
