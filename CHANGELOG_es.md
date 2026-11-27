@@ -5,7 +5,9 @@ AppImage, el wheel y el código, están en
 [Codeberg](https://codeberg.org/nivaca/py-tuner/releases) y en
 [GitHub](https://github.com/nivaca/py-tuner/releases).
 
-## Sin publicar
+## 0.3.0 — 2026-11-27
+
+El ruido del cuarto, un espectro y una aguja más fina.
 
 - La ventana ya no cae al cerrarse (SIGBUS o SIGABRT al salir): se borra
   mientras Qt sigue entero.

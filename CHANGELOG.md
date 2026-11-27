@@ -5,7 +5,9 @@ the wheel and the source, are on
 [Codeberg](https://codeberg.org/nivaca/py-tuner/releases) and
 [GitHub](https://github.com/nivaca/py-tuner/releases).
 
-## Unreleased
+## 0.3.0 — 2026-11-27
+
+The room's noise, a spectrum, and a finer needle.
 
 - The window no longer crashes as it closes (SIGBUS or SIGABRT at exit):
   it is deleted while Qt is still whole.
