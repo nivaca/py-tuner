@@ -122,6 +122,7 @@ class App:
         self.screen = screen
         self.live = live
         self.strobe = display.Strobe()
+        self.follower = display.Follower()
         self.last = time.monotonic()
         curses.curs_set(0)
         screen.nodelay(True)
@@ -210,7 +211,10 @@ class App:
         r = self.live.reading
         s = self.s
         now = time.monotonic()
-        phases = self.strobe.advance(r.cents if r.active else None, now - self.last)
+        model = self.strobe.advance(r.cents if r.active else None, now - self.last)
+        # las bandas del estroboscopio de verdad (strobe.py), si las hay; si no, el modelo
+        self.follower.update(r.strobe if r.active else (), now)
+        phases = self.follower.phases(now) or [(p, 1.0) for p in model]
         self.last = now
         scr = self.screen
         scr.erase()
@@ -247,9 +251,10 @@ class App:
                 self.put(y + 1, left + pos, "█", attr)
             y += 4
         if s.display in ("both", "strobe"):
-            for i, phase in enumerate(phases):
+            for i, (phase, alpha) in enumerate(phases):
                 row = strobe_row(phase, width) if r.active else " " * width
-                self.put(y + i, left, row, attr if r.active else curses.A_DIM)
+                # (una banda que se apaga, en la terminal, se atenúa)
+                self.put(y + i, left, row, attr if r.active and alpha >= 0.5 else curses.A_DIM)
             y += len(phases) + 1
         labels = display.string_labels(s)
         if labels:

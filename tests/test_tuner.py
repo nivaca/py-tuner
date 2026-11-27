@@ -176,3 +176,27 @@ def test_the_string_held_holds_past_halfway():
     assert tuner.target(notes.frequency(e2 + 2.55))[1] == 0
     assert tuner.target(notes.frequency(e2 + 2.7))[1] == 1
     assert tuner.target(notes.frequency(a2 - 2.55))[1] == 1
+
+
+def test_live_strobe_moves_with_the_deviation():
+    # De punta a punta: el hilo de análisis alimenta el estroboscopio con cada muestra una vez, y sus bandas
+    # avanzan unas 2, 4 y 8 franjas por segundo para una cuerda 2 cents alta.
+    src = FakeSource()
+    live = LiveTuner(Settings(instrument="guitar"), src)
+    live.start()
+    try:
+        x = string(notes.frequency(notes.parse("A2")) * 2 ** (2 / 1200), seconds=3.0, decay=0.1)
+        marks = []
+        for i in range(0, len(x), 1200):
+            src.buffer.write(x[i:i + 1200])
+            time.sleep(0.004)
+            if i in (int(1.5 * RATE) // 1200 * 1200, int(2.9 * RATE) // 1200 * 1200):
+                deadline = time.monotonic() + 2
+                while live.reading.time < (i + 1200) / RATE - 1e-6 and time.monotonic() < deadline:
+                    time.sleep(0.005)
+                marks.append((live.reading.time, live.reading.strobe))
+        (t0, a), (t1, b) = marks
+        speeds = [(bb.position - aa.position) / (t1 - t0) for aa, bb in zip(a, b)]
+        assert speeds == pytest.approx([2, 4, 8], rel=0.2)
+    finally:
+        live.stop()

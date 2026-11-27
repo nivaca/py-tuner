@@ -16,6 +16,8 @@ from pathlib import Path
 from . import instruments, interface, notes
 
 DISPLAYS = ("both", "needle", "strobe")
+# (los de strobe.MODES: vernier, la parcial más clara a 1, 2 y 4 veces; harmonics, cada banda la suya)
+STROBE_MODES = ("vernier", "harmonics")
 
 
 @dataclass
@@ -30,7 +32,8 @@ class Settings:
     min_level: the quietest sound analysed, dBFS. smoothing: seconds the
     reading averages. periods: periods of the note in each fine frame.
     tolerance: cents within which a note counts as in tune.
-    display: "both", "needle" or "strobe". language: of the interface ("en",
+    display: "both", "needle" or "strobe". strobe_mode: "vernier" (three
+    speeds of the clearest partial) or "harmonics" (partials 1, 2 and 3). language: of the interface ("en",
     "es"; "" follows the system's). custom_tunings: the user's own.
     """
 
@@ -48,6 +51,7 @@ class Settings:
     periods: float = 16.0
     tolerance: float = 1.0
     display: str = "both"
+    strobe_mode: str = "vernier"
     language: str = ""
     custom_tunings: list[dict] = field(default_factory=list)
 
@@ -70,6 +74,7 @@ class Settings:
             "periods": lambda v: 4 <= float(v) <= 64,
             "tolerance": lambda v: 0.1 <= float(v) <= 50,
             "display": lambda v: v in DISPLAYS,
+            "strobe_mode": lambda v: v in STROBE_MODES,
             "language": lambda v: v == "" or v in interface.names(),
             "custom_tunings": lambda v: isinstance(v, list) and all(isinstance(e, dict) for e in v),
         }

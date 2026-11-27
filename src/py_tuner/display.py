@@ -85,3 +85,35 @@ class Strobe:
             for i, band in enumerate(STROBE_BANDS):
                 self.phases[i] = (self.phases[i] + c * STROBE_SPEED * band * dt / self.period) % 1.0
         return self.phases
+
+
+class Follower:
+    """The real strobe's bands (strobe.Band, from the readings) drawn smoothly between readings.
+
+    Las lecturas llegan cada 25 ms y la ventana se dibuja cada 16: entre una y otra, cada banda sigue a la
+    velocidad que traía (como mucho 60 ms, por si las lecturas se detienen).
+    """
+
+    LIMIT = 0.06
+
+    def __init__(self) -> None:
+        self._bands: tuple = ()
+        self._time = 0.0
+        self._speed: list[float] = []
+
+    def update(self, bands: tuple, now: float) -> None:
+        if not bands:
+            self._bands, self._speed = (), []
+            return
+        if bands != self._bands:
+            if self._bands and len(self._bands) == len(bands) and now > self._time:
+                dt = now - self._time
+                self._speed = [(b.position - a.position) / dt for a, b in zip(self._bands, bands)]
+            else:
+                self._speed = [0.0] * len(bands)
+            self._bands, self._time = bands, now
+
+    def phases(self, now: float) -> list[tuple[float, float]]:
+        """[(phase in 0..1, alpha), ...] of each band at NOW."""
+        ahead = min(max(0.0, now - self._time), self.LIMIT)
+        return [((b.position + v * ahead) % 1.0, b.alpha) for b, v in zip(self._bands, self._speed)]

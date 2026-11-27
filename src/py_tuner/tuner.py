@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import threading
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import numpy as np
 
@@ -21,6 +21,7 @@ from .audio import Source
 from .pitch import Detector, Estimate
 from .settings import Settings
 from .stabilizer import Stabilizer
+from .strobe import Strobe
 
 # Cada cuánto se analiza (segundos): 40 lecturas por segundo.
 HOP = 0.025
@@ -59,6 +60,7 @@ class Reading:
     clarity: float = 0.0
     inharmonicity: float = 0.0
     harmonics: int = 0
+    strobe: tuple = ()  # las bandas del estroboscopio (strobe.Band), en la ventana y la terminal
     in_tune: bool = False
     time: float = 0.0
 
@@ -183,6 +185,8 @@ class LiveTuner:
         self.source = source
         self.tuner = Tuner(settings, source.rate)
         self.reading = Reading()
+        self.strobe = Strobe(source.rate, settings.validated().strobe_mode)
+        self._inharmonicity = 0.0
         self.error: str | None = None
         self._lock = threading.Lock()
         self._stop = threading.Event()
@@ -195,6 +199,9 @@ class LiveTuner:
     def configure(self, settings: Settings) -> None:
         with self._lock:
             self.tuner.configure(settings)
+            if self.tuner.settings.strobe_mode != self.strobe.mode:
+                self.strobe.mode = self.tuner.settings.strobe_mode
+                self.strobe.reset()
 
     def start(self) -> None:
         self.source.start()
@@ -208,6 +215,16 @@ class LiveTuner:
             self._thread.join(timeout=2)
         self.source.stop()
 
+    def _strobe(self, fresh: np.ndarray, reading: Reading) -> Reading:
+        """Feeds the strobe the samples not seen before, points it at the reading's target, and puts its bands in
+        the reading."""
+        self.strobe.feed(fresh)
+        if reading.active and reading.harmonics >= 4:
+            # la inarmonicidad, alisada: la de un cuadro solo tiembla
+            self._inharmonicity += 0.1 * (reading.inharmonicity - self._inharmonicity)
+        self.strobe.set_target(reading.target_frequency if reading.active else 0.0, self._inharmonicity)
+        return replace(reading, strobe=tuple(self.strobe.bands()))
+
     def _run(self) -> None:
         seen = 0
         while not self._stop.is_set():
@@ -216,11 +233,13 @@ class LiveTuner:
             if total == seen:
                 self._stop.wait(HOP / 2)
                 continue
+            fresh = total - seen
             seen = total
             try:
                 with self._lock:
-                    samples = buf.latest(self.tuner.history)
+                    samples = buf.window(total, self.tuner.history)
                     reading = self.tuner.analyze(samples, total / self.source.rate)
+                    reading = self._strobe(buf.window(total, fresh), reading)
                 self.reading = reading
             except Exception as exc:  # noqa: BLE001 (un fallo del análisis se muestra, no mata el hilo)
                 self.error = f"{type(exc).__name__}: {exc}"

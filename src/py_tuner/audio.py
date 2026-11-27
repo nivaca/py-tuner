@@ -76,6 +76,21 @@ class RingBuffer:
                 self._pos = end % self.size
             self.total += n
 
+    def window(self, end: int, n: int) -> np.ndarray:
+        """The N samples that end at the absolute position END (the count written when END was the total), or
+        fewer if the oldest of them were already overwritten. A reader can thus take exactly the samples written
+        since it last looked, whatever came after."""
+        with self._lock:
+            end = min(end, self.total)
+            n = max(0, min(n, end, self.size - (self.total - end)))
+            stop = (self._pos - (self.total - end)) % self.size
+            start = (stop - n) % self.size
+            if n == 0:
+                return np.zeros(0, dtype=np.float32)
+            if start < stop or stop == 0:
+                return self._data[start:start + n].copy()
+            return np.concatenate((self._data[start:], self._data[:stop]))
+
     def latest(self, n: int) -> np.ndarray:
         """Las N muestras más recientes (menos al principio), de la más antigua a la más nueva."""
         with self._lock:

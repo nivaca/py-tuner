@@ -8,6 +8,7 @@ dicen lo mismo en todos: afinado, cerca, lejos.
 from __future__ import annotations
 
 import math
+import time
 
 from PySide6.QtCore import QPointF, QRectF, QSize, Qt
 from PySide6.QtGui import QColor, QFont, QPainter, QPainterPath, QPalette, QPen
@@ -110,16 +111,25 @@ class Strobe(QWidget):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.model = display.Strobe(period=1.0)
+        self.follower = display.Follower()
         self.cents: float | None = None
         self.tolerance = 1.0
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.setFixedHeight(84)
 
-    def advance(self, cents: float | None, dt: float) -> None:
+    def advance(self, cents: float | None, dt: float, bands: tuple = ()) -> None:
+        """Moves the stripes: by the real strobe's BANDS when there are any (strobe.py), or else at a speed
+        proportional to CENTS (a reading without sound behind it, as in the manual's pictures)."""
         self.cents = cents
+        self.follower.update(bands if cents is not None else (), time.monotonic())
         # Una franja (un período del dibujo) por segundo por cada cent, en la primera banda.
         self.model.advance(cents, dt)
         self.update()
+
+    def phases(self) -> list[tuple[float, float]]:
+        """[(phase, alpha)] of each band: the real strobe's, or the model's."""
+        real = self.follower.phases(time.monotonic())
+        return real if real else [(phase, 1.0) for phase in self.model.phases]
 
     def paintEvent(self, event) -> None:  # noqa: ARG002
         p = QPainter(self)
@@ -133,11 +143,12 @@ class Strobe(QWidget):
             color.setAlphaF(0.12)
         else:
             color = deviation_color(self.cents, self.tolerance)
-        bands = len(self.model.phases)
+        phases = self.phases()
+        bands = len(phases)
         gap = 4
         band_h = (h - gap * (bands + 1)) / bands
         stripe = w / self.STRIPES
-        for i, phase in enumerate(self.model.phases):
+        for i, (phase, alpha) in enumerate(phases):
             y = gap + i * (band_h + gap)
             # Las tres bandas tienen las mismas franjas; la de abajo corre cuatro
             # veces más rápido, para ver desviaciones de décimas de cent.
@@ -148,7 +159,10 @@ class Strobe(QWidget):
             while x < w:
                 path.addRect(QRectF(x, y, width / 2, band_h))
                 x += width
-            p.fillPath(path, color)
+            # una banda cuya parcial no sobresale del ruido se apaga (como en Strobie)
+            shade = QColor(color)
+            shade.setAlphaF(color.alphaF() * max(0.12, alpha))
+            p.fillPath(path, shade)
 
 
 class Level(QWidget):

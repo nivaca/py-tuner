@@ -78,3 +78,14 @@ def test_file_source_plays_in_real_time(tmp_path):
 
 def test_input_devices_never_raises():
     assert isinstance(audio.input_devices(), list)
+
+
+def test_ring_buffer_window_by_absolute_position():
+    rb = audio.RingBuffer(10)
+    rb.write(np.arange(7))
+    assert list(rb.window(5, 3)) == [2, 3, 4]
+    rb.write(np.arange(7, 15))  # 15 escritas, quedan 5..14
+    assert list(rb.window(12, 4)) == [8, 9, 10, 11]
+    assert list(rb.window(15, 20)) == list(range(5, 15))
+    assert list(rb.window(8, 5)) == [5, 6, 7]  # (lo más viejo ya se pisó)
+    assert len(rb.window(15, 0)) == 0

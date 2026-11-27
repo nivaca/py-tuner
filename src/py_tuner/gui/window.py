@@ -372,7 +372,7 @@ class Window(QMainWindow):
         self.level.set_level(r.level)
         cents = r.cents if r.active else None
         self.needle.set_cents(cents, dt)
-        self.strobe.advance(cents, dt)
+        self.strobe.advance(cents, dt, r.strobe)
         if not r.active:
             self.note.setText("--")
             self.note.setStyleSheet("")
