@@ -25,9 +25,9 @@ The right note on real strings, and a real strobe.
   Tuner, Tuneo and pianito (docs/THIRD-PARTY.md).
 - `--once` waits for a reading of at least 0.3 seconds of sound before it
   takes it as steady (with one or two frames, a wrong one could pass, as on
-  a slow machine), and a
-  frame shorter than the analysis needs, or whose harmonics disagree with
-  its period, gives no reading instead of a poor one.
+  a slow machine), and a frame shorter than the analysis needs, or whose
+  harmonics disagree with its period, gives no reading instead of a poor
+  one.
 - Pictures of the terminal interface and of the command line, in the
   READMEs and the manuals (tools/terminal_images.py).
 
