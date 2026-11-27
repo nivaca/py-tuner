@@ -159,3 +159,54 @@ def test_no_pitch_without_a_whole_fine_frame():
     x = string(110.0, seconds=1.0)
     assert not det.analyze(x[-(det.fine_size(110.0) - 100):]).found
     assert det.analyze(x[-det.fine_size(110.0):]).found
+
+
+def test_weak_odd_harmonics_are_not_an_octave_up():
+    # A string whose odd partials are weak (a steel string on a small microphone): the period alone reads an
+    # octave up; the harmonic score finds the odd partials and keeps the octave.
+    rng = np.random.default_rng(1)
+    t = np.arange(RATE) / RATE
+    f = 82.41
+    x = sum((1 / n if n % 2 == 0 else 0.06 / n) * np.sin(2 * np.pi * n * f * t + rng.uniform(0, 6))
+            for n in range(1, 13))
+    x = 0.4 * x / np.abs(x).max() + rng.normal(0, 1e-4, len(t))
+    e = Detector(rate=RATE, fmin=50, fmax=700).analyze(x)
+    assert abs(cents(e.frequency, f)) < 0.1
+
+
+def test_choose_octave_up_from_a_subharmonic():
+    # Un período tres veces el verdadero (el submúltiplo de dos cuerdas que resuenan): la puntuación lo corrige.
+    x = string(143.0, seconds=1.0, b=0.0)
+    n = pitch.nsdf(x[-8000:], 4000)
+    period = RATE / 143.0
+
+    def periodicity(r):
+        i = int(round(3 * period / r))
+        return n[i - 1:i + 2].max() / n[int(round(3 * period))]
+
+    f = pitch.choose_octave(x, RATE, 143.0 / 3, 40, 700, 16, None, periodicity)
+    assert abs(cents(f, 143.0)) < 5
+
+
+def test_continuity_breaks_a_tie():
+    x = string(110.0, seconds=1.0, snr_db=10, decay=3.0)
+    guess = 110.0
+    assert pitch.choose_octave(x, RATE, guess, 40, 700, 16, prefer=110.0) == guess
+
+
+def test_highpass_keeps_the_phase_above_the_corner():
+    t = np.arange(48000) / RATE
+    # (un retumbo de 3 Hz, 40 dB bajo un filtro de segundo orden a 30 Hz, y la continua)
+    x = np.sin(2 * np.pi * 440 * t) + 0.5 * np.sin(2 * np.pi * 3 * t) + 0.3
+    y = pitch.highpass(x, RATE, 30.0)
+    core = slice(2000, -2000)
+    assert np.max(np.abs(y[core] - np.sin(2 * np.pi * 440 * t)[core])) < 0.02
+
+
+def test_prominence_marks_partials_not_noise():
+    rng = np.random.default_rng(2)
+    t = np.arange(16384) / RATE
+    x = np.sin(2 * np.pi * 300 * t) + rng.normal(0, 0.01, len(t))
+    prom, df = pitch.prominence(x, RATE)
+    assert prom[int(300 / df)] > 30
+    assert np.median(prom) < 6

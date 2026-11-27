@@ -137,3 +137,21 @@ def test_readings_count_their_frames():
     readings = [r for r in tuner.analyze_all(string(220.0, seconds=1.0)) if r.active]
     assert readings[0].count == 1
     assert readings[-1].count > 12
+
+
+def test_the_search_stays_near_the_strings():
+    # Con cuerdas, el margen va de una cuarta bajo la más grave a una quinta sobre la más aguda.
+    tuner = Tuner(Settings(instrument="guitar", tuning="Standard"), RATE)
+    assert tuner.detector.fmin == pytest.approx(notes.frequency(notes.parse("B1")))
+    assert tuner.detector.fmax == pytest.approx(notes.frequency(notes.parse("B4")))
+    chromatic = Tuner(Settings(), RATE)
+    assert chromatic.detector.fmin < 25
+
+
+def test_a_pluck_is_an_onset():
+    tuner = Tuner(Settings(), RATE)
+    quiet = 0.001 * string(110.0, seconds=0.5, snr_db=None)
+    loud = string(110.0, seconds=0.5, snr_db=None)
+    assert not tuner._onset(quiet, 0.5)
+    assert not tuner._onset(quiet, 0.525)
+    assert tuner._onset(loud, 0.55)

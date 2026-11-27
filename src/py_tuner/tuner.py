@@ -24,6 +24,13 @@ from .stabilizer import Stabilizer
 
 # Cada cuánto se analiza (segundos): 40 lecturas por segundo.
 HOP = 0.025
+# Semitones searched below the lowest string and above the highest, in an instrument's tuning
+STRING_BELOW = 5
+STRING_ABOVE = 7
+# A pluck: the level of the newest HOP of sound this many times its envelope, which follows over ONSET_ENVELOPE_S
+# (as Strobie, by Davorin Šego, finds its onsets: 1.5 over 0.3 s)
+ONSET_RATIO = 1.5
+ONSET_ENVELOPE_S = 0.3
 
 
 @dataclass(frozen=True)
@@ -72,13 +79,18 @@ class Tuner:
         self.instrument = s.instrument_preset()
         self.tuning = self.instrument.tuning(s.tuning) if self.instrument.tunings else None
         self.string_midis = self.tuning.midis if self.tuning else ()
-        lo, hi = self.instrument.lowest, self.instrument.highest
         if self.string_midis:
-            lo, hi = min(lo, min(self.string_midis) - 3), max(hi, max(self.string_midis))
-        # Un poco más allá del margen, para afinar desde una cuerda muy floja
-        # o muy tensa sin que el detector la pierda.
-        fmin = notes.frequency(lo, s.a4) * 0.85
-        fmax = min(notes.frequency(hi, s.a4) * 1.1, 0.4 * self.rate)
+            # Con cuerdas, se busca solo cerca de ellas: de una cuarta bajo la más grave (una cuerda muy floja) a
+            # una quinta sobre la más aguda. Lo que queda fuera (el golpe de la pulsación, un submúltiplo de dos
+            # cuerdas que resuenan) no puede pasar por una nota. Como el margen ceñido a la cuerda de pianito (Axel
+            # Stevens) y de Tuneo (Braulio Ríos).
+            fmin = notes.frequency(min(self.string_midis) - STRING_BELOW, s.a4)
+            fmax = notes.frequency(max(self.string_midis) + STRING_ABOVE, s.a4)
+        else:
+            # Un poco más allá del margen del instrumento, para afinar desde una cuerda muy floja o muy tensa
+            fmin = notes.frequency(self.instrument.lowest, s.a4) * 0.85
+            fmax = notes.frequency(self.instrument.highest, s.a4) * 1.1
+        fmax = min(fmax, 0.4 * self.rate)
         old = getattr(self, "detector", None)
         self.detector = Detector(rate=self.rate, fmin=fmin, fmax=fmax, periods=s.periods,
                                  min_level=s.min_level)
@@ -104,8 +116,11 @@ class Tuner:
 
     def analyze(self, samples: np.ndarray, now: float) -> Reading:
         """The reading after the newest SAMPLES (their end is at time NOW, in seconds)."""
-        est: Estimate = self.detector.analyze(samples)
-        smooth = self.stabilizer.push(now, est.frequency)
+        onset = self._onset(samples, now)
+        # La nota que suena orienta la elección de la octava, salvo justo después de pulsar.
+        prefer = None if self.stabilizer.recent_onset(now) else self.stabilizer.centre_frequency()
+        est: Estimate = self.detector.analyze(samples, prefer)
+        smooth = self.stabilizer.push(now, est.frequency, onset)
         if smooth is None:
             return Reading(raw=est.frequency, level=est.level, clarity=est.clarity, time=now)
         midi, string = self.target(smooth.frequency)
@@ -115,6 +130,21 @@ class Tuner:
                        target_frequency=target, cents=c, string=string, spread=smooth.spread, count=smooth.count,
                        level=est.level, clarity=est.clarity, inharmonicity=est.inharmonicity,
                        harmonics=est.harmonics, in_tune=abs(c) <= self.settings.tolerance, time=now)
+
+    def _onset(self, samples: np.ndarray, now: float) -> bool:
+        """Whether the newest samples are a pluck: their level jumps ONSET_RATIO over the envelope."""
+        n = max(1, int(HOP * self.rate))
+        newest = np.asarray(samples[-n:], dtype=np.float64)
+        amp = float(np.sqrt(np.mean(newest * newest))) if len(newest) else 0.0
+        last = getattr(self, "_env_time", None)
+        env = getattr(self, "_envelope", 0.0)
+        dt = HOP if last is None else max(0.0, now - last)
+        onset = amp > ONSET_RATIO * env and 20 * np.log10(amp + 1e-12) > self.settings.min_level
+        # la envolvente sigue al nivel, más despacio cuanto más largo ONSET_ENVELOPE_S
+        k = 1 - np.exp(-dt / ONSET_ENVELOPE_S) if dt > 0 else 1.0
+        self._envelope = env + (amp - env) * k
+        self._env_time = now
+        return bool(onset)
 
     def analyze_all(self, samples: np.ndarray, hop: float = HOP) -> list[Reading]:
         """Lecturas cada HOP segundos a lo largo de una grabación entera."""

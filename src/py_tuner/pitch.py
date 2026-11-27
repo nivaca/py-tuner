@@ -259,6 +259,120 @@ def _fit(ns: np.ndarray, freqs: np.ndarray, amps: np.ndarray) -> tuple[float, fl
     return float(np.sum(w * y) / np.sum(w)), 0.0
 
 
+def highpass(x: np.ndarray, rate: float, corner: float, order: int = 2) -> np.ndarray:
+    """X without what lies under CORNER Hz: a Butterworth high-pass of ORDER applied by its magnitude in the
+    frequency domain, so without phase shift (the frequencies above keep their exact phase).
+
+    Como en Strobie (Davorin Šego), que corta bajo A0: se lleva la continua y el retumbo bajo las notas, que
+    inflan la correlación de los períodos largos.
+    """
+    n = len(x)
+    size = 1 << int(np.ceil(np.log2(2 * n)))  # (con ceros detrás, para que el filtro no dé la vuelta)
+    spec = np.fft.rfft(x, size)
+    f = np.fft.rfftfreq(size, 1 / rate)
+    with np.errstate(divide="ignore"):
+        gain = 1 / np.sqrt(1 + (corner / np.maximum(f, 1e-9)) ** (2 * order))
+    gain[0] = 0.0
+    return np.fft.irfft(spec * gain, size)[:n]
+
+
+def prominence(x: np.ndarray, rate: float, cap: float = 40.0) -> tuple[np.ndarray, float]:
+    """How far each bin of X's spectrum stands over the sound around it, in dB (0..CAP), and the bin width in Hz.
+
+    The background is the lower quartile of the bins within 40 Hz either side, worked out every few bins and
+    joined by straight lines, as Strobie's harmonic stack does: a partial and its lobes take a small share of
+    the bins around them, so the quartile falls between partials. A peak counts by how far it stands out, not by
+    its level, so a loud low rumble and a soft clear partial weigh alike.
+    """
+    n = len(x)
+    size = 1 << int(np.ceil(np.log2(2 * n)))
+    mag = np.abs(np.fft.rfft((x - x.mean()) * np.hanning(n), size))
+    db = 20 * np.log10(mag + 1e-12 * (mag.max() + 1e-30))
+    df = rate / size
+    half = max(4, int(40 / df))
+    step = max(1, half // 4)
+    padded = np.pad(db, half, mode="edge")
+    windows = np.lib.stride_tricks.sliding_window_view(padded, 2 * half + 1)[::step]
+    centres = np.arange(0, len(db), step)[: len(windows)]
+    background = np.interp(np.arange(len(db)), centres, np.percentile(windows, 25, axis=1))
+    return np.clip(db - background, 0.0, cap), df
+
+
+# Lo que cuesta cada lugar de armónico en el que no hay nada (dB de prominencia): el ruido mismo sobresale unos
+# 5 o 6 dB de su cuartil, una parcial de verdad mucho más
+SLOT_COST_DB = 8.0
+# A partial this far over its background is clear (it sets the ceiling of the harmonics compared)
+CLEAR_DB = 12.0
+
+
+def harmonic_score(prom: np.ndarray, df: float, f0: float, ceiling: float) -> float:
+    """How well F0 explains the peaks of PROM up to CEILING Hz: for each of its harmonics, its prominence less
+    SLOT_COST_DB (an empty place costs), and less the prominence at each half-harmonic, (n - ½)·F0.
+
+    Las posiciones intermedias restan, como los picos negativos del núcleo del reconocedor de teclas de Entropy
+    Piano Tuner (Hinrichsen y Wick), y la suma sobre los armónicos, como la pila de armónicos de Strobie (Davorin
+    Šego): una altura una octava baja paga sus lugares vacíos, una octava (o una duodécima) alta cubre menos
+    parciales y encuentra los impares verdaderos entre los suyos. Each harmonic is looked for within 1.2 % of
+    n·F0, as a stiff string's partials run sharp.
+    """
+    count = int(ceiling // f0)
+    if count < 1:
+        return -np.inf
+
+    def peak(f: float) -> float:
+        lo, hi = int((f * 0.988) / df), int(np.ceil((f * 1.012) / df)) + 1
+        return float(prom[max(lo, 0):min(hi, len(prom))].max()) if lo < len(prom) else 0.0
+
+    ns = range(1, count + 1)
+    return sum(peak(n * f0) - SLOT_COST_DB for n in ns) - sum(peak((n - 0.5) * f0) for n in ns)
+
+
+# The ratios to the coarse pitch that are tried as the real one: the octave and twelfth either side, the usual
+# errors of a period method (a sub-harmonic shared by two ringing partials, or the 2nd harmonic of a string
+# whose fundamental is weak).
+CANDIDATES = (1 / 3, 1 / 2, 1.0, 2.0, 3.0)
+# How much better (dB of prominence) another candidate must score to replace the coarse pitch
+SWITCH_DB = 6.0
+# Lo que gana el candidato que sigue la nota que ya sonaba (a menos de 60 cents de ella): en la cola de una
+# nota, cuando sus parciales se apagan, un múltiplo o un submúltiplo puede ganar por poco y por azar.
+CONTINUITY_DB = 12.0
+
+
+# An octave or a twelfth up is only taken if the sound also repeats at that shorter lag: its NSDF there at least
+# this share of the NSDF at the period found
+UP_PERIODICITY = 0.8
+
+
+def choose_octave(x: np.ndarray, rate: float, guess: float, fmin: float, fmax: float, periods: float,
+                  prefer: float | None = None, periodicity=None) -> float:
+    """The candidate around GUESS that best explains the spectrum of X, GUESS itself unless another is clearly
+    better. PREFER, the pitch of the note already sounding, gives the candidate near it an advantage (as Tuneo,
+    by Braulio Ríos, narrows its search around the note while it decays). PERIODICITY(ratio), if given, is how
+    periodic the sound is at the period divided by RATIO, relative to the period found: a candidate above GUESS
+    needs it (a sound with a pitch of 3f repeats every third of the period of f)."""
+    options = [guess * r for r in CANDIDATES if fmin <= guess * r <= fmax
+               and (r <= 1 or periodicity is None or periodicity(r) >= UP_PERIODICITY)]
+    if len(options) < 2:
+        return guess
+    # Un cuadro con bastantes períodos del candidato más grave, para que sus armónicos se separen.
+    size = min(len(x), int(max(MIN_FINE, periods * rate / min(options))))
+    prom, df = prominence(x[-size:], rate)
+    # Los armónicos se comparan hasta poco más allá de la parcial clara más alta (y no más de doce del
+    # candidato del período): por encima no hay nada que explicar, y un seno no premia a sus múltiplos.
+    top = min(5000.0, 0.45 * rate, 12 * guess)
+    clear = np.nonzero(prom[: int(top / df)] >= CLEAR_DB)[0]
+    if not len(clear):
+        return guess
+    ceiling = min(top, 1.1 * clear[-1] * df)
+    scores = {f: harmonic_score(prom, df, f, ceiling) for f in options}
+    if prefer:
+        for f in scores:
+            if abs(1200 * np.log2(f / prefer)) < 60:
+                scores[f] += CONTINUITY_DB
+    best = max(scores, key=scores.get)
+    return best if scores[best] > scores[guess] + SWITCH_DB else guess
+
+
 @dataclass
 class Detector:
     """The analysis settings, and the frame sizes they imply.
@@ -291,20 +405,31 @@ class Detector:
         """Samples a caller should keep: enough for both stages at the lowest note."""
         return max(self.coarse_size, self.fine_size(self.fmin))
 
-    def analyze(self, samples: np.ndarray) -> Estimate:
-        """The pitch of the most recent samples (the end of SAMPLES)."""
+    def analyze(self, samples: np.ndarray, prefer: float | None = None) -> Estimate:
+        """The pitch of the most recent samples (the end of SAMPLES); PREFER, the note already sounding, if any."""
         x = np.asarray(samples, dtype=np.float64)
         if len(x) == 0:
             return Estimate(0.0, 0.0, float("-inf"))
-        coarse = x[-min(len(x), self.coarse_size):]
-        level = level_db(coarse[-min(len(coarse), MIN_FINE * 2):])
-        if level < self.min_level or len(coarse) < 4 * self.rate / self.fmax:
+        level = level_db(x[-min(len(x), MIN_FINE * 2):])
+        if level < self.min_level or len(x) < 4 * self.rate / self.fmax:
             return Estimate(0.0, 0.0, level)
+        # sin lo que queda bajo el margen (a 0,7 de la nota más grave): la continua y el retumbo
+        x = highpass(x - x.mean(), self.rate, 0.7 * self.fmin)
+        coarse = x[-min(len(x), self.coarse_size):]
         coarse = coarse - coarse.mean()
         period, clarity = coarse_period(coarse, self.rate, self.fmin, self.fmax)
         if period <= 0 or clarity < self.min_clarity:
             return Estimate(0.0, clarity, level)
-        guess = self.rate / period
+        # La periodicidad a una fracción del período, del mismo NSDF del paso grueso
+        n = nsdf(coarse, int(np.ceil(period)) + 2)
+
+        def periodicity(ratio: float) -> float:
+            lag = period / ratio
+            i = int(round(lag))
+            return float(n[max(1, i - 1):i + 2].max() / max(n[int(round(period))], 1e-9)) if i >= 2 else 0.0
+
+        guess = choose_octave(x, self.rate, self.rate / period, self.fmin, self.fmax, self.periods, prefer,
+                              periodicity)
         size = self.fine_size(guess)
         if len(x) < size:
             # Sin un cuadro fino entero (al empezar a escuchar, o en una máquina lenta) la estimación sería
