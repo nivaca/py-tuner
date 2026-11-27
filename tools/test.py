@@ -28,7 +28,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 TESTS = ROOT / "tests"
 # Los archivos que más tardan, que arrancan primero (los demás siguen en orden alfabético), por su ruta en tests/
-SLOW = ("test_pitch.py", "test_gui.py", "test_tuner.py")
+SLOW = ("test_zenodo.py", "test_tuner.py", "test_pitch.py", "test_tui.py", "test_cli.py")
 
 
 def files(names: list[str]) -> list[Path]:

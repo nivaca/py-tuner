@@ -1,0 +1,38 @@
+{
+  "title": "py-tuner",
+  "upload_type": "software",
+  "creators": [
+    {
+      "name": "Vaughan, Nicolas",
+      "affiliation": "Universidad de los Andes",
+      "orcid": "0000-0002-2877-0539"
+    }
+  ],
+  "contributors": [
+    {
+      "name": "Vaughan, Nicolas",
+      "affiliation": "Universidad de los Andes",
+      "orcid": "0000-0002-2877-0539",
+      "type": "ProjectLeader"
+    }
+  ],
+  "license": "gpl-3.0-or-later",
+  "access_right": "open",
+  "keywords": [
+    "tuner",
+    "instrument tuning",
+    "guitar",
+    "bass",
+    "double bass",
+    "violin",
+    "pitch detection",
+    "strobe tuner",
+    "inharmonicity"
+  ],
+  "languages": [
+    "eng",
+    "spa"
+  ],
+  "programming_language": "python",
+  "development_status": "active"
+}

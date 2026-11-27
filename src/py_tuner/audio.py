@@ -16,6 +16,35 @@ from pathlib import Path
 import numpy as np
 
 
+# La PortAudio que lleva la AppImage (tools/build-libs.py), si la hay; si no, la del sistema.
+BUNDLED_PORTAUDIO = Path(__file__).resolve().parent / "lib" / "libportaudio.so.2"
+
+
+def sounddevice():
+    """El módulo sounddevice, con la PortAudio del paquete si la trae.
+
+    sounddevice busca PortAudio solo por su nombre, con ctypes.util.find_library; mientras se importa, se le
+    señala la del paquete. (Como en py-slowdown.)
+    """
+    import sys
+
+    if "sounddevice" in sys.modules:
+        return sys.modules["sounddevice"]
+    if not BUNDLED_PORTAUDIO.is_file():
+        import sounddevice as module
+
+        return module
+    import ctypes.util
+
+    original = ctypes.util.find_library
+    ctypes.util.find_library = lambda name: str(BUNDLED_PORTAUDIO) if name == "portaudio" else original(name)
+    try:
+        import sounddevice as module
+    finally:
+        ctypes.util.find_library = original
+    return module
+
+
 class RingBuffer:
     """Las últimas SIZE muestras monofónicas, que un hilo escribe y otro lee."""
 
@@ -105,8 +134,7 @@ class MicSource(Source):
 
     def __init__(self, seconds: float, device: str | None = None, rate: int | None = None,
                  channel: str = "mix") -> None:
-        import sounddevice as sd
-
+        sd = sounddevice()
         self._sd = sd
         self.device = _device_index(sd, device)
         info = sd.query_devices(self.device, "input")
@@ -185,9 +213,7 @@ def _device_index(sd, device: str | None) -> int | None:
 def input_devices() -> list[tuple[int, str, int]]:
     """(index, name, default sample rate) of every input device; [] without PortAudio."""
     try:
-        import sounddevice as sd
-
-        found = sd.query_devices()
+        found = sounddevice().query_devices()
     except (ImportError, OSError):
         return []
     return [(i, d["name"], int(d["default_samplerate"])) for i, d in enumerate(found)

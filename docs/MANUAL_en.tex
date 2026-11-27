@@ -1,0 +1,646 @@
+\newcommand*{\version}{0.1.0}
+
+\documentclass[12pt,
+              article,
+              oneside
+              ]{memoir}
+
+\usepackage{iftex}
+
+\ifluatex
+  \usepackage{fontspec}
+\fi
+
+\usepackage[
+  % latin,
+  english,
+  % spanish,% <- principal
+  % es-minimal,
+  % es-noshorthands,
+  % es-tabla,
+]{babel}
+
+\ifluatex
+% LuaLaTeX --------------------
+\defaultfontfeatures{Ligatures=TeX, Scale=MatchLowercase}
+\usepackage[MainFeatures={medium,
+  Ligatures=Common,
+  Numbers=OldStyle,
+  SmallCapsFeatures = {LetterSpace=5.0}}]
+{junicodevf}
+%
+% \setsansfont{Libertinus Sans}
+% (sin las ligaduras de TeX: -{}-help no se vuelve una raya)
+\setmonofont[Scale=MatchLowercase, Ligatures=ResetAll]{DejaVu Sans Mono}
+% \setmonofont[Scale=MatchLowercase]{Libertinus Mono}
+% \setmonofont[Scale=MatchLowercase}]{Fira Code}
+\else
+% PDFLaTeX ---------------------
+\usepackage[T1]{fontenc}
+\usepackage[osf]{libertinus}
+\usepackage[scaled=0.9]{FiraMono}
+% \usepackage[scaled=0.9]{cascadia-code}
+% \usepackage[scaled=0.9]{roboto}
+\input glyphtounicode
+\pdfgentounicode=1
+\fi
+
+\usepackage[babel=true, verbose=false, tracking=true, expansion=true, protrusion=true, final, draft=false]{microtype}
+\SetTracking{ encoding = *, shape = sc }{ 30 }
+\SetTracking[context = notracking, ]{encoding = *}{0}
+
+\usepackage[autostyle=false, style=british]{csquotes}
+\usepackage{latexcolors}
+
+\newcommand{\Rojo}{\color[HTML]{8B0000}}
+\newcommand*{\rojo}[1]{\textcolor[HTML]{8B0000}{#1}}
+\newcommand*{\rojoit}[1]{\textit{\textcolor[HTML]{8B0000}{#1}}}
+\newcommand{\Azul}{\color{bluenivaca}}
+\newcommand*{\azul}[1]{\textcolor{bluenivaca}{#1}}
+\newcommand{\Verde}{\color{darkgreen}}
+\newcommand*{\verde}[1]{\textcolor{darkgreen}{#1}}
+\newcommand{\Amarillo}{\color{goldenpoppy}}
+\newcommand*{\amarillo}[1]{\textcolor{goldenpoppy}{#1}}
+\newcommand{\Morado}{\color{byzantium}}
+\newcommand*{\morado}[1]{\textcolor{byzantium}{#1}}
+\newcommand{\Naranja}{\color{orange}}
+\newcommand*{\naranja}[1]{\textcolor{orange}{#1}}
+
+% \usepackage[margin=3cm]{geometry}
+
+\usepackage{graphicx}
+\usepackage{booktabs}
+
+\clubpenalty=9999
+\widowpenalty=9999
+\brokenpenalty=5000
+\frenchspacing
+\raggedbottom
+\midsloppy
+\parindent=14pt
+\fboxsep=2pt
+
+\renewcommand\thesection{\arabic{section}}
+\chapterstyle{reparticle}
+
+\usepackage{enumitem}
+\setlist{noitemsep, nosep}
+\setlist[description]{font=\itshape}
+
+\newcommand*{\elipsis}{\,.\,.\,.\,}
+\newcommand*{\elipsisb}{\textup{[\elipsis]}}
+
+\renewenvironment{quote}%
+ {\begin{list}{}%
+              {\setlength\rightmargin{0pt}%
+              \setlength\leftmargin{\parindent}}%
+  \item[]\small\ignorespaces}
+ {\unskip\end{list}}
+
+
+\definecolor{Link}{HTML}{408080}
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  filecolor=blue,
+  citecolor = black,
+  urlcolor=Link,
+}
+\urlstyle{tt}
+\usepackage{bookmark}
+
+\setlength{\droptitle}{-2cm}
+
+\title{\bfseries%
+  \texttt{py-tuner} v.\version{} \\
+  User Manual}
+
+\author{%
+  Nicolás Vaughan\\
+  \begin{minipage}[t]{0.8\linewidth}
+    \centering\small%
+    \href{mailto:nicolasvaughan@proton.me}{\texttt{nicolasvaughan@proton.me}}\\
+    \url{https://nicolasvaughan.org}\\
+    \url{https://github.com/nivaca/py-tuner}\\
+    \url{https://codeberg.org/nivaca/py-tuner}\\
+  \end{minipage}}
+
+
+\date{2026-11-27}
+
+% The pictures, made by tools/manual_images.py
+\graphicspath{{img/manual/}}
+\usepackage{longtable}
+
+% the title and the author in the PDF's own metadata
+\hypersetup{pdftitle={py-tuner User Manual}, pdfauthor={Nicolás Vaughan}}
+
+% the index (makeindex, with the style manual.ist: see latexmkrc)
+\makeindex
+
+% menus, keys, and the pictures of the window
+\newcommand*{\menu}[1]{\textit{#1}}
+\newcommand*{\then}{\,>\,}
+\newcommand*{\key}[1]{\texttt{#1}}
+\newcommand*{\shot}[3]{%
+  \begin{figure}[htbp]
+    \centering
+    \includegraphics[width=#2\textwidth,height=0.75\textheight,keepaspectratio]{#1}
+    \caption{#3}
+    \label{fig:#1}
+  \end{figure}}
+
+\begin{document}
+\maketitle
+
+\tableofcontents*
+
+\section{Introduction}
+\noindent
+\texttt{py-tuner} is a tuner for guitar, bass, double bass and violin, with
+a chromatic mode for any other instrument. It listens to the sound card,
+recognizes the note played, compares it with the nearest string of the
+chosen tuning (or with the string one locks) and shows how many cents it
+is off. A cent is a hundredth of a semitone.
+
+\index{accuracy}\index{inharmonicity}%
+I made it to be accurate. On a steady string, each analysis frame falls
+within a few hundredths of a cent of the true pitch, and the reading shown
+averages half a second of frames. The pitch is found from all the
+harmonics of the string at once, taking into account that a real string is
+inharmonic (its upper partials sound a little sharp); so it also works when
+a small microphone hardly picks up the fundamental of a low string, as
+happens with the bass and the double bass.
+
+\index{interfaces}%
+It shows the deviation with a needle and with a strobe, and it runs in
+three ways: in a window, in a full-screen terminal and on the command line.
+The interface is in English or Spanish. This manual describes version
+\version{}; the pictures are of the English window.
+
+\section{Installing}
+\label{sec:installing}
+
+\index{installing}%
+The releases are on GitHub and Codeberg (the addresses are on the first
+page). Each one has the files below, and every file is signed: see
+section~\ref{sec:signatures}.
+
+\subsection{Fedora}
+
+\index{fedora@Fedora}\index{copr@Copr}\index{rpm@RPM}%
+The RPM is also in Copr, so that \texttt{dnf upgrade} brings each new
+version:
+
+\begin{quote}
+\texttt{sudo dnf copr enable nivaca/py-tuner}\\
+\texttt{sudo dnf install py-tuner}
+\end{quote}
+
+\noindent It uses Fedora's own NumPy, PortAudio and PySide6, and installs
+a menu entry, the manual pages (\texttt{man py-tuner}, in English and in
+Spanish) and this manual.
+
+\subsection{Any Linux: the AppImage}
+
+\index{appimage@AppImage}%
+\texttt{py-tuner-\version-x86\_64.AppImage} carries its own Python, Qt and
+PortAudio, and needs no installing. It runs on any Linux with glibc 2.34
+or later (Ubuntu 22.04, Debian 12, Fedora 35 and later):
+
+\begin{quote}
+\texttt{chmod +x py-tuner-\version-x86\_64.AppImage}\\
+\texttt{./py-tuner-\version-x86\_64.AppImage}\\
+\texttt{./py-tuner-\version-x86\_64.AppImage tui}
+\end{quote}
+
+\noindent The first opens the window, the second the terminal interface;
+any other command and option of section~\ref{sec:cli} can be given in the
+same way.
+
+\subsection{From the source}
+
+\index{source}\index{python@Python}%
+With Python 3.14 or later and PortAudio from the system (\texttt{sudo dnf
+install portaudio} on Fedora, \texttt{sudo apt install libportaudio2} on
+Debian and Ubuntu), the wheel of a release installs with \texttt{pip
+install py\_tuner-\version-py3-none-any.whl}. From a copy of the source,
+with uv (\url{https://docs.astral.sh/uv/}), \texttt{uv run py-tuner} runs
+it at once.
+
+\subsection{Checking the files of a release}
+\label{sec:signatures}
+
+\index{signatures}%
+Each file of a release has a signature (\texttt{FILE.asc}), and
+\texttt{SHA256SUMS} lists the sums of all of them, with its own signature.
+They are checked with the public key published with the release:
+
+\begin{quote}
+\texttt{gpg -{}-import RPM-GPG-KEY-py-tuner}\\
+\texttt{gpg -{}-verify FILE.asc FILE}
+\end{quote}
+
+\noindent The RPM is signed inside too; \texttt{dnf} checks it once the
+key is imported (\texttt{sudo rpm -{}-import RPM-GPG-KEY-py-tuner}).
+
+\section{Starting the program}
+
+\index{starting}%
+From the menu, \menu{py-tuner} opens the window. From a terminal:
+
+\begin{quote}
+\begin{tabular}{@{}ll@{}}
+\texttt{py-tuner} & the window\\
+\texttt{py-tuner tui} & the terminal interface (section~\ref{sec:tui})\\
+\texttt{py-tuner cli} & one line of text (section~\ref{sec:cli})\\
+\texttt{py-tuner devices} & the list of sound inputs\\
+\texttt{py-tuner instruments} & the list of instruments and tunings\\
+\end{tabular}
+\end{quote}
+
+\noindent The window opens in chromatic mode (section~\ref{sec:chromatic})
+until another instrument is chosen; the choice is kept.
+\texttt{py-tuner -{}-help} lists every option. The options
+change the settings for that session only, unless \texttt{-{}-save} is
+added (section~\ref{sec:settings}).
+
+\section{The window}
+\label{sec:window}
+
+\index{window}%
+\shot{window_en}{0.75}{The window: the G string of a guitar, 0.4 cents sharp}
+
+\noindent From the top down, the window has:
+
+\begin{description}
+\item[The bar] the instrument, its tuning (with its strings), the
+  reference A (section~\ref{sec:a4}) and the settings.
+\item[The note] the note the sound is compared with, in large letters;
+  under it, the deviation in cents, and the frequency heard, with an arrow
+  to the frequency it should have.
+\item[The needle] the deviation, from $-50$ to $+50$ cents. The narrow
+  green zone in the middle is the tolerance: a note within it counts as in
+  tune (section~\ref{sec:settings}).
+\item[The strobe] three bands of stripes that drift to the right when the
+  note is sharp and to the left when it is flat, and stand still when it is
+  in tune (section~\ref{sec:strobe}).
+\item[The strings] a button for each string of the tuning. The string
+  compared against is framed.
+\item[The status bar] the input in use, its sample rate, and the level of
+  the sound, with a mark at the level below which sounds are ignored.
+\end{description}
+
+\index{colours}%
+The colours say the same everywhere: green within the tolerance, amber
+within five times the tolerance, red beyond it.
+
+\shot{flat_en}{0.75}{The low E of a five-string bass, 12.3 cents flat}
+
+\index{string, locked}%
+The string compared against is, normally, the nearest one to the sound. A
+click on the button of a string locks it: from then on every sound is
+compared with that string, however far, which helps when a string is very
+slack and sounds nearer to the next one. Another click on the same button
+unlocks it.
+
+\shot{locked_en}{0.75}{The violin's A string locked, with A4 at 442~Hz}
+
+\section{Instruments and tunings}
+\label{sec:tunings}
+
+\index{instruments}\index{tunings}%
+Each instrument has its usual tuning first, and some others:
+
+\begin{longtable}{@{}lll@{}}
+\toprule
+Instrument & Tuning & Strings, lowest first\\
+\midrule
+\endhead
+Guitar & Standard & \texttt{E2 A2 D3 G3 B3 E4} \\
+ & Drop D & \texttt{D2 A2 D3 G3 B3 E4} \\
+ & Half step down & \texttt{Eb2 Ab2 Db3 Gb3 Bb3 Eb4} \\
+ & Whole step down & \texttt{D2 G2 C3 F3 A3 D4} \\
+ & Drop C & \texttt{C2 G2 C3 F3 A3 D4} \\
+ & DADGAD & \texttt{D2 A2 D3 G3 A3 D4} \\
+ & Open D & \texttt{D2 A2 D3 F\#3 A3 D4} \\
+ & Open G & \texttt{D2 G2 D3 G3 B3 D4} \\
+ & Open E & \texttt{E2 B2 E3 G\#3 B3 E4} \\
+ & Open C & \texttt{C2 G2 C3 G3 C4 E4} \\
+ & 7-string & \texttt{B1 E2 A2 D3 G3 B3 E4} \\
+\addlinespace
+Bass & Standard & \texttt{E1 A1 D2 G2} \\
+ & Drop D & \texttt{D1 A1 D2 G2} \\
+ & Half step down & \texttt{Eb1 Ab1 Db2 Gb2} \\
+ & 5-string & \texttt{B0 E1 A1 D2 G2} \\
+ & 5-string high C & \texttt{E1 A1 D2 G2 C3} \\
+ & 6-string & \texttt{B0 E1 A1 D2 G2 C3} \\
+\addlinespace
+Double bass & Orchestral & \texttt{E1 A1 D2 G2} \\
+ & Solo & \texttt{F\#1 B1 E2 A2} \\
+ & 5-string (low B) & \texttt{B0 E1 A1 D2 G2} \\
+ & 5-string (low C) & \texttt{C1 E1 A1 D2 G2} \\
+ & Fifths & \texttt{C1 G1 D2 A2} \\
+\addlinespace
+Violin & Standard & \texttt{G3 D4 A4 E5} \\
+ & Cross (AEAE) & \texttt{A3 E4 A4 E5} \\
+ & Scordatura GDGD & \texttt{G3 D4 G4 D5} \\
+\bottomrule
+\end{longtable}
+
+\noindent The instrument also fixes the range in which the fundamental is
+looked for, a little beyond its lowest string, so that a very slack string
+is still found.
+
+\index{tunings, own}%
+\label{sec:own-tunings}
+Tunings of one's own are added to the settings file
+(section~\ref{sec:files}), with the program closed, as a list
+\texttt{custom\_tunings}. Each tuning names its instrument
+(\texttt{guitar}, \texttt{bass}, \texttt{double-bass} or
+\texttt{violin}), its name and its strings, lowest first:
+
+\begin{verbatim}
+"custom_tunings": [
+  {"instrument": "guitar", "name": "Nashville",
+   "strings": "E3 A3 D4 G4 B3 E4"}
+]
+\end{verbatim}
+
+\noindent They appear after the tunings of the instrument. A tuning with a
+note that cannot be read is left out.
+
+\section{The reference A}
+\label{sec:a4}
+
+\index{reference A}\index{a4@A4}%
+All the notes are measured against the A above middle C (A4), 440~Hz
+unless changed. It can be set from 380 to 480~Hz, in tenths of a hertz: in
+the window, with the box \menu{A4} (the arrow keys move it by 0.1~Hz, Page
+Up and Page Down by 1~Hz) or with the menu beside it, which has the usual
+ones (415, 430, 432, 435, 438 to 444, 446 and 466~Hz); in the terminal, with
+the arrow keys; on the command line, with \texttt{-a}:
+
+\begin{quote}
+\texttt{py-tuner -a 442}
+\end{quote}
+
+\noindent Raising A4 by 1~Hz raises every note by about 3.9 cents.
+
+\section{Chromatic mode and note names}
+\label{sec:chromatic}
+
+\index{chromatic mode}%
+The instrument \menu{Chromatic}, the one the program starts with, has no
+strings: the sound is compared with the nearest note of the equal-tempered
+scale, from A0 to G6. It serves for
+any instrument, and for checking the notes along a string.
+
+\index{note names}%
+The notes can be written in English (C, D, E\elipsis), Latin (Do, Re,
+Mi\elipsis) or German (with H for B and B for B$\flat$), with sharps,
+flats or both (F$\sharp$/G$\flat$); the octave is always the scientific
+one, in which middle C is C4.
+
+\shot{chromatic_en}{0.75}{Chromatic mode, with Latin names and flats}
+
+\section{The needle and the strobe}
+\label{sec:strobe}
+
+\index{needle}%
+The needle shows the deviation at once, and is the easier to read from
+afar. It follows the reading with a little inertia, so that it does not
+tremble.
+
+\index{strobe}%
+The strobe is the more sensitive. Its three bands drift at a speed
+proportional to the deviation: the top one moves one stripe per second for
+each cent, the middle one twice as fast and the bottom one four times. So
+a deviation of a tenth of a cent, which the needle hardly shows, still
+moves the bottom band slowly. To tune with it, turn the peg until the
+bottom band stands still. Which of the two is shown is chosen in the
+settings, or with \key{v} in the terminal.
+
+\shot{strobe_en}{0.75}{The strobe alone}
+
+\section{Settings}
+\label{sec:settings}
+
+\index{settings}%
+\menu{Settings\elipsis} opens the less frequent settings:
+
+\shot{settings_en}{0.6}{The settings}
+
+\begin{description}
+\item[Input device] the sound input to listen to, or the system's default.
+\item[Channel] the mix of all channels, or only one (for an interface with
+  the instrument in one input).
+\item[Note names] English, Latin or German.
+\item[Accidentals] sharps, flats or both (F$\sharp$/G$\flat$).
+\item[Show] the needle and the strobe, or one of them.
+\item[Language] the language of the interface, or the system's; it is used
+  from the next time the program starts.
+\item[In tune within] the tolerance, in cents (1 unless changed).
+\item[Ignore below] sounds quieter than this, in dBFS, are ignored ($-60$
+  unless changed). Raise it in a noisy room.
+\item[Smoothing] how many seconds the reading averages (0.5 unless
+  changed): longer is steadier, shorter follows faster.
+\item[Analysis frame] the length of each frame, in periods of the note (16
+  unless changed): more is more precise, fewer reacts faster.
+\end{description}
+
+\noindent Every change is saved at once, and the window, the terminal and
+the command line share the same settings.
+
+\section{The terminal}
+\label{sec:tui}
+
+\index{terminal}\index{tui@TUI}%
+\texttt{py-tuner tui} shows, in the whole terminal, the same as the window:
+the note in large letters, the frequency and the deviation, a needle of
+text, the strobe, the strings, and the level.
+
+{\footnotesize
+\begin{verbatim}
+ py-tuner  Guitar · Standard · A4 = 440.0 Hz
+
+                                   ███ ███
+                                  █       █
+                                  █ ██  ██
+                                  █  █    █
+                                   ███ ███
+
+            196.04 Hz    target 196.00 Hz    +0.4 cents    in tune
+
+ -50                                                                      +50
+  ┬──────┬───────┬──────┬───────┬──────█──────┬───────┬──────┬───────┬──────┬
+                                       ▲
+
+   ████    ████    ████    ████    ████    ████    ████    ████    ████    █
+   ████    ████    ████    ████    ████    ████    ████    ████    ████    █
+    ████    ████    ████    ████    ████    ████    ████    ████    ████
+
+  strings  E2   A2   D3   G3   B3   E4   (auto)
+
+  level   ██████████████████████░░░░░░░░   -25 dBFS
+
+ q quit   ←→ A4 ±0.1 Hz   ↑↓ A4 ±1 Hz   0 A4 = 440   i instrument   t tuning
+ s string   n names   b accidentals   v view   l language
+\end{verbatim}
+}
+
+\noindent It is driven with these keys, and each change is saved in the
+settings:
+
+\begin{longtable}{@{}lp{0.7\textwidth}@{}}
+\toprule
+Key & What it does\\
+\midrule
+\endhead
+\key{q} & Quit \\
+\key{← / →} & Lower / raise the reference A4 by 0.1 Hz \\
+\key{↓ / ↑} & Lower / raise the reference A4 by 1 Hz \\
+\key{0} & Put the reference A4 back to 440 Hz \\
+\key{i} & The next instrument \\
+\key{t} & The next tuning of the instrument \\
+\key{s} & Lock the next string (after the last one, back to the nearest string) \\
+\key{n} & The next system of note names: English, Latin, German \\
+\key{b} & Sharps, flats or both \\
+\key{v} & Needle and strobe, the needle alone or the strobe alone \\
+\key{l} & The next language of the interface \\
+\bottomrule
+\end{longtable}
+
+\section{The command line}
+\label{sec:cli}
+
+\index{command line}\index{cli@CLI}%
+\texttt{py-tuner cli} writes the reading in a line that rewrites itself
+(or, in a pipe, a line every quarter of a second):
+
+\begin{verbatim}
+A2       109.52 Hz   -7.5 cents  [---------*|----------]  string 2
+\end{verbatim}
+
+\noindent \texttt{-{}-once} waits for the first steady reading, writes it
+and ends, for use in scripts.
+
+\index{recordings}\index{wav@WAV}%
+With a WAV file, \texttt{py-tuner cli -{}-file FILE.wav} analyses the whole
+recording at once and writes a line for each note heard in it: when it
+sounds, the note, its frequency, the frequency it should have, the
+deviation and its spread:
+
+{\footnotesize
+\begin{verbatim}
+0.03-   1.77 s  E2  82.550 Hz  (target 82.407)  +3.00 cents  ±0.02  string 1
+1.80-   3.52 s  A2  109.52 Hz  (target 110.00)  -7.50 cents  ±0.03  string 2
+\end{verbatim}
+}
+
+\noindent The first tenth of a second of each note is left out, since a
+plucked string sounds a little sharp at the start. With
+\texttt{-{}-realtime}, the file is played at its own pace instead, as if
+it came from the sound card; \texttt{-{}-file} works in the same way with
+the window and the terminal.
+
+The options common to the three ways:
+
+\begin{longtable}{@{}lp{0.62\textwidth}@{}}
+\toprule
+Option & What it does\\
+\midrule
+\endhead
+\texttt{-a}, \texttt{-{}-a4 HZ} & the reference A4, 380 to 480 Hz\\
+\texttt{-i}, \texttt{-{}-instrument} & \texttt{chromatic} (unless changed), \texttt{guitar}, \texttt{bass}, \texttt{double-bass} or \texttt{violin}\\
+\texttt{-t}, \texttt{-{}-tuning NAME} & the tuning, by its name (e.g.\ \texttt{"Drop D"})\\
+\texttt{-s}, \texttt{-{}-string N} & compare only with string N (1 = the lowest); \texttt{auto}, with the nearest\\
+\texttt{-{}-names} & \texttt{english}, \texttt{latin} or \texttt{german}\\
+\texttt{-{}-accidentals} & \texttt{sharps}, \texttt{flats} or \texttt{both} (F\#/Gb); also \texttt{-{}-flats}, \texttt{-{}-sharps}\\
+\texttt{-{}-tolerance CENTS} & in tune within this many cents\\
+\texttt{-d}, \texttt{-{}-device DEV} & the input, by its number (\texttt{py-tuner devices}) or part of its name\\
+\texttt{-r}, \texttt{-{}-rate HZ} & the sample rate (the device's, unless given)\\
+\texttt{-c}, \texttt{-{}-channel} & \texttt{mix}, or a channel number from 1\\
+\texttt{-f}, \texttt{-{}-file WAV} & a WAV file instead of the sound card\\
+\texttt{-{}-min-level DBFS} & ignore sounds quieter than this\\
+\texttt{-{}-smoothing SECONDS} & seconds the reading averages\\
+\texttt{-{}-periods N} & periods of the note in each analysis frame\\
+\texttt{-{}-display} & \texttt{both}, \texttt{needle} or \texttt{strobe}\\
+\texttt{-{}-language} & \texttt{en} or \texttt{es}\\
+\texttt{-{}-save} & keep the options given as the new settings\\
+\bottomrule
+\end{longtable}
+
+\section{How it measures}
+\label{sec:how}
+
+\index{accuracy}%
+Each analysis takes two steps. A coarse one finds the period of the sound
+by McLeod's method, which cannot be wrong by an octave; a fine one then
+locates every harmonic of the string, up to the sixteenth, at the exact
+peak of its spectrum, and fits all of them at once to the model of a real,
+slightly stiff string, $f_n = n f_0 \sqrt{1 + B n^2}$. Strong harmonics
+count more than weak ones, and those buried in noise are left out. The
+reading shown is the trimmed mean of the last half second of frames; a
+sustained jump of more than a third of a semitone is a new note.
+
+\index{tips}%
+A few habits help:
+
+\begin{itemize}
+\item Play the string alone, and let the first instant of the pluck pass:
+  a plucked string sounds a little sharp at first, and settles.
+\item Bring the microphone near the instrument, away from fans and other
+  noise; if the room is noisy, raise \menu{Ignore below}.
+\item For low strings, give the reading half a second more: the frame of a
+  low E of a bass lasts almost 0.4~s.
+\item To tune finely, watch the bottom band of the strobe.
+\end{itemize}
+
+\section{The files it keeps}
+\label{sec:files}
+
+\index{files}%
+The program keeps one file: \texttt{\textasciitilde/.config/py-tuner/settings.json}
+(under \texttt{\$XDG\_CONFIG\_HOME}, if it is set), with every setting, in
+JSON. It can be edited by hand with the program closed; a value that does
+not make sense is replaced by its default, so the program always starts.
+Deleting it brings back all the defaults.
+
+\section{When something goes wrong}
+
+\index{problems}%
+\begin{description}
+\item[Nothing is heard (``Play a note'')] the level bar does not move: the
+  input chosen is not the one with the instrument. Choose another in
+  \menu{Settings} (\texttt{py-tuner devices} lists them), and check that
+  the input is not muted in the system's sound settings.
+\item[The level moves, but no note appears] the sound is quieter than
+  \menu{Ignore below}, or too noisy to have a pitch. Bring the microphone
+  nearer, or lower \menu{Ignore below}.
+\item[The note jumps to the next string] the string is so slack that it
+  is nearer to another; lock the string you are tuning
+  (section~\ref{sec:window}).
+\item[The reading is a few cents off from another tuner] check that both
+  have the same reference A.
+\item[``Cannot open the input''] another program holds the sound card, or
+  the device was unplugged; the message gives the reason.
+\item[A setting is wrong] delete the settings file
+  (section~\ref{sec:files}).
+\end{description}
+
+\noindent
+Problems and wishes can be written as issues on GitHub or
+Codeberg (the addresses are on the first page), or sent to
+\href{mailto:nicolasvaughan@proton.me}{\texttt{nicolasvaughan@proton.me}}.
+
+\printindex
+
+\end{document}
+
+% ===============================================
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:

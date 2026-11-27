@@ -1,0 +1,16 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=py-tuner
+GenericName=Instrument tuner
+GenericName[es]=Afinador de instrumentos
+Comment=An accurate tuner for guitar, bass, double bass and violin, with a needle and a strobe
+Comment[es]=Un afinador preciso para guitarra, bajo, contrabajo y violín, con aguja y estroboscopio
+Keywords=tuner;tuning;guitar;bass;double bass;violin;pitch;strobe;cents;music;
+Keywords[es]=afinador;afinar;guitarra;bajo;contrabajo;violín;altura;estroboscopio;cents;música;
+Categories=AudioVideo;Audio;
+Icon=py-tuner
+Exec=py-tuner
+Terminal=false
+StartupNotify=true
+StartupWMClass=py-tuner

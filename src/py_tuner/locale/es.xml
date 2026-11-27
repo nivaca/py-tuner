@@ -1,0 +1,566 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The interface of py-tuner in Spanish: each <text> gives an English text of the
+     program (<en>) and its translation (<tr>). See src/py_tuner/interface.py.
+     tests/test_interface.py checks that every text of the program is here, and nothing else. -->
+<interface code="es" name="Spanish" native="Español">
+  <text>
+    <en>(Ctrl+C to stop)</en>
+    <tr>(Ctrl+C para terminar)</tr>
+  </text>
+  <text>
+    <en>(auto)</en>
+    <tr>(automática)</tr>
+  </text>
+  <text>
+    <en>(locked)</en>
+    <tr>(fija)</tr>
+  </text>
+  <text>
+    <en>(target {frequency})</en>
+    <tr>(objetivo {frequency})</tr>
+  </text>
+  <text>
+    <en>--  (no pitch, {level})</en>
+    <tr>--  (sin altura, {level})</tr>
+  </text>
+  <text>
+    <en>--channel must be mix or a number from 1</en>
+    <tr>--channel debe ser mix o un número desde 1</tr>
+  </text>
+  <text>
+    <en>--string must be auto or 1..{count}</en>
+    <tr>--string debe ser auto o de 1 a {count}</tr>
+  </text>
+  <text>
+    <en>--string needs an instrument with strings</en>
+    <tr>--string necesita un instrumento con cuerdas</tr>
+  </text>
+  <text>
+    <en>--{option} {value} is out of range</en>
+    <tr>--{option} {value} está fuera del margen</tr>
+  </text>
+  <text>
+    <en>5-string</en>
+    <tr>5 cuerdas</tr>
+  </text>
+  <text>
+    <en>5-string (low B)</en>
+    <tr>5 cuerdas (Si grave)</tr>
+  </text>
+  <text>
+    <en>5-string (low C)</en>
+    <tr>5 cuerdas (Do grave)</tr>
+  </text>
+  <text>
+    <en>5-string high C</en>
+    <tr>5 cuerdas con Do agudo</tr>
+  </text>
+  <text>
+    <en>6-string</en>
+    <tr>6 cuerdas</tr>
+  </text>
+  <text>
+    <en>7-string</en>
+    <tr>7 cuerdas</tr>
+  </text>
+  <text>
+    <en>A note within this many cents counts as in tune (shown green).</en>
+    <tr>Una nota a menos de estos cents se da por afinada (se muestra en verde).</tr>
+  </text>
+  <text>
+    <en>About</en>
+    <tr>Acerca de</tr>
+  </text>
+  <text>
+    <en>About py-tuner</en>
+    <tr>Acerca de py-tuner</tr>
+  </text>
+  <text>
+    <en>Accidentals</en>
+    <tr>Alteraciones</tr>
+  </text>
+  <text>
+    <en>An accurate tuner for guitar, bass, double bass and violin (and a chromatic one), with a needle and a strobe, in a window, in the terminal or on the command line.</en>
+    <tr>Un afinador preciso para guitarra, bajo, contrabajo y violín (y uno cromático), con aguja y estroboscopio, en una ventana, en la terminal o en la línea de órdenes.</tr>
+  </text>
+  <text>
+    <en>An accurate tuner for guitar, bass, double bass and violin.</en>
+    <tr>Un afinador preciso para guitarra, bajo, contrabajo y violín.</tr>
+  </text>
+  <text>
+    <en>Analysis frame</en>
+    <tr>Cuadro de análisis</tr>
+  </text>
+  <text>
+    <en>Bass</en>
+    <tr>Bajo</tr>
+  </text>
+  <text>
+    <en>Cannot open the input: {error}</en>
+    <tr>No se puede abrir la entrada: {error}</tr>
+  </text>
+  <text>
+    <en>Channel</en>
+    <tr>Canal</tr>
+  </text>
+  <text>
+    <en>Channel {number}</en>
+    <tr>Canal {number}</tr>
+  </text>
+  <text>
+    <en>Chromatic</en>
+    <tr>Cromático</tr>
+  </text>
+  <text>
+    <en>Common reference pitches</en>
+    <tr>Diapasones habituales</tr>
+  </text>
+  <text>
+    <en>Cross (AEAE)</en>
+    <tr>Cruzada (La Mi La Mi)</tr>
+  </text>
+  <text>
+    <en>DADGAD</en>
+    <tr>DADGAD</tr>
+  </text>
+  <text>
+    <en>Default input</en>
+    <tr>Entrada predeterminada</tr>
+  </text>
+  <text>
+    <en>Double bass</en>
+    <tr>Contrabajo</tr>
+  </text>
+  <text>
+    <en>Drop C</en>
+    <tr>Drop C</tr>
+  </text>
+  <text>
+    <en>Drop D</en>
+    <tr>Drop D</tr>
+  </text>
+  <text>
+    <en>English (C D E)</en>
+    <tr>Inglés (C D E)</tr>
+  </text>
+  <text>
+    <en>Fifths</en>
+    <tr>Por quintas</tr>
+  </text>
+  <text>
+    <en>Flats ({sign})</en>
+    <tr>Bemoles ({sign})</tr>
+  </text>
+  <text>
+    <en>GNU General Public License, version 3 or later.</en>
+    <tr>Licencia Pública General de GNU, versión 3 o posterior.</tr>
+  </text>
+  <text>
+    <en>German (C D E … H)</en>
+    <tr>Alemán (C D E … H)</tr>
+  </text>
+  <text>
+    <en>Guitar</en>
+    <tr>Guitarra</tr>
+  </text>
+  <text>
+    <en>Half step down</en>
+    <tr>Medio tono abajo</tr>
+  </text>
+  <text>
+    <en>How many seconds the reading averages: longer is steadier, shorter follows faster.</en>
+    <tr>Cuántos segundos promedia la lectura: más es más estable, menos sigue más rápido.</tr>
+  </text>
+  <text>
+    <en>Ignore below</en>
+    <tr>Ignorar por debajo de</tr>
+  </text>
+  <text>
+    <en>In tune within</en>
+    <tr>Afinada a menos de</tr>
+  </text>
+  <text>
+    <en>Input device</en>
+    <tr>Dispositivo de entrada</tr>
+  </text>
+  <text>
+    <en>Instrument</en>
+    <tr>Instrumento</tr>
+  </text>
+  <text>
+    <en>Language</en>
+    <tr>Idioma</tr>
+  </text>
+  <text>
+    <en>Latin (Do Re Mi)</en>
+    <tr>Latino (Do Re Mi)</tr>
+  </text>
+  <text>
+    <en>Length of each analysis frame, in periods of the note: more is more precise, fewer reacts faster.</en>
+    <tr>La longitud de cada cuadro de análisis, en períodos de la nota: más es más preciso, menos reacciona más rápido.</tr>
+  </text>
+  <text>
+    <en>Level</en>
+    <tr>Nivel</tr>
+  </text>
+  <text>
+    <en>Mix of all channels</en>
+    <tr>Mezcla de todos los canales</tr>
+  </text>
+  <text>
+    <en>NAME</en>
+    <tr>NOMBRE</tr>
+  </text>
+  <text>
+    <en>Needle</en>
+    <tr>Aguja</tr>
+  </text>
+  <text>
+    <en>Needle and strobe</en>
+    <tr>Aguja y estroboscopio</tr>
+  </text>
+  <text>
+    <en>No input devices (is PortAudio installed?)</en>
+    <tr>No hay dispositivos de entrada (¿está instalado PortAudio?)</tr>
+  </text>
+  <text>
+    <en>Note names</en>
+    <tr>Nombres de las notas</tr>
+  </text>
+  <text>
+    <en>Open C</en>
+    <tr>Abierta en Do</tr>
+  </text>
+  <text>
+    <en>Open D</en>
+    <tr>Abierta en Re</tr>
+  </text>
+  <text>
+    <en>Open E</en>
+    <tr>Abierta en Mi</tr>
+  </text>
+  <text>
+    <en>Open G</en>
+    <tr>Abierta en Sol</tr>
+  </text>
+  <text>
+    <en>Orchestral</en>
+    <tr>Orquestal</tr>
+  </text>
+  <text>
+    <en>Play a note</en>
+    <tr>Toque una nota</tr>
+  </text>
+  <text>
+    <en>Quit</en>
+    <tr>Salir</tr>
+  </text>
+  <text>
+    <en>Reference A4. Arrow keys step 0.1 Hz; Page Up/Down step 1 Hz.</en>
+    <tr>El La de referencia (A4). Las flechas lo cambian 0,1 Hz; Re Pág y Av Pág, 1 Hz.</tr>
+  </text>
+  <text>
+    <en>Scordatura GDGD</en>
+    <tr>Scordatura Sol Re Sol Re</tr>
+  </text>
+  <text>
+    <en>Settings</en>
+    <tr>Configuración</tr>
+  </text>
+  <text>
+    <en>Settings…</en>
+    <tr>Configuración…</tr>
+  </text>
+  <text>
+    <en>Sharps ({sign})</en>
+    <tr>Sostenidos ({sign})</tr>
+  </text>
+  <text>
+    <en>Show</en>
+    <tr>Mostrar</tr>
+  </text>
+  <text>
+    <en>Smoothing</en>
+    <tr>Suavizado</tr>
+  </text>
+  <text>
+    <en>Solo</en>
+    <tr>Solista</tr>
+  </text>
+  <text>
+    <en>Sounds quieter than this are ignored. Raise it in a noisy room.</en>
+    <tr>Los sonidos más débiles se ignoran. Súbalo en un cuarto ruidoso.</tr>
+  </text>
+  <text>
+    <en>Standard</en>
+    <tr>Estándar</tr>
+  </text>
+  <text>
+    <en>Strobe</en>
+    <tr>Estroboscopio</tr>
+  </text>
+  <text>
+    <en>The new language is used from the next time the program starts.</en>
+    <tr>El idioma nuevo se usa desde la próxima vez que se abra el programa.</tr>
+  </text>
+  <text>
+    <en>The system's</en>
+    <tr>El del sistema</tr>
+  </text>
+  <text>
+    <en>Tune this string only (click again for automatic)</en>
+    <tr>Afinar solo esta cuerda (otro clic vuelve a la elección automática)</tr>
+  </text>
+  <text>
+    <en>Violin</en>
+    <tr>Violín</tr>
+  </text>
+  <text>
+    <en>Whole step down</en>
+    <tr>Un tono abajo</tr>
+  </text>
+  <text>
+    <en>Without a command, the window opens. Options given here override the saved settings for this session only, unless --save is given. Settings: {path}</en>
+    <tr>Sin orden, se abre la ventana. Las opciones dadas aquí pisan la configuración guardada solo en esta sesión, salvo que se dé --save. Configuración: {path}</tr>
+  </text>
+  <text>
+    <en>cannot open the input: {error}</en>
+    <tr>no se puede abrir la entrada: {error}</tr>
+  </text>
+  <text>
+    <en>cents</en>
+    <tr>cents</tr>
+  </text>
+  <text>
+    <en>cli with --file: play the file at its own pace instead of analysing it at once</en>
+    <tr>cli con --file: reproducir el archivo a su ritmo en lugar de analizarlo de una vez</tr>
+  </text>
+  <text>
+    <en>cli: print the first steady reading and exit</en>
+    <tr>cli: escribir la primera lectura estable y terminar</tr>
+  </text>
+  <text>
+    <en>gui (the window, default), tui (full-screen terminal), cli (a line of text), devices (list the inputs), instruments (list the tunings)</en>
+    <tr>gui (la ventana, por omisión), tui (la terminal a pantalla completa), cli (una línea de texto), devices (las entradas), instruments (las afinaciones)</tr>
+  </text>
+  <text>
+    <en>i instrument   t tuning   s string   n names   b accidentals   v view   l language</en>
+    <tr>i instrumento   t afinación   s cuerda   n nombres   b alteraciones   v vista   l idioma</tr>
+  </text>
+  <text>
+    <en>ignore sounds quieter than this (default -60)</en>
+    <tr>ignorar los sonidos más débiles que esto (por omisión -60)</tr>
+  </text>
+  <text>
+    <en>in tune</en>
+    <tr>afinada</tr>
+  </text>
+  <text>
+    <en>in tune within this many cents (default 1)</en>
+    <tr>afinada a menos de estos cents (por omisión 1)</tr>
+  </text>
+  <text>
+    <en>input</en>
+    <tr>entrada</tr>
+  </text>
+  <text>
+    <en>input device: its number or part of its name</en>
+    <tr>dispositivo de entrada: su número o parte de su nombre</tr>
+  </text>
+  <text>
+    <en>level</en>
+    <tr>nivel</tr>
+  </text>
+  <text>
+    <en>needle, strobe or both (gui, tui)</en>
+    <tr>aguja, estroboscopio o ambos (gui, tui)</tr>
+  </text>
+  <text>
+    <en>no steady note found</en>
+    <tr>no se encontró ninguna nota estable</tr>
+  </text>
+  <text>
+    <en>none (chromatic)</en>
+    <tr>ninguna (cromático)</tr>
+  </text>
+  <text>
+    <en>note names: english, latin or german</en>
+    <tr>nombres de las notas: english (inglés), latin (latino) o german (alemán)</tr>
+  </text>
+  <text>
+    <en>options</en>
+    <tr>opciones</tr>
+  </text>
+  <text>
+    <en>output</en>
+    <tr>salida</tr>
+  </text>
+  <text>
+    <en>periods</en>
+    <tr>períodos</tr>
+  </text>
+  <text>
+    <en>periods per analysis frame: more is steadier, fewer is faster (default 16)</en>
+    <tr>períodos por cuadro de análisis: más es más estable, menos es más rápido (por omisión 16)</tr>
+  </text>
+  <text>
+    <en>play a note</en>
+    <tr>toque una nota</tr>
+  </text>
+  <text>
+    <en>positional arguments</en>
+    <tr>argumentos</tr>
+  </text>
+  <text>
+    <en>q quit   ←→ A4 ±0.1 Hz   ↑↓ A4 ±1 Hz   0 A4 = 440</en>
+    <tr>q salir   ←→ A4 ±0,1 Hz   ↑↓ A4 ±1 Hz   0 A4 = 440</tr>
+  </text>
+  <text>
+    <en>read a WAV file instead of the sound card</en>
+    <tr>leer un archivo WAV en lugar de la tarjeta de sonido</tr>
+  </text>
+  <text>
+    <en>reference A4 in Hz, {low} to {high} (default 440)</en>
+    <tr>La de referencia (A4) en Hz, de {low} a {high} (por omisión 440)</tr>
+  </text>
+  <text>
+    <en>reference A4 must be between {low} and {high} Hz, not {value}</en>
+    <tr>el La de referencia (A4) debe estar entre {low} y {high} Hz, no {value}</tr>
+  </text>
+  <text>
+    <en>sample rate (default: the device's)</en>
+    <tr>frecuencia de muestreo (por omisión, la del dispositivo)</tr>
+  </text>
+  <text>
+    <en>save the options given as the new settings</en>
+    <tr>guardar las opciones dadas como la nueva configuración</tr>
+  </text>
+  <text>
+    <en>seconds the reading averages (default 0.5)</en>
+    <tr>segundos que promedia la lectura (por omisión 0.5)</tr>
+  </text>
+  <text>
+    <en>show the version and quit</en>
+    <tr>mostrar la versión y terminar</tr>
+  </text>
+  <text>
+    <en>show this help and quit</en>
+    <tr>mostrar esta ayuda y terminar</tr>
+  </text>
+  <text>
+    <en>silence</en>
+    <tr>silencio</tr>
+  </text>
+  <text>
+    <en>string {name}</en>
+    <tr>cuerda {name}</tr>
+  </text>
+  <text>
+    <en>string {number}</en>
+    <tr>cuerda {number}</tr>
+  </text>
+  <text>
+    <en>strings</en>
+    <tr>cuerdas</tr>
+  </text>
+  <text>
+    <en>the instrument, or chromatic</en>
+    <tr>el instrumento, o chromatic (cromático)</tr>
+  </text>
+  <text>
+    <en>the language of the interface (default: the system's)</en>
+    <tr>el idioma de la interfaz (por omisión, el del sistema)</tr>
+  </text>
+  <text>
+    <en>the tuning, by name (e.g. "Drop D")</en>
+    <tr>la afinación, por su nombre (p. ej. "Drop D")</tr>
+  </text>
+  <text>
+    <en>tune against string N (1 = the lowest) instead of the nearest one</en>
+    <tr>afinar contra la cuerda N (1 = la más grave) en lugar de la más cercana</tr>
+  </text>
+  <text>
+    <en>tuning</en>
+    <tr>afinación</tr>
+  </text>
+  <text>
+    <en>usage: </en>
+    <tr>uso: </tr>
+  </text>
+  <text>
+    <en>use channel N (from 1) or the mix of all</en>
+    <tr>usar el canal N (desde 1) o la mezcla de todos</tr>
+  </text>
+  <text>
+    <en>write accidentals as flats</en>
+    <tr>escribir las alteraciones como bemoles</tr>
+  </text>
+  <text>
+    <en>write accidentals as sharps, flats or both (F#/Gb)</en>
+    <tr>escribir las alteraciones como sostenidos, bemoles o ambos (F#/Gb)</tr>
+  </text>
+  <text>
+    <en>Both ({sharp}/{flat})</en>
+    <tr>Ambos ({sharp}/{flat})</tr>
+  </text>
+  <text>
+    <en>write accidentals as sharps</en>
+    <tr>escribir las alteraciones como sostenidos</tr>
+  </text>
+  <text>
+    <en>{cents} cents</en>
+    <tr>{cents} cents</tr>
+  </text>
+  <text>
+    <en>{frequency} Hz    target {target} Hz    {cents} cents</en>
+    <tr>{frequency} Hz    objetivo {target} Hz    {cents} cents</tr>
+  </text>
+  <text>
+    <en>{instrument} has no tuning {tuning}; it has: {names}</en>
+    <tr>{instrument} no tiene la afinación {tuning}; tiene: {names}</tr>
+  </text>
+  <text>
+    <en>{path}: {seconds} s at {rate} Hz, {summary}</en>
+    <tr>{path}: {seconds} s a {rate} Hz, {summary}</tr>
+  </text>
+  <text>
+    <en>Lower / raise the reference A4 by 0.1 Hz</en>
+    <tr>Bajar / subir el La de referencia (A4) 0,1 Hz</tr>
+  </text>
+  <text>
+    <en>Lower / raise the reference A4 by 1 Hz</en>
+    <tr>Bajar / subir el La de referencia (A4) 1 Hz</tr>
+  </text>
+  <text>
+    <en>Put the reference A4 back to 440 Hz</en>
+    <tr>Volver a poner el La de referencia (A4) en 440 Hz</tr>
+  </text>
+  <text>
+    <en>The next instrument</en>
+    <tr>El instrumento siguiente</tr>
+  </text>
+  <text>
+    <en>The next tuning of the instrument</en>
+    <tr>La afinación siguiente del instrumento</tr>
+  </text>
+  <text>
+    <en>Lock the next string (after the last one, back to the nearest string)</en>
+    <tr>Fijar la cuerda siguiente (tras la última, vuelve a la cuerda más cercana)</tr>
+  </text>
+  <text>
+    <en>The next system of note names: English, Latin, German</en>
+    <tr>El sistema siguiente de nombres de notas: inglés, latino, alemán</tr>
+  </text>
+  <text>
+    <en>Sharps, flats or both</en>
+    <tr>Sostenidos, bemoles o ambos</tr>
+  </text>
+  <text>
+    <en>Needle and strobe, the needle alone or the strobe alone</en>
+    <tr>Aguja y estroboscopio, la aguja sola o el estroboscopio solo</tr>
+  </text>
+  <text>
+    <en>The next language of the interface</en>
+    <tr>El idioma siguiente de la interfaz</tr>
+  </text>
+</interface>

@@ -13,7 +13,7 @@ import os
 from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path
 
-from . import instruments, notes
+from . import instruments, interface, notes
 
 DISPLAYS = ("both", "needle", "strobe")
 
@@ -30,12 +30,13 @@ class Settings:
     min_level: the quietest sound analysed, dBFS. smoothing: seconds the
     reading averages. periods: periods of the note in each fine frame.
     tolerance: cents within which a note counts as in tune.
-    display: "both", "needle" or "strobe". custom_tunings: the user's own.
+    display: "both", "needle" or "strobe". language: of the interface ("en",
+    "es"; "" follows the system's). custom_tunings: the user's own.
     """
 
     a4: float = notes.DEFAULT_A4
-    instrument: str = "guitar"
-    tuning: str = "Standard"
+    instrument: str = "chromatic"
+    tuning: str = ""
     string: int | None = None
     names: str = "english"
     accidentals: str = "sharps"
@@ -47,6 +48,7 @@ class Settings:
     periods: float = 16.0
     tolerance: float = 1.0
     display: str = "both"
+    language: str = ""
     custom_tunings: list[dict] = field(default_factory=list)
 
     def validated(self) -> Settings:
@@ -68,6 +70,7 @@ class Settings:
             "periods": lambda v: 4 <= float(v) <= 64,
             "tolerance": lambda v: 0.1 <= float(v) <= 50,
             "display": lambda v: v in DISPLAYS,
+            "language": lambda v: v == "" or v in interface.names(),
             "custom_tunings": lambda v: isinstance(v, list) and all(isinstance(e, dict) for e in v),
         }
         for f in fields(Settings):

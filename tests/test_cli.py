@@ -24,6 +24,18 @@ def test_options_override_settings():
            (442.5, "bass", "5-string", 0, "latin", "flats", 0.5, "2")
 
 
+def test_accidentals_options():
+    assert parse("--accidentals", "both").accidentals == "both"
+    assert parse("--flats").accidentals == "flats"
+    assert parse("--sharps").accidentals == "sharps"
+    assert parse().accidentals == "sharps"
+
+
+def test_chromatic_is_the_default():
+    s = parse()
+    assert (s.instrument, s.tuning, s.string) == ("chromatic", "", None)
+
+
 def test_instrument_resets_tuning_and_string():
     s = app.apply(app.parser().parse_args(["-i", "violin"]), Settings(tuning="Drop D", string=3))
     assert (s.tuning, s.string) == ("Standard", None)

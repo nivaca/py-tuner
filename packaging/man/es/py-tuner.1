@@ -1,0 +1,123 @@
+.TH PY-TUNER 1 "" "py-tuner 0.1.0" "py-tuner"
+.SH NOMBRE
+py\-tuner \- un afinador preciso para guitarra, bajo, contrabajo y violín
+.SH SINOPSIS
+.B py\-tuner
+[gui | tui | cli | devices | instruments] [\-a\ HZ] [\-i\ INSTRUMENT] [\-t\ TUNING] [\-f\ WAV] [...]
+.SH DESCRIPCIÓN
+Un afinador preciso para guitarra, bajo, contrabajo y violín (y uno cromático), con aguja y estroboscopio, en una ventana, en la terminal o en la línea de órdenes.
+
+Sin orden, se abre la ventana. Las opciones dadas aquí pisan la configuración guardada solo en esta sesión, salvo que se dé \-\-save. Configuración: ~/.config/py\-tuner/settings.json
+.SH OPCIONES
+.TP
+.B \-h, \-\-help
+mostrar esta ayuda y terminar
+.TP
+.B \-\-version
+mostrar la versión y terminar
+.TP
+.B mode
+gui (la ventana, por omisión), tui (la terminal a pantalla completa), cli (una línea de texto), devices (las entradas), instruments (las afinaciones)
+.TP
+.B \-a, \-\-a4
+La de referencia (A4) en Hz, de 380 a 480 (por omisión 440)
+.TP
+.B \-i, \-\-instrument
+el instrumento, o chromatic (cromático) (uno de: chromatic, guitar, bass, double\-bass, violin)
+.TP
+.B \-t, \-\-tuning
+la afinación, por su nombre (p. ej. "Drop D")
+.TP
+.B \-s, \-\-string
+afinar contra la cuerda N (1 = la más grave) en lugar de la más cercana
+.TP
+.B \-\-names
+nombres de las notas: english (inglés), latin (latino) o german (alemán) (uno de: english, latin, german)
+.TP
+.B \-\-accidentals
+escribir las alteraciones como sostenidos, bemoles o ambos (F#/Gb) (uno de: sharps, flats, both)
+.TP
+.B \-\-flats
+escribir las alteraciones como bemoles
+.TP
+.B \-\-sharps
+escribir las alteraciones como sostenidos
+.TP
+.B \-\-tolerance
+afinada a menos de estos cents (por omisión 1)
+.TP
+.B \-d, \-\-device
+dispositivo de entrada: su número o parte de su nombre
+.TP
+.B \-r, \-\-rate
+frecuencia de muestreo (por omisión, la del dispositivo)
+.TP
+.B \-c, \-\-channel
+usar el canal N (desde 1) o la mezcla de todos
+.TP
+.B \-f, \-\-file
+leer un archivo WAV en lugar de la tarjeta de sonido
+.TP
+.B \-\-min\-level
+ignorar los sonidos más débiles que esto (por omisión \-60)
+.TP
+.B \-\-smoothing
+segundos que promedia la lectura (por omisión 0.5)
+.TP
+.B \-\-periods
+períodos por cuadro de análisis: más es más estable, menos es más rápido (por omisión 16)
+.TP
+.B \-\-display
+aguja, estroboscopio o ambos (gui, tui) (uno de: both, needle, strobe)
+.TP
+.B \-\-language
+el idioma de la interfaz (por omisión, el del sistema) (uno de: en, es)
+.TP
+.B \-\-once
+cli: escribir la primera lectura estable y terminar
+.TP
+.B \-\-realtime
+cli con \-\-file: reproducir el archivo a su ritmo en lugar de analizarlo de una vez
+.TP
+.B \-\-save
+guardar las opciones dadas como la nueva configuración
+.SH TECLAS DE LA INTERFAZ DE TERMINAL
+.TP
+.B q
+Salir
+.TP
+.B ← / →
+Bajar / subir el La de referencia (A4) 0,1 Hz
+.TP
+.B ↓ / ↑
+Bajar / subir el La de referencia (A4) 1 Hz
+.TP
+.B 0
+Volver a poner el La de referencia (A4) en 440 Hz
+.TP
+.B i
+El instrumento siguiente
+.TP
+.B t
+La afinación siguiente del instrumento
+.TP
+.B s
+Fijar la cuerda siguiente (tras la última, vuelve a la cuerda más cercana)
+.TP
+.B n
+El sistema siguiente de nombres de notas: inglés, latino, alemán
+.TP
+.B b
+Sostenidos, bemoles o ambos
+.TP
+.B v
+Aguja y estroboscopio, la aguja sola o el estroboscopio solo
+.TP
+.B l
+El idioma siguiente de la interfaz
+.SH ARCHIVOS
+.TP
+.I ~/.config/py\-tuner/settings.json
+La configuración, la misma para la ventana, la terminal y la línea de órdenes ($XDG_CONFIG_HOME). En ella se pueden añadir afinaciones propias, en custom_tunings.
+.SH AUTOR
+Nicolas Vaughan <nicolasvaughan@proton.me>

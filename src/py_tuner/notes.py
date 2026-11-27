@@ -30,7 +30,8 @@ _GERMAN_SHARPS = ("C", "Cis", "D", "Dis", "E", "F", "Fis", "G", "Gis", "A", "B",
 _GERMAN_FLATS = ("C", "Des", "D", "Es", "E", "F", "Ges", "G", "As", "A", "B", "H")
 
 NAME_SYSTEMS = ("english", "latin", "german")
-ACCIDENTALS = ("sharps", "flats")
+# "both" escribe las teclas negras de las dos maneras: F♯/G♭
+ACCIDENTALS = ("sharps", "flats", "both")
 
 _TABLES = {
     ("english", "sharps"): _ENGLISH_SHARPS, ("english", "flats"): _ENGLISH_FLATS,
@@ -72,7 +73,10 @@ def nearest(freq: float, a4: float = DEFAULT_A4) -> int:
 
 
 def name(midi: int, system: str = "english", accidentals: str = "sharps", unicode: bool = True) -> str:
-    """The name of the note MIDI without its octave ("A", "Sol#", "Fis")."""
+    """The name of the note MIDI without its octave ("A", "Sol#", "Fis"; with "both", "F#/Gb")."""
+    if accidentals == "both":
+        sharp, flat = name(midi, system, "sharps", unicode), name(midi, system, "flats", unicode)
+        return sharp if sharp == flat else f"{sharp}/{flat}"
     text = _TABLES[system, accidentals][midi % 12]
     if unicode and system != "german":
         # En las tablas, un "#" o una "b" minúscula al final son siempre la
@@ -95,10 +99,17 @@ def full_name(midi: int, system: str = "english", accidentals: str = "sharps", u
 
 
 def parse(text: str) -> int:
-    """The MIDI number of a note name with octave: "E2", "F#1", "Bb0", "Sol3", "H2".
+    """The MIDI number of a note name with octave: "E2", "F#1", "Bb0", "Sol3", "H2", "F#/Gb3".
 
     Raises ValueError for anything else.
     """
+    if "/" in text:
+        # los dos nombres de una tecla negra: vale el primero, con la octava del final
+        first, rest = text.split("/", 1)
+        octv = re.search(r"-?\d+\s*$", rest)
+        if not octv or parse(first + octv.group()) != parse(rest):
+            raise ValueError(f"not a note name with octave: {text!r}")
+        text = first + octv.group()
     m = _NOTE_RE.match(text)
     if not m:
         raise ValueError(f"not a note name with octave: {text!r}")

@@ -8,6 +8,7 @@ la misma velocidad.
 from __future__ import annotations
 
 from . import notes
+from .interface import number, tr
 from .settings import Settings
 from .tuner import Reading
 
@@ -41,27 +42,27 @@ def cents_text(r: Reading) -> str:
     if not r.active:
         return ""
     c = round(r.cents, 1)
-    return f"{c:+.1f}" if c != 0 else "0.0"
+    return number(f"{c:+.1f}" if c != 0 else "0.0")
 
 
 def freq_text(hz: float) -> str:
     """A frequency with three decimals below 100 Hz and two above (a hundredth
     of a cent at 41 Hz is 0.0024 Hz: the digits shown should be ones that mean
     something, not noise)."""
-    return f"{hz:.3f}" if hz < 100 else f"{hz:.2f}"
+    return number(f"{hz:.3f}" if hz < 100 else f"{hz:.2f}")
 
 
 def summary(s: Settings) -> str:
     """"Guitar · Standard · A4 = 440.0 Hz" for headers and status lines."""
     inst = s.instrument_preset()
-    parts = [inst.name]
+    parts = [tr(inst.name)]
     if inst.tunings:
-        parts.append(inst.tuning(s.tuning).name)
+        parts.append(tr(inst.tuning(s.tuning).name))
         if s.string is not None:
             labels = string_labels(s)
             if s.string < len(labels):
-                parts.append(f"string {labels[s.string]}")
-    parts.append(f"A4 = {s.a4:.1f} Hz")
+                parts.append(tr("string {name}", name=labels[s.string]))
+    parts.append(f"A4 = {number(f'{s.a4:.1f}')} Hz")
     return " · ".join(parts)
 
 

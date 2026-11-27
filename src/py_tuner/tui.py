@@ -13,13 +13,30 @@ import curses
 import time
 from dataclasses import replace
 
-from . import display, instruments, notes
+from . import display, instruments, interface, notes
 from . import settings as settings_mod
+from .interface import tr
 from .settings import Settings
 from .tuner import LiveTuner, Reading
 
+# La ayuda de las teclas, en dos mitades (en inglés: las claves de su traducción)
 KEYS = ("q quit   ←→ A4 ±0.1 Hz   ↑↓ A4 ±1 Hz   0 A4 = 440",
-        "i instrument   t tuning   s string   n names   b flats/sharps   v view")
+        "i instrument   t tuning   s string   n names   b accidentals   v view   l language")
+
+# Las teclas, una por fila, para la página de manual y el manual (en inglés: las claves de su traducción)
+KEY_ROWS = (
+    ("q", "Quit"),
+    ("\u2190 / \u2192", "Lower / raise the reference A4 by 0.1 Hz"),
+    ("\u2193 / \u2191", "Lower / raise the reference A4 by 1 Hz"),
+    ("0", "Put the reference A4 back to 440 Hz"),
+    ("i", "The next instrument"),
+    ("t", "The next tuning of the instrument"),
+    ("s", "Lock the next string (after the last one, back to the nearest string)"),
+    ("n", "The next system of note names: English, Latin, German"),
+    ("b", "Sharps, flats or both"),
+    ("v", "Needle and strobe, the needle alone or the strobe alone"),
+    ("l", "The next language of the interface"),
+)
 
 # Letras de cinco filas para la nota: las que piden los nombres en inglés,
 # latín y alemán (en mayúsculas), las cifras de la octava y las alteraciones.
@@ -51,6 +68,7 @@ _FONT = {
     notes.SHARP: [" █ █", "█████", " █ █", "█████", " █ █"],
     notes.FLAT: ["█   ", "█   ", "███ ", "█  █", "███ "],
     "-": ["   ", "   ", "███", "   ", "   "],
+    "/": ["    █", "   █ ", "  █  ", " █   ", "█    "],
     " ": ["  ", "  ", "  ", "  ", "  "],
 }
 
@@ -66,6 +84,19 @@ def big(text: str) -> list[str]:
         for i in range(5):
             rows[i] += glyph[i].ljust(width) + " "
     return rows
+
+
+def wrap_keys(halves: list[str], width: int) -> list[str]:
+    """The help of the keys in as few lines of WIDTH as it fits, never breaking one key from what it does
+    (the items are separated by three spaces)."""
+    items = [item for half in halves for item in half.split("   ") if item]
+    lines: list[str] = []
+    for item in items:
+        if lines and len(lines[-1]) + 3 + len(item) <= width:
+            lines[-1] += "   " + item
+        else:
+            lines.append(item)
+    return lines
 
 
 def needle_row(cents: float | None, width: int) -> tuple[str, int | None]:
@@ -150,7 +181,14 @@ class App:
             systems = notes.NAME_SYSTEMS
             self.change(names=systems[(systems.index(s.names) + 1) % len(systems)])
         elif ch == ord("b"):
-            self.change(accidentals="sharps" if s.accidentals == "flats" else "flats")
+            kinds = notes.ACCIDENTALS
+            self.change(accidentals=kinds[(kinds.index(s.accidentals) + 1) % len(kinds)])
+        elif ch == ord("l"):
+            codes = list(interface.names())
+            now = interface.current()
+            code = codes[(codes.index(now) + 1) % len(codes)] if now in codes else codes[0]
+            interface.use(code)
+            self.change(language=code)
         elif ch == ord("v"):
             views = settings_mod.DISPLAYS
             self.change(display=views[(views.index(s.display) + 1) % len(views)])
@@ -188,12 +226,13 @@ class App:
             y += 1
         y += 1
         if r.active:
-            info = (f"{display.freq_text(r.frequency)} Hz    target {display.freq_text(r.target_frequency)} Hz    "
-                    f"{display.cents_text(r)} cents")
+            info = tr("{frequency} Hz    target {target} Hz    {cents} cents",
+                      frequency=display.freq_text(r.frequency), target=display.freq_text(r.target_frequency),
+                      cents=display.cents_text(r))
             if r.in_tune:
-                info += "    in tune"
+                info += "    " + tr("in tune")
         else:
-            info = "play a note"
+            info = tr("play a note")
         self.centre(y, info, attr if r.active else curses.A_DIM)
         y += 2
         width = min(w - 4, 81)
@@ -215,8 +254,9 @@ class App:
         labels = display.string_labels(s)
         if labels:
             x = left
-            self.put(y, x, "strings ", curses.A_DIM)
-            x += 8
+            label = tr("strings") + " "
+            self.put(y, x, label, curses.A_DIM)
+            x += len(label)
             for i, lab in enumerate(labels):
                 a = curses.A_REVERSE if r.active and r.string == i else 0
                 if s.string == i:
@@ -225,13 +265,13 @@ class App:
                     a |= curses.color_pair(1)
                 self.put(y, x, f" {lab} ", a)
                 x += len(lab) + 3
-            self.put(y, x + 1, "(auto)" if s.string is None else "(locked)", curses.A_DIM)
+            self.put(y, x + 1, tr("(auto)") if s.string is None else tr("(locked)"), curses.A_DIM)
             y += 2
         level = r.level if r.level > -120 else -120
         bar = max(0, min(30, round((level + 90) / 90 * 30)))
-        self.put(y, left, "level   " + "█" * bar + "░" * (30 - bar) + f" {level:5.0f} dBFS", curses.A_DIM)
+        self.put(y, left, f"{tr('level'):8}" + "█" * bar + "░" * (30 - bar) + f" {level:5.0f} dBFS", curses.A_DIM)
         # la ayuda de las teclas, en una línea si cabe y si no en dos
-        keys = ["   ".join(KEYS)] if len("   ".join(KEYS)) < w - 2 else list(KEYS)
+        keys = wrap_keys([tr(k) for k in KEYS], w - 2)
         for i, text in enumerate(keys):
             self.put(h - len(keys) + i, 1, text, curses.A_DIM)
         err = self.live.error or getattr(self.live.source, "error", None)
@@ -260,7 +300,7 @@ def run(s: Settings, file: str | None = None) -> int:
         live = LiveTuner(s, source)
         live.start()
     except Exception as exc:  # noqa: BLE001 (PortAudio levanta varios tipos)
-        print(f"py-tuner: cannot open the input: {exc}", file=sys.stderr)
+        print("py-tuner: " + tr("cannot open the input: {error}", error=exc), file=sys.stderr)
         return 1
     try:
         curses.wrapper(lambda scr: App(scr, live).loop())

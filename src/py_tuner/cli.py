@@ -13,6 +13,7 @@ import sys
 import time
 
 from . import display
+from .interface import number, tr
 from .settings import Settings
 from .tuner import LiveTuner, Reading, Tuner
 
@@ -35,14 +36,14 @@ def needle(cents: float, width: int = 21) -> str:
 def line(r: Reading, s: Settings) -> str:
     """Una lectura como una línea de texto."""
     if not r.active:
-        level = "silence" if r.level == float("-inf") else f"{r.level:.0f} dBFS"
-        return f"--  (no pitch, {level})"
+        level = tr("silence") if r.level == float("-inf") else f"{r.level:.0f} dBFS"
+        return tr("--  (no pitch, {level})", level=level)
     name = display.note_full(r.target_midi, s)
     mark = " OK" if r.in_tune else ""
-    text = (f"{name:5} {display.freq_text(r.frequency):>9} Hz  {display.cents_text(r):>6} cents  "
+    text = (f"{name:5} {display.freq_text(r.frequency):>9} Hz  {display.cents_text(r):>6} {tr('cents')}  "
             f"{needle(r.cents)}{mark}")
     if r.string is not None:
-        text += f"  string {r.string + 1}"
+        text += "  " + tr("string {number}", number=r.string + 1)
     return text
 
 
@@ -77,16 +78,19 @@ def report_file(s: Settings, path: str) -> int:
     rate, samples = read_wav(path, s.channel)
     tuner = Tuner(s, rate)
     found = notes_in(tuner.analyze_all(samples))
-    print(f"{path}: {len(samples) / rate:.2f} s at {rate} Hz, {display.summary(s)}")
+    print(tr("{path}: {seconds} s at {rate} Hz, {summary}", path=path, seconds=number(f"{len(samples) / rate:.2f}"),
+             rate=rate, summary=display.summary(s)))
     if not found:
-        print("no steady note found")
+        print(tr("no steady note found"))
         return 1
     for n in found:
         name = display.note_full(n["midi"], s)
-        string = f"  string {n['string'] + 1}" if n["string"] is not None else ""
-        print(f"{n['start']:7.2f}-{n['end']:7.2f} s  {name:5} {display.freq_text(n['frequency']):>9} Hz  "
-              f"(target {display.freq_text(n['target'])})  {n['cents']:+6.2f} cents  "
-              f"±{n['spread']:.2f}{string}")
+        string = "  " + tr("string {number}", number=n["string"] + 1) if n["string"] is not None else ""
+        target = tr("(target {frequency})", frequency=display.freq_text(n["target"]))
+        span = number(f"{n['start']:7.2f}-{n['end']:7.2f}")
+        print(f"{span} s  {name:5} {display.freq_text(n['frequency']):>9} Hz  "
+              f"{target}  {number(format(n['cents'], '+6.2f'))} {tr('cents')}  ±{number(format(n['spread'], '.2f'))}"
+              f"{string}")
     return 0
 
 
@@ -104,11 +108,11 @@ def run(s: Settings, file: str | None = None, once: bool = False, realtime: bool
         return 1
     live = LiveTuner(s, source)
     tty = out.isatty()
-    print(display.summary(s) + "  (Ctrl+C to stop)", file=out)
+    print(display.summary(s) + "  " + tr("(Ctrl+C to stop)"), file=out)
     try:
         live.start()
     except Exception as exc:  # noqa: BLE001 (PortAudio levanta varios tipos)
-        print(f"py-tuner: cannot open the input: {exc}", file=sys.stderr)
+        print("py-tuner: " + tr("cannot open the input: {error}", error=exc), file=sys.stderr)
         return 1
     last_print = 0.0
     try:

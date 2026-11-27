@@ -1,0 +1,123 @@
+.TH PY-TUNER 1 "" "py-tuner 0.1.0" "py-tuner"
+.SH NAME
+py\-tuner \- an accurate tuner for guitar, bass, double bass and violin
+.SH SYNOPSIS
+.B py\-tuner
+[gui | tui | cli | devices | instruments] [\-a\ HZ] [\-i\ INSTRUMENT] [\-t\ TUNING] [\-f\ WAV] [...]
+.SH DESCRIPTION
+An accurate tuner for guitar, bass, double bass and violin (and a chromatic one), with a needle and a strobe, in a window, in the terminal or on the command line.
+
+Without a command, the window opens. Options given here override the saved settings for this session only, unless \-\-save is given. Settings: ~/.config/py\-tuner/settings.json
+.SH OPTIONS
+.TP
+.B \-h, \-\-help
+show this help and quit
+.TP
+.B \-\-version
+show the version and quit
+.TP
+.B mode
+gui (the window, default), tui (full\-screen terminal), cli (a line of text), devices (list the inputs), instruments (list the tunings)
+.TP
+.B \-a, \-\-a4
+reference A4 in Hz, 380 to 480 (default 440)
+.TP
+.B \-i, \-\-instrument
+the instrument, or chromatic (one of: chromatic, guitar, bass, double\-bass, violin)
+.TP
+.B \-t, \-\-tuning
+the tuning, by name (e.g. "Drop D")
+.TP
+.B \-s, \-\-string
+tune against string N (1 = the lowest) instead of the nearest one
+.TP
+.B \-\-names
+note names: english, latin or german (one of: english, latin, german)
+.TP
+.B \-\-accidentals
+write accidentals as sharps, flats or both (F#/Gb) (one of: sharps, flats, both)
+.TP
+.B \-\-flats
+write accidentals as flats
+.TP
+.B \-\-sharps
+write accidentals as sharps
+.TP
+.B \-\-tolerance
+in tune within this many cents (default 1)
+.TP
+.B \-d, \-\-device
+input device: its number or part of its name
+.TP
+.B \-r, \-\-rate
+sample rate (default: the device's)
+.TP
+.B \-c, \-\-channel
+use channel N (from 1) or the mix of all
+.TP
+.B \-f, \-\-file
+read a WAV file instead of the sound card
+.TP
+.B \-\-min\-level
+ignore sounds quieter than this (default \-60)
+.TP
+.B \-\-smoothing
+seconds the reading averages (default 0.5)
+.TP
+.B \-\-periods
+periods per analysis frame: more is steadier, fewer is faster (default 16)
+.TP
+.B \-\-display
+needle, strobe or both (gui, tui) (one of: both, needle, strobe)
+.TP
+.B \-\-language
+the language of the interface (default: the system's) (one of: en, es)
+.TP
+.B \-\-once
+cli: print the first steady reading and exit
+.TP
+.B \-\-realtime
+cli with \-\-file: play the file at its own pace instead of analysing it at once
+.TP
+.B \-\-save
+save the options given as the new settings
+.SH KEYS OF THE TERMINAL INTERFACE
+.TP
+.B q
+Quit
+.TP
+.B ← / →
+Lower / raise the reference A4 by 0.1 Hz
+.TP
+.B ↓ / ↑
+Lower / raise the reference A4 by 1 Hz
+.TP
+.B 0
+Put the reference A4 back to 440 Hz
+.TP
+.B i
+The next instrument
+.TP
+.B t
+The next tuning of the instrument
+.TP
+.B s
+Lock the next string (after the last one, back to the nearest string)
+.TP
+.B n
+The next system of note names: English, Latin, German
+.TP
+.B b
+Sharps, flats or both
+.TP
+.B v
+Needle and strobe, the needle alone or the strobe alone
+.TP
+.B l
+The next language of the interface
+.SH FILES
+.TP
+.I ~/.config/py\-tuner/settings.json
+The settings, the same for the window, the terminal and the command line ($XDG_CONFIG_HOME). Own tunings can be added in it, under custom_tunings.
+.SH AUTHOR
+Nicolas Vaughan <nicolasvaughan@proton.me>

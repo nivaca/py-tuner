@@ -10,53 +10,76 @@ from __future__ import annotations
 import argparse
 import sys
 from dataclasses import replace
+from pathlib import Path
 
-from . import __version__, audio, instruments, notes
+from . import __version__, audio, instruments, interface, notes
 from . import settings as settings_mod
+from .interface import tr
 from .settings import Settings
 
+# La descripción y el epílogo de --help, en inglés (las claves de su traducción).
 DESCRIPTION = ("An accurate tuner for guitar, bass, double bass and violin (and a chromatic one), "
                "with a needle and a strobe, in a window, in the terminal or on the command line.")
 EPILOG = ("Without a command, the window opens. Options given here override the saved settings for this "
-          "session only, unless --save is given. Settings: " + str(settings_mod.path()))
+          "session only, unless --save is given. Settings: {path}")
 
 MODES = ("gui", "tui", "cli", "devices", "instruments")
 
 
+def shown_path(path: Path) -> str:
+    """PATH con la carpeta personal escrita ~, como se lee en una ayuda."""
+    try:
+        return "~/" + str(path.relative_to(Path.home()))
+    except ValueError:
+        return str(path)
+
+
 def parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(prog="py-tuner", description=DESCRIPTION, epilog=EPILOG)
-    p.add_argument("--version", action="version", version=f"py-tuner {__version__}")
+    """Las opciones de la línea de órdenes, en el idioma de la interfaz."""
+    p = argparse.ArgumentParser(prog="py-tuner", description=tr(DESCRIPTION),
+                                epilog=tr(EPILOG, path=shown_path(settings_mod.path())), add_help=False)
+    p.add_argument("-h", "--help", action="help", help=tr("show this help and quit"))
+    p.add_argument("--version", action="version", version=f"py-tuner {__version__}",
+                   help=tr("show the version and quit"))
     p.add_argument("mode", nargs="?", choices=MODES, default="gui",
-                   help="gui (the window, default), tui (full-screen terminal), cli (a line of text), "
-                        "devices (list the inputs), instruments (list the tunings)")
-    g = p.add_argument_group("tuning")
+                   help=tr("gui (the window, default), tui (full-screen terminal), cli (a line of text), "
+                           "devices (list the inputs), instruments (list the tunings)"))
+    g = p.add_argument_group(tr("tuning"))
     g.add_argument("-a", "--a4", type=float, metavar="HZ",
-                   help=f"reference A4 in Hz, {notes.MIN_A4:g} to {notes.MAX_A4:g} (default 440)")
-    g.add_argument("-i", "--instrument", choices=instruments.keys(), help="the instrument, or chromatic")
-    g.add_argument("-t", "--tuning", metavar="NAME", help='the tuning, by name (e.g. "Drop D")')
+                   help=tr("reference A4 in Hz, {low} to {high} (default 440)", low=f"{notes.MIN_A4:g}",
+                           high=f"{notes.MAX_A4:g}"))
+    g.add_argument("-i", "--instrument", choices=instruments.keys(), help=tr("the instrument, or chromatic"))
+    g.add_argument("-t", "--tuning", metavar=tr("NAME"), help=tr('the tuning, by name (e.g. "Drop D")'))
     g.add_argument("-s", "--string", metavar="N|auto",
-                   help="tune against string N (1 = the lowest) instead of the nearest one")
-    g.add_argument("--names", choices=notes.NAME_SYSTEMS, help="note names: english, latin or german")
-    g.add_argument("--flats", action="store_true", default=None, help="write accidentals as flats")
-    g.add_argument("--sharps", dest="flats", action="store_false", help="write accidentals as sharps")
-    g.add_argument("--tolerance", type=float, metavar="CENTS", help="in tune within this many cents (default 1)")
-    g = p.add_argument_group("input")
-    g.add_argument("-d", "--device", metavar="DEV", help="input device: its number or part of its name")
-    g.add_argument("-r", "--rate", type=int, metavar="HZ", help="sample rate (default: the device's)")
-    g.add_argument("-c", "--channel", metavar="mix|N", help="use channel N (from 1) or the mix of all")
-    g.add_argument("-f", "--file", metavar="WAV", help="read a WAV file instead of the sound card")
-    g.add_argument("--min-level", type=float, metavar="DBFS", help="ignore sounds quieter than this (default -60)")
+                   help=tr("tune against string N (1 = the lowest) instead of the nearest one"))
+    g.add_argument("--names", choices=notes.NAME_SYSTEMS, help=tr("note names: english, latin or german"))
+    g.add_argument("--accidentals", choices=notes.ACCIDENTALS,
+                   help=tr("write accidentals as sharps, flats or both (F#/Gb)"))
+    g.add_argument("--flats", dest="accidentals", action="store_const", const="flats",
+                   help=tr("write accidentals as flats"))
+    g.add_argument("--sharps", dest="accidentals", action="store_const", const="sharps",
+                   help=tr("write accidentals as sharps"))
+    g.add_argument("--tolerance", type=float, metavar="CENTS",
+                   help=tr("in tune within this many cents (default 1)"))
+    g = p.add_argument_group(tr("input"))
+    g.add_argument("-d", "--device", metavar="DEV", help=tr("input device: its number or part of its name"))
+    g.add_argument("-r", "--rate", type=int, metavar="HZ", help=tr("sample rate (default: the device's)"))
+    g.add_argument("-c", "--channel", metavar="mix|N", help=tr("use channel N (from 1) or the mix of all"))
+    g.add_argument("-f", "--file", metavar="WAV", help=tr("read a WAV file instead of the sound card"))
+    g.add_argument("--min-level", type=float, metavar="DBFS",
+                   help=tr("ignore sounds quieter than this (default -60)"))
     g.add_argument("--smoothing", type=float, metavar="SECONDS",
-                   help="seconds the reading averages (default 0.5)")
+                   help=tr("seconds the reading averages (default 0.5)"))
     g.add_argument("--periods", type=float, metavar="N",
-                   help="periods per analysis frame: more is steadier, fewer is faster (default 16)")
-    g = p.add_argument_group("output")
-    g.add_argument("--display", choices=settings_mod.DISPLAYS, help="needle, strobe or both (gui, tui)")
-    g.add_argument("--once", action="store_true",
-                   help="cli: print the first steady reading and exit")
+                   help=tr("periods per analysis frame: more is steadier, fewer is faster (default 16)"))
+    g = p.add_argument_group(tr("output"))
+    g.add_argument("--display", choices=settings_mod.DISPLAYS, help=tr("needle, strobe or both (gui, tui)"))
+    g.add_argument("--language", choices=list(interface.names()),
+                   help=tr("the language of the interface (default: the system's)"))
+    g.add_argument("--once", action="store_true", help=tr("cli: print the first steady reading and exit"))
     g.add_argument("--realtime", action="store_true",
-                   help="cli with --file: play the file at its own pace instead of analysing it at once")
-    g.add_argument("--save", action="store_true", help="save the options given as the new settings")
+                   help=tr("cli with --file: play the file at its own pace instead of analysing it at once"))
+    g.add_argument("--save", action="store_true", help=tr("save the options given as the new settings"))
     return p
 
 
@@ -64,7 +87,11 @@ def apply(args: argparse.Namespace, base: Settings) -> Settings:
     """BASE with the options of ARGS that were given; ValueError for bad ones."""
     s = replace(base)
     if args.a4 is not None:
-        s.a4 = notes.check_a4(args.a4)
+        try:
+            s.a4 = notes.check_a4(args.a4)
+        except ValueError:
+            raise ValueError(tr("reference A4 must be between {low} and {high} Hz, not {value}",
+                                low=f"{notes.MIN_A4:g}", high=f"{notes.MAX_A4:g}", value=f"{args.a4:g}")) from None
     if args.instrument is not None and args.instrument != s.instrument:
         s.instrument = args.instrument
         s.string = None
@@ -72,10 +99,13 @@ def apply(args: argparse.Namespace, base: Settings) -> Settings:
         s.tuning = inst.tunings[0].name if inst.tunings else ""
     if args.tuning is not None:
         inst = s.instrument_preset()
-        match = [t.name for t in inst.tunings if t.name.lower() == args.tuning.lower()]
+        # (vale el nombre en inglés o en el idioma de la interfaz)
+        wanted = args.tuning.lower()
+        match = [t.name for t in inst.tunings if wanted in (t.name.lower(), tr(t.name).lower())]
         if not match:
-            names = ", ".join(t.name for t in inst.tunings) or "none (chromatic)"
-            raise ValueError(f"{inst.name} has no tuning {args.tuning!r}; it has: {names}")
+            names = ", ".join(tr(t.name) for t in inst.tunings) or tr("none (chromatic)")
+            raise ValueError(tr("{instrument} has no tuning {tuning}; it has: {names}", instrument=tr(inst.name),
+                                tuning=repr(args.tuning), names=names))
         s.tuning = match[0]
         s.string = None
     if args.string is not None:
@@ -85,25 +115,26 @@ def apply(args: argparse.Namespace, base: Settings) -> Settings:
             inst = s.instrument_preset()
             count = len(inst.tuning(s.tuning).strings) if inst.tunings else 0
             if not args.string.isdigit() or not 1 <= int(args.string) <= count:
-                raise ValueError(f"--string must be auto or 1..{count}" if count
-                                 else "--string needs an instrument with strings")
+                raise ValueError(tr("--string must be auto or 1..{count}", count=count) if count
+                                 else tr("--string needs an instrument with strings"))
             s.string = int(args.string) - 1
     if args.names is not None:
         s.names = args.names
-    if args.flats is not None:
-        s.accidentals = "flats" if args.flats else "sharps"
-    for name in ("tolerance", "device", "rate", "min_level", "smoothing", "periods", "display"):
+    if args.accidentals is not None:
+        s.accidentals = args.accidentals
+    for name in ("tolerance", "device", "rate", "min_level", "smoothing", "periods", "display", "language"):
         value = getattr(args, name)
         if value is not None:
             setattr(s, name, value)
     if args.channel is not None:
         if args.channel != "mix" and not args.channel.isdigit():
-            raise ValueError("--channel must be mix or a number from 1")
+            raise ValueError(tr("--channel must be mix or a number from 1"))
         s.channel = args.channel
     checked = s.validated()
     for name in ("tolerance", "rate", "min_level", "smoothing", "periods"):
         if getattr(args, name) is not None and getattr(checked, name) != getattr(s, name):
-            raise ValueError(f"--{name.replace('_', '-')} {getattr(args, name)} is out of range")
+            raise ValueError(tr("--{option} {value} is out of range", option=name.replace("_", "-"),
+                                value=getattr(args, name)))
     return checked
 
 
@@ -119,7 +150,7 @@ def open_source(s: Settings, file: str | None, realtime: bool = True) -> audio.S
 def list_devices() -> int:
     found = audio.input_devices()
     if not found:
-        print("No input devices (is PortAudio installed?)")
+        print(tr("No input devices (is PortAudio installed?)"))
         return 1
     for index, name, rate in found:
         print(f"{index:3}  {name}  ({rate} Hz)")
@@ -129,17 +160,33 @@ def list_devices() -> int:
 def list_instruments(s: Settings) -> int:
     for inst in instruments.INSTRUMENTS:
         inst = instruments.with_custom(inst, s.custom_tunings)
-        print(f"{inst.key}  ({inst.name})")
+        print(f"{inst.key}  ({tr(inst.name)})")
         for t in inst.tunings:
-            print(f"    {t.name:20} {' '.join(t.strings)}")
+            print(f"    {tr(t.name):20} {' '.join(t.strings)}")
     return 0
 
 
+def choose_language(saved: Settings, argv: list[str]) -> None:
+    """Pone la interfaz en el idioma de --language, si se dio, o en el guardado, o en el del sistema.
+    (Se mira antes de leer las opciones, porque la ayuda misma sale en ese idioma.)"""
+    code = ""
+    for i, arg in enumerate(argv):
+        if arg == "--language" and i + 1 < len(argv):
+            code = argv[i + 1]
+        elif arg.startswith("--language="):
+            code = arg.split("=", 1)[1]
+    interface.use(code or saved.language or interface.system_code())
+    interface.translate_argparse()
+
+
 def main(argv: list[str] | None = None) -> int:
+    argv = sys.argv[1:] if argv is None else argv
+    saved = settings_mod.load()
+    choose_language(saved, argv)
     p = parser()
     args = p.parse_args(argv)
     try:
-        s = apply(args, settings_mod.load())
+        s = apply(args, saved)
     except ValueError as exc:
         p.error(str(exc))
     if args.save:

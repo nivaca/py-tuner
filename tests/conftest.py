@@ -9,8 +9,10 @@ import wave
 import numpy as np
 import pytest
 
-# Las ventanas de las pruebas se dibujan fuera de la pantalla.
+# Las ventanas de las pruebas se dibujan fuera de la pantalla, y la interfaz está en inglés, sea cual sea el
+# idioma del sistema (también en los procesos que las pruebas lanzan).
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
+os.environ["LANGUAGE"] = "en"
 
 RATE = 48000
 

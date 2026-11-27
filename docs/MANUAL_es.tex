@@ -1,0 +1,649 @@
+\newcommand*{\version}{0.1.0}
+
+\documentclass[12pt,
+              article,
+              oneside
+              ]{memoir}
+
+\usepackage{iftex}
+
+\ifluatex
+  \usepackage{fontspec}
+\fi
+
+\usepackage[
+  % latin,
+  % english,
+  spanish,% <- principal
+  es-minimal,
+  es-noshorthands,
+  es-tabla,
+]{babel}
+
+\ifluatex
+% LuaLaTeX --------------------
+\defaultfontfeatures{Ligatures=TeX, Scale=MatchLowercase}
+\usepackage[MainFeatures={medium,
+  Ligatures=Common,
+  Numbers=OldStyle,
+  SmallCapsFeatures = {LetterSpace=5.0}}]
+{junicodevf}
+%
+% \setsansfont{Libertinus Sans}
+% (sin las ligaduras de TeX: -{}-help no se vuelve una raya)
+\setmonofont[Scale=MatchLowercase, Ligatures=ResetAll]{DejaVu Sans Mono}
+% \setmonofont[Scale=MatchLowercase]{Libertinus Mono}
+% \setmonofont[Scale=MatchLowercase}]{Fira Code}
+\else
+% PDFLaTeX ---------------------
+\usepackage[T1]{fontenc}
+\usepackage[osf]{libertinus}
+\usepackage[scaled=0.9]{FiraMono}
+% \usepackage[scaled=0.9]{cascadia-code}
+% \usepackage[scaled=0.9]{roboto}
+\input glyphtounicode
+\pdfgentounicode=1
+\fi
+
+\usepackage[babel=true, verbose=false, tracking=true, expansion=true, protrusion=true, final, draft=false]{microtype}
+\SetTracking{ encoding = *, shape = sc }{ 30 }
+\SetTracking[context = notracking, ]{encoding = *}{0}
+
+\usepackage[autostyle=false, style=british]{csquotes}
+\usepackage{latexcolors}
+
+\newcommand{\Rojo}{\color[HTML]{8B0000}}
+\newcommand*{\rojo}[1]{\textcolor[HTML]{8B0000}{#1}}
+\newcommand*{\rojoit}[1]{\textit{\textcolor[HTML]{8B0000}{#1}}}
+\newcommand{\Azul}{\color{bluenivaca}}
+\newcommand*{\azul}[1]{\textcolor{bluenivaca}{#1}}
+\newcommand{\Verde}{\color{darkgreen}}
+\newcommand*{\verde}[1]{\textcolor{darkgreen}{#1}}
+\newcommand{\Amarillo}{\color{goldenpoppy}}
+\newcommand*{\amarillo}[1]{\textcolor{goldenpoppy}{#1}}
+\newcommand{\Morado}{\color{byzantium}}
+\newcommand*{\morado}[1]{\textcolor{byzantium}{#1}}
+\newcommand{\Naranja}{\color{orange}}
+\newcommand*{\naranja}[1]{\textcolor{orange}{#1}}
+
+% \usepackage[margin=3cm]{geometry}
+
+\usepackage{graphicx}
+\usepackage{booktabs}
+
+\clubpenalty=9999
+\widowpenalty=9999
+\brokenpenalty=5000
+\frenchspacing
+\raggedbottom
+\midsloppy
+\parindent=14pt
+\fboxsep=2pt
+
+\renewcommand\thesection{\arabic{section}}
+\chapterstyle{reparticle}
+
+\usepackage{enumitem}
+\setlist{noitemsep, nosep}
+\setlist[description]{font=\itshape}
+
+\newcommand*{\elipsis}{\,.\,.\,.\,}
+\newcommand*{\elipsisb}{\textup{[\elipsis]}}
+
+\renewenvironment{quote}%
+ {\begin{list}{}%
+              {\setlength\rightmargin{0pt}%
+              \setlength\leftmargin{\parindent}}%
+  \item[]\small\ignorespaces}
+ {\unskip\end{list}}
+
+
+\definecolor{Link}{HTML}{408080}
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  filecolor=blue,
+  citecolor = black,
+  urlcolor=Link,
+}
+\urlstyle{tt}
+\usepackage{bookmark}
+
+\setlength{\droptitle}{-2cm}
+
+\title{\bfseries%
+  \texttt{py-tuner} v.\version{} \\
+  Manual de usuario}
+
+\author{%
+  Nicolás Vaughan\\
+  \begin{minipage}[t]{0.8\linewidth}
+    \centering\small%
+    \href{mailto:nicolasvaughan@proton.me}{\texttt{nicolasvaughan@proton.me}}\\
+    \url{https://nicolasvaughan.org}\\
+    \url{https://github.com/nivaca/py-tuner}\\
+    \url{https://codeberg.org/nivaca/py-tuner}\\
+  \end{minipage}}
+
+
+\date{2026-11-27}
+
+% The pictures, made by tools/manual_images.py
+\graphicspath{{img/manual/}}
+\usepackage{longtable}
+
+% the title and the author in the PDF's own metadata
+\hypersetup{pdftitle={py-tuner: manual de usuario}, pdfauthor={Nicolás Vaughan}}
+
+% the index (makeindex, with the style manual.ist: see latexmkrc)
+\makeindex
+
+% menus, keys, and the pictures of the window
+\newcommand*{\menu}[1]{\textit{#1}}
+\newcommand*{\then}{\,>\,}
+\newcommand*{\key}[1]{\texttt{#1}}
+\newcommand*{\shot}[3]{%
+  \begin{figure}[htbp]
+    \centering
+    \includegraphics[width=#2\textwidth,height=0.75\textheight,keepaspectratio]{#1}
+    \caption{#3}
+    \label{fig:#1}
+  \end{figure}}
+
+\begin{document}
+\maketitle
+
+\tableofcontents*
+
+\section{Introducción}
+\noindent
+\texttt{py-tuner} es un afinador para guitarra, bajo, contrabajo y violín,
+con un modo cromático para cualquier otro instrumento. Escucha la tarjeta
+de sonido, reconoce la nota que suena, la compara con la cuerda más cercana
+de la afinación elegida (o con la cuerda que se fije) y muestra cuántos
+cents se aparta. Un cent es la centésima parte de un semitono.
+
+\index{precisión}\index{inarmonicidad}%
+Lo hice para que fuera preciso. En una cuerda estable, cada cuadro de
+análisis cae a unas centésimas de cent de la altura verdadera, y la lectura
+que se muestra promedia medio segundo de cuadros. La altura sale de todos
+los armónicos de la cuerda a la vez, teniendo en cuenta que una cuerda real
+es inarmónica (sus parciales altos suenan un poco agudos); por eso funciona
+también cuando un micrófono pequeño apenas recoge la fundamental de una
+cuerda grave, como pasa con el bajo y el contrabajo.
+
+\index{interfaces}%
+Muestra la desviación con una aguja y con un estroboscopio, y funciona de
+tres maneras: en una ventana, en la terminal a pantalla completa y en la
+línea de órdenes. La interfaz está en español o en inglés. Este manual
+describe la versión \version{}; las imágenes son de la ventana en español.
+
+\section{Instalación}
+\label{sec:installing}
+
+\index{instalación}%
+Las versiones están en GitHub y en Codeberg (las direcciones están en la
+primera página). Cada una trae los archivos que siguen, todos firmados:
+véase la sección~\ref{sec:signatures}.
+
+\subsection{Fedora}
+
+\index{fedora@Fedora}\index{copr@Copr}\index{rpm@RPM}%
+El RPM está también en Copr, para que \texttt{dnf upgrade} traiga cada
+versión nueva:
+
+\begin{quote}
+\texttt{sudo dnf copr enable nivaca/py-tuner}\\
+\texttt{sudo dnf install py-tuner}
+\end{quote}
+
+\noindent Usa NumPy, PortAudio y PySide6 de Fedora, e instala una entrada
+en el menú, las páginas de manual (\texttt{man py-tuner}, en español y en
+inglés) y este manual.
+
+\subsection{Cualquier Linux: la AppImage}
+
+\index{appimage@AppImage}%
+\texttt{py-tuner-\version-x86\_64.AppImage} lleva su propio Python, Qt y
+PortAudio, y no hay que instalarla. Funciona en cualquier Linux con glibc
+2.34 o posterior (Ubuntu 22.04, Debian 12, Fedora 35 y posteriores):
+
+\begin{quote}
+\texttt{chmod +x py-tuner-\version-x86\_64.AppImage}\\
+\texttt{./py-tuner-\version-x86\_64.AppImage}\\
+\texttt{./py-tuner-\version-x86\_64.AppImage tui}
+\end{quote}
+
+\noindent La primera orden abre la ventana; la segunda, la interfaz de
+terminal. Cualquier otra orden u opción de la sección~\ref{sec:cli} se da
+de la misma manera.
+
+\subsection{Desde el código}
+
+\index{código}\index{python@Python}%
+Con Python 3.14 o posterior y la PortAudio del sistema (\texttt{sudo dnf
+install portaudio} en Fedora, \texttt{sudo apt install libportaudio2} en
+Debian y Ubuntu), el wheel de una versión se instala con \texttt{pip
+install py\_tuner-\version-py3-none-any.whl}. Desde una copia del código,
+con uv (\url{https://docs.astral.sh/uv/}), \texttt{uv run py-tuner} lo
+corre enseguida.
+
+\subsection{Comprobar los archivos de una versión}
+\label{sec:signatures}
+
+\index{firmas}%
+Cada archivo de una versión tiene su firma (\texttt{ARCHIVO.asc}), y
+\texttt{SHA256SUMS} lista las sumas de todos, con su propia firma. Se
+comprueban con la clave pública que se publica con la versión:
+
+\begin{quote}
+\texttt{gpg -{}-import RPM-GPG-KEY-py-tuner}\\
+\texttt{gpg -{}-verify ARCHIVO.asc ARCHIVO}
+\end{quote}
+
+\noindent El RPM va firmado también por dentro; \texttt{dnf} lo comprueba
+una vez importada la clave (\texttt{sudo rpm -{}-import
+RPM-GPG-KEY-py-tuner}).
+
+\section{Cómo abrir el programa}
+
+\index{abrir el programa}%
+Desde el menú, \menu{py-tuner} abre la ventana. Desde una terminal:
+
+\begin{quote}
+\begin{tabular}{@{}ll@{}}
+\texttt{py-tuner} & la ventana\\
+\texttt{py-tuner tui} & la interfaz de terminal (sección~\ref{sec:tui})\\
+\texttt{py-tuner cli} & una línea de texto (sección~\ref{sec:cli})\\
+\texttt{py-tuner devices} & la lista de entradas de sonido\\
+\texttt{py-tuner instruments} & la lista de instrumentos y afinaciones\\
+\end{tabular}
+\end{quote}
+
+\noindent La ventana se abre en el modo cromático
+(sección~\ref{sec:chromatic}) hasta que se elija otro instrumento; la
+elección se guarda. \texttt{py-tuner -{}-help} lista todas las opciones. Las opciones
+cambian la configuración solo en esa sesión, salvo que se añada
+\texttt{-{}-save} (sección~\ref{sec:settings}).
+
+\section{La ventana}
+\label{sec:window}
+
+\index{ventana}%
+\shot{window_es}{0.75}{La ventana: la cuerda Sol de una guitarra, 0,4 cents alta}
+
+\noindent De arriba abajo, la ventana tiene:
+
+\begin{description}
+\item[La barra] el instrumento, su afinación (con sus cuerdas), el La de
+  referencia (sección~\ref{sec:a4}) y la configuración.
+\item[La nota] la nota con que se compara el sonido, en letras grandes;
+  debajo, la desviación en cents y la frecuencia que se oye, con una flecha
+  hacia la frecuencia que debería tener.
+\item[La aguja] la desviación, de $-50$ a $+50$ cents. La estrecha zona
+  verde del centro es la tolerancia: una nota dentro de ella está afinada
+  (sección~\ref{sec:settings}).
+\item[El estroboscopio] tres bandas de franjas que se mueven a la derecha
+  cuando la nota está alta y a la izquierda cuando está baja, y se quedan
+  quietas cuando está afinada (sección~\ref{sec:strobe}).
+\item[Las cuerdas] un botón por cada cuerda de la afinación. La cuerda con
+  que se compara va enmarcada.
+\item[La barra de estado] la entrada en uso, su frecuencia de muestreo y el
+  nivel del sonido, con una marca en el nivel por debajo del cual los
+  sonidos se ignoran.
+\end{description}
+
+\index{colores}%
+Los colores dicen lo mismo en todas partes: verde dentro de la tolerancia,
+ámbar dentro de cinco veces la tolerancia, rojo más allá.
+
+\shot{flat_es}{0.75}{El Mi grave de un bajo de cinco cuerdas, 12,3 cents bajo}
+
+\index{cuerda fija}%
+La cuerda con que se compara es, normalmente, la más cercana al sonido. Un
+clic en el botón de una cuerda la fija: desde entonces todo sonido se
+compara con esa cuerda, por lejos que esté, lo que ayuda cuando una cuerda
+está muy floja y suena más cerca de la siguiente. Otro clic en el mismo
+botón la suelta.
+
+\shot{locked_es}{0.75}{La cuerda La del violín fija, con el La a 442~Hz}
+
+\section{Instrumentos y afinaciones}
+\label{sec:tunings}
+
+\index{instrumentos}\index{afinaciones}%
+Cada instrumento tiene primero su afinación habitual, y algunas otras:
+
+\begin{longtable}{@{}lll@{}}
+\toprule
+Instrumento & Afinación & Cuerdas, de la más grave\\
+\midrule
+\endhead
+Guitarra & Estándar & \texttt{E2 A2 D3 G3 B3 E4} \\
+ & Drop D & \texttt{D2 A2 D3 G3 B3 E4} \\
+ & Medio tono abajo & \texttt{Eb2 Ab2 Db3 Gb3 Bb3 Eb4} \\
+ & Un tono abajo & \texttt{D2 G2 C3 F3 A3 D4} \\
+ & Drop C & \texttt{C2 G2 C3 F3 A3 D4} \\
+ & DADGAD & \texttt{D2 A2 D3 G3 A3 D4} \\
+ & Abierta en Re & \texttt{D2 A2 D3 F\#3 A3 D4} \\
+ & Abierta en Sol & \texttt{D2 G2 D3 G3 B3 D4} \\
+ & Abierta en Mi & \texttt{E2 B2 E3 G\#3 B3 E4} \\
+ & Abierta en Do & \texttt{C2 G2 C3 G3 C4 E4} \\
+ & 7 cuerdas & \texttt{B1 E2 A2 D3 G3 B3 E4} \\
+\addlinespace
+Bajo & Estándar & \texttt{E1 A1 D2 G2} \\
+ & Drop D & \texttt{D1 A1 D2 G2} \\
+ & Medio tono abajo & \texttt{Eb1 Ab1 Db2 Gb2} \\
+ & 5 cuerdas & \texttt{B0 E1 A1 D2 G2} \\
+ & 5 cuerdas con Do agudo & \texttt{E1 A1 D2 G2 C3} \\
+ & 6 cuerdas & \texttt{B0 E1 A1 D2 G2 C3} \\
+\addlinespace
+Contrabajo & Orquestal & \texttt{E1 A1 D2 G2} \\
+ & Solista & \texttt{F\#1 B1 E2 A2} \\
+ & 5 cuerdas (Si grave) & \texttt{B0 E1 A1 D2 G2} \\
+ & 5 cuerdas (Do grave) & \texttt{C1 E1 A1 D2 G2} \\
+ & Por quintas & \texttt{C1 G1 D2 A2} \\
+\addlinespace
+Violín & Estándar & \texttt{G3 D4 A4 E5} \\
+ & Cruzada (La Mi La Mi) & \texttt{A3 E4 A4 E5} \\
+ & Scordatura Sol Re Sol Re & \texttt{G3 D4 G4 D5} \\
+\bottomrule
+\end{longtable}
+
+\noindent El instrumento fija también el margen en el que se busca la
+fundamental, algo más allá de su cuerda más grave, para que una cuerda muy
+floja se siga encontrando.
+
+\index{afinaciones propias}%
+\label{sec:own-tunings}
+Las afinaciones propias se añaden al archivo de configuración
+(sección~\ref{sec:files}), con el programa cerrado, como una lista
+\texttt{custom\_tunings}. Cada afinación dice su instrumento
+(\texttt{guitar}, \texttt{bass}, \texttt{double-bass} o \texttt{violin}),
+su nombre y sus cuerdas, de la más grave a la más aguda:
+
+\begin{verbatim}
+"custom_tunings": [
+  {"instrument": "guitar", "name": "Nashville",
+   "strings": "E3 A3 D4 G4 B3 E4"}
+]
+\end{verbatim}
+
+\noindent Aparecen después de las afinaciones del instrumento. Una
+afinación con una nota que no se puede leer se deja fuera.
+
+\section{El La de referencia}
+\label{sec:a4}
+
+\index{La de referencia}\index{a4@A4}%
+Todas las notas se miden contra el La que está sobre el Do central (A4),
+440~Hz si no se cambia. Puede ir de 380 a 480~Hz, en décimas de hercio: en
+la ventana, con la casilla \menu{A4} (las flechas lo mueven 0,1~Hz, Re Pág
+y Av Pág 1~Hz) o con el menú de al lado, que tiene los habituales (415,
+430, 432, 435, de 438 a 444, 446 y 466~Hz); en la terminal, con las
+flechas; en la línea de órdenes, con \texttt{-a}:
+
+\begin{quote}
+\texttt{py-tuner -a 442}
+\end{quote}
+
+\noindent Subir el La 1~Hz sube cada nota unos 3,9 cents.
+
+\section{El modo cromático y los nombres de las notas}
+\label{sec:chromatic}
+
+\index{modo cromático}%
+El instrumento \menu{Cromático}, con el que arranca el programa, no tiene
+cuerdas: el sonido se compara con la nota más cercana de la escala
+temperada, de A0 a G6. Sirve para
+cualquier instrumento, y para revisar las notas a lo largo de una cuerda.
+
+\index{nombres de las notas}%
+Las notas pueden escribirse en inglés (C, D, E\elipsis), latinos (Do, Re,
+Mi\elipsis) o alemanes (con H para Si y B para Si$\flat$), con
+sostenidos, bemoles o ambos (F$\sharp$/G$\flat$); la octava es siempre la científica, en la que el Do central es C4
+(Do4).
+
+\shot{chromatic_es}{0.75}{El modo cromático, con nombres latinos y bemoles}
+
+\section{La aguja y el estroboscopio}
+\label{sec:strobe}
+
+\index{aguja}%
+La aguja muestra la desviación de inmediato, y es la más fácil de leer de
+lejos. Sigue la lectura con algo de inercia, para no temblar.
+
+\index{estroboscopio}%
+El estroboscopio es el más sensible. Sus tres bandas se mueven a una
+velocidad proporcional a la desviación: la de arriba, una franja por
+segundo por cada cent; la del medio, el doble, y la de abajo, el cuádruple.
+Así, una desviación de una décima de cent, que la aguja apenas muestra,
+sigue moviendo despacio la banda de abajo. Para afinar con él, se gira la
+clavija hasta que la banda de abajo se quede quieta. Cuál de los dos se
+muestra se elige en la configuración, o con \key{v} en la terminal.
+
+\shot{strobe_es}{0.75}{El estroboscopio solo}
+
+\section{Configuración}
+\label{sec:settings}
+
+\index{configuración}%
+\menu{Configuración\elipsis} abre los ajustes menos frecuentes:
+
+\shot{settings_es}{0.6}{La configuración}
+
+\begin{description}
+\item[Dispositivo de entrada] la entrada de sonido que se escucha, o la
+  predeterminada del sistema.
+\item[Canal] la mezcla de todos los canales, o uno solo (para una interfaz
+  con el instrumento en una entrada).
+\item[Nombres de las notas] inglés, latino o alemán.
+\item[Alteraciones] sostenidos, bemoles o ambos (F$\sharp$/G$\flat$).
+\item[Mostrar] la aguja y el estroboscopio, o uno de los dos.
+\item[Idioma] el idioma de la interfaz, o el del sistema; se usa desde la
+  próxima vez que se abra el programa.
+\item[Afinada a menos de] la tolerancia, en cents (1 si no se cambia).
+\item[Ignorar por debajo de] los sonidos más débiles que esto, en dBFS, se
+  ignoran ($-60$ si no se cambia). Súbalo en un cuarto ruidoso.
+\item[Suavizado] cuántos segundos promedia la lectura (0,5 si no se
+  cambia): más es más estable, menos sigue más rápido.
+\item[Cuadro de análisis] la longitud de cada cuadro, en períodos de la
+  nota (16 si no se cambia): más es más preciso, menos reacciona más rápido.
+\end{description}
+
+\noindent Cada cambio se guarda en el acto, y la ventana, la terminal y la
+línea de órdenes comparten la misma configuración.
+
+\section{La terminal}
+\label{sec:tui}
+
+\index{terminal}\index{tui@TUI}%
+\texttt{py-tuner tui} muestra, en toda la terminal, lo mismo que la
+ventana: la nota en letras grandes, la frecuencia y la desviación, una
+aguja de texto, el estroboscopio, las cuerdas y el nivel.
+
+{\footnotesize
+\begin{verbatim}
+ py-tuner  Guitarra · Estándar · A4 = 440,0 Hz
+
+                                   ███ ███
+                                  █       █
+                                  █ ██  ██
+                                  █  █    █
+                                   ███ ███
+
+           196,04 Hz    objetivo 196,00 Hz    +0,4 cents    afinada
+
+ -50                                                                      +50
+  ┬──────┬───────┬──────┬───────┬──────█──────┬───────┬──────┬───────┬──────┬
+                                       ▲
+
+  ██    ████    ████    ████    ████    ████    ████    ████    ████    ████
+     ████    ████    ████    ████    ████    ████    ████    ████    ████
+  ██    ████    ████    ████    ████    ████    ████    ████    ████    ████
+
+  cuerdas  E2   A2   D3   G3   B3   E4   (automática)
+
+  nivel   ██████████████████████░░░░░░░░   -25 dBFS
+
+ q salir   ←→ A4 ±0,1 Hz   ↑↓ A4 ±1 Hz   0 A4 = 440   i instrumento
+ t afinación   s cuerda   n nombres   b alteraciones   v vista   l idioma
+\end{verbatim}
+}
+
+\noindent Se maneja con estas teclas, y cada cambio se guarda en la
+configuración:
+
+\begin{longtable}{@{}lp{0.7\textwidth}@{}}
+\toprule
+Tecla & Lo que hace\\
+\midrule
+\endhead
+\key{q} & Salir \\
+\key{← / →} & Bajar / subir el La de referencia (A4) 0,1 Hz \\
+\key{↓ / ↑} & Bajar / subir el La de referencia (A4) 1 Hz \\
+\key{0} & Volver a poner el La de referencia (A4) en 440 Hz \\
+\key{i} & El instrumento siguiente \\
+\key{t} & La afinación siguiente del instrumento \\
+\key{s} & Fijar la cuerda siguiente (tras la última, vuelve a la cuerda más cercana) \\
+\key{n} & El sistema siguiente de nombres de notas: inglés, latino, alemán \\
+\key{b} & Sostenidos, bemoles o ambos \\
+\key{v} & Aguja y estroboscopio, la aguja sola o el estroboscopio solo \\
+\key{l} & El idioma siguiente de la interfaz \\
+\bottomrule
+\end{longtable}
+
+\section{La línea de órdenes}
+\label{sec:cli}
+
+\index{línea de órdenes}\index{cli@CLI}%
+\texttt{py-tuner cli} escribe la lectura en una línea que se reescribe
+(o, en una tubería, una línea cada cuarto de segundo):
+
+\begin{verbatim}
+A2       109,52 Hz   -7,5 cents  [---------*|----------]  cuerda 2
+\end{verbatim}
+
+\noindent \texttt{-{}-once} espera la primera lectura estable, la escribe y
+termina, para usarla en guiones.
+
+\index{grabaciones}\index{wav@WAV}%
+Con un archivo WAV, \texttt{py-tuner cli -{}-file ARCHIVO.wav} analiza toda
+la grabación de una vez y escribe una línea por cada nota que suena en
+ella: cuándo suena, la nota, su frecuencia, la que debería tener, la
+desviación y su dispersión:
+
+{\footnotesize
+\begin{verbatim}
+0,03-   1,77 s  E2  82,550 Hz  (objetivo 82,407)  +3,00 cents  ±0,02  cuerda 1
+1,80-   3,52 s  A2  109,52 Hz  (objetivo 110,00)  -7,50 cents  ±0,03  cuerda 2
+\end{verbatim}
+}
+
+\noindent La primera décima de segundo de cada nota se deja fuera, porque
+una cuerda pulsada suena algo alta al principio. Con
+\texttt{-{}-realtime}, en cambio, el archivo suena a su ritmo, como si
+viniera de la tarjeta de sonido; \texttt{-{}-file} funciona igual con la
+ventana y con la terminal.
+
+Las opciones comunes a las tres maneras:
+
+\begin{longtable}{@{}lp{0.62\textwidth}@{}}
+\toprule
+Opción & Lo que hace\\
+\midrule
+\endhead
+\texttt{-a}, \texttt{-{}-a4 HZ} & el La de referencia (A4), de 380 a 480 Hz\\
+\texttt{-i}, \texttt{-{}-instrument} & \texttt{chromatic} (si no se cambia), \texttt{guitar}, \texttt{bass}, \texttt{double-bass} o \texttt{violin}\\
+\texttt{-t}, \texttt{-{}-tuning NOMBRE} & la afinación, por su nombre (p.~ej.\ \texttt{"Drop D"})\\
+\texttt{-s}, \texttt{-{}-string N} & comparar solo con la cuerda N (1 = la más grave); \texttt{auto}, con la más cercana\\
+\texttt{-{}-names} & \texttt{english}, \texttt{latin} o \texttt{german}\\
+\texttt{-{}-accidentals} & \texttt{sharps}, \texttt{flats} o \texttt{both}: sostenidos, bemoles o ambos (F\#/Gb); también \texttt{-{}-flats}, \texttt{-{}-sharps}\\
+\texttt{-{}-tolerance CENTS} & afinada a menos de estos cents\\
+\texttt{-d}, \texttt{-{}-device DISP} & la entrada, por su número (\texttt{py-tuner devices}) o parte de su nombre\\
+\texttt{-r}, \texttt{-{}-rate HZ} & la frecuencia de muestreo (la del dispositivo, si no se da)\\
+\texttt{-c}, \texttt{-{}-channel} & \texttt{mix}, o un número de canal desde 1\\
+\texttt{-f}, \texttt{-{}-file WAV} & un archivo WAV en lugar de la tarjeta de sonido\\
+\texttt{-{}-min-level DBFS} & ignorar los sonidos más débiles que esto\\
+\texttt{-{}-smoothing SEGUNDOS} & los segundos que promedia la lectura\\
+\texttt{-{}-periods N} & los períodos de la nota en cada cuadro de análisis\\
+\texttt{-{}-display} & \texttt{both}, \texttt{needle} o \texttt{strobe}\\
+\texttt{-{}-language} & \texttt{es} o \texttt{en}\\
+\texttt{-{}-save} & guardar las opciones dadas como la nueva configuración\\
+\bottomrule
+\end{longtable}
+
+\section{Cómo mide}
+\label{sec:how}
+
+\index{precisión}%
+Cada análisis tiene dos pasos. Uno grueso halla el período del sonido con
+el método de McLeod, que no puede errar la octava; uno fino ubica después
+cada armónico de la cuerda, hasta el decimosexto, en el máximo exacto de su
+espectro, y los ajusta todos a la vez al modelo de una cuerda real, algo
+rígida, $f_n = n f_0 \sqrt{1 + B n^2}$. Los armónicos fuertes cuentan más
+que los débiles, y los que se hunden en el ruido quedan fuera. La lectura
+que se muestra es la media recortada del último medio segundo de cuadros;
+un salto sostenido de más de un tercio de semitono es una nota nueva.
+
+\index{consejos}%
+Algunas costumbres ayudan:
+
+\begin{itemize}
+\item Tocar la cuerda sola, y dejar pasar el primer instante del pulsado:
+  una cuerda pulsada suena algo alta al principio, y luego se asienta.
+\item Acercar el micrófono al instrumento, lejos de ventiladores y otros
+  ruidos; si el cuarto es ruidoso, subir \menu{Ignorar por debajo de}.
+\item Con las cuerdas graves, darle a la lectura medio segundo más: el
+  cuadro de un Mi grave del bajo dura casi 0,4~s.
+\item Para afinar fino, mirar la banda de abajo del estroboscopio.
+\end{itemize}
+
+\section{Los archivos que guarda}
+\label{sec:files}
+
+\index{archivos}%
+El programa guarda un solo archivo:
+\texttt{\textasciitilde/.config/py-tuner/settings.json} (bajo
+\texttt{\$XDG\_CONFIG\_HOME}, si está definida), con toda la configuración,
+en JSON. Se puede editar a mano con el programa cerrado; un valor que no
+tenga sentido se cambia por el de fábrica, así que el programa siempre
+arranca. Borrarlo devuelve toda la configuración de fábrica.
+
+\section{Cuando algo sale mal}
+
+\index{problemas}%
+\begin{description}
+\item[No se oye nada (``Toque una nota'')] la barra de nivel no se mueve:
+  la entrada elegida no es la del instrumento. Elija otra en
+  \menu{Configuración} (\texttt{py-tuner devices} las lista), y revise que
+  la entrada no esté silenciada en la configuración de sonido del sistema.
+\item[El nivel se mueve, pero no aparece ninguna nota] el sonido es más
+  débil que \menu{Ignorar por debajo de}, o demasiado ruidoso para tener
+  altura. Acerque el micrófono, o baje \menu{Ignorar por debajo de}.
+\item[La nota salta a la cuerda siguiente] la cuerda está tan floja que
+  queda más cerca de otra; fije la cuerda que está afinando
+  (sección~\ref{sec:window}).
+\item[La lectura difiere unos cents de la de otro afinador] revise que los
+  dos tengan el mismo La de referencia.
+\item[``No se puede abrir la entrada''] otro programa tiene la tarjeta de
+  sonido, o el dispositivo se desconectó; el mensaje dice la causa.
+\item[Un ajuste está mal] borre el archivo de configuración
+  (sección~\ref{sec:files}).
+\end{description}
+
+\noindent
+Los problemas y los deseos pueden escribirse como \emph{issues} en GitHub o
+en Codeberg (las direcciones están en la primera página), o enviarse a
+\href{mailto:nicolasvaughan@proton.me}{\texttt{nicolasvaughan@proton.me}}.
+
+\printindex
+
+\end{document}
+
+% ===============================================
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:

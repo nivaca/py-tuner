@@ -7,7 +7,7 @@ November 2026.  Its starting point was the study of FMIT (Free Music
 Instrument Tuner), the C++ and Qt tuner that Gilles Degottex wrote from
 2004; nothing of its code was copied, but reading it showed what a tuner
 needs and where its precision is lost.  Here I explain how it was made, in
-five stages.
+six stages.
 
 py-tuner is free software, under the GNU General Public License, version 3
 or later.  It uses numpy (BSD licence) for the analysis, sounddevice (MIT
@@ -140,11 +140,39 @@ strobe of three bands that move at one, two and four times the speed of
 the deviation, and a button for each string.  Every change in the window or
 in the terminal is saved in the settings at once.
 
+6. In Spanish, and packaged
+---------------------------
+
+My other programs speak English and Spanish, and this one had to as well.
+Every text of the interface goes through one function, `tr()`, which looks
+it up in `locale/es.xml`, as in py-slowdown; a test checks that every text
+of the program is in that file, and nothing else.  The language follows
+the system's unless the settings say otherwise, and in Spanish the numbers
+take a decimal comma, in the window, the terminal and the command line
+alike.  The notes can now also be written with both accidentals at once
+(F♯/G♭), and the program starts in chromatic mode, which serves any
+instrument, until another is chosen.
+
+Then came what all my programs have: an icon, drawn as an SVG and turned
+into every size by Inkscape; a menu entry and the AppStream metadata;
+manual pages in both languages, made from the program's own help, so that
+they cannot say anything it does not; user manuals in LaTeX, in both
+languages, with pictures of the window drawn by a script from fixed
+readings; an RPM, built and tested with Fedora's own packages and signed,
+for Copr; and an AppImage with its own Python.  The AppImage needed one
+thing more.  sounddevice, on Linux, does not bring PortAudio, and Fedora's
+needs a glibc too new for older systems; so PortAudio is compiled for
+glibc 2.28 with zig's compiler, from its source checked by its SHA-256,
+and `audio.py` points sounddevice at the copy inside the package when there
+is one.  Every file of a release is signed with my key, and each signature
+is checked with only the published public key before anything is
+published.
+
 Testing
 -------
 
-The program has 114 tests, which run all at once with `tools/test.py`,
-each file in a process of its own, in about four seconds.  Most of them
+The program has 165 tests, which run all at once with `tools/test.py`,
+each file in a process of its own, in about eight seconds.  Most of them
 measure: the open strings of the four instruments must come out within a
 tenth of a cent of their known pitch, with noise the mean error must stay
 near zero, a weak or missing fundamental and a strongly inharmonic string
@@ -154,7 +182,13 @@ reading's response to wrong values and new notes, the settings, the WAV
 files of 8 to 32 bits, the options of the command line, a whole recording
 analysed note by note, the terminal interface running in a
 pseudo-terminal, where the test presses keys and reads the screen, and the
-window drawn off screen.  I also looked at the window and at the terminal
-as a user sees them, while a WAV file of six detuned guitar strings
-played, and ran the command line with the computer's microphone.  The
-program has 29 files of code, around 3,500 lines.
+window drawn off screen.  Others check that the Spanish file has every
+text, that the versions of the program, the spec and the metadata agree,
+that the manual pages are up to date, that the AppImage finds its own
+PortAudio, and the signing of a release and its deposit on Zenodo, with a
+key made for the test.  I also looked at the window and at the terminal
+as a user sees them, in both languages, while a WAV file of six detuned
+guitar strings played; ran the command line with the computer's
+microphone; and ran the AppImage, which found the sound devices through its
+own PortAudio.  The program has 41 files of Python, around 6,900 lines, of
+which some 1,900 are tests.

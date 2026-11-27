@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- AppStream metadata of py-tuner, for software centres. The RPM installs it. -->
+<component type="desktop-application">
+  <id>io.github.nivaca.py-tuner</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>py-tuner</name>
+  <summary>An accurate tuner for guitar, bass, double bass and violin</summary>
+  <summary xml:lang="es">Un afinador preciso para guitarra, bajo, contrabajo y violín</summary>
+  <developer id="io.github.nivaca">
+    <name>Nicolas Vaughan</name>
+  </developer>
+  <description>
+    <p>
+      py-tuner listens to the sound card, recognizes the note played, compares it with the
+      nearest string of the chosen tuning and shows how many cents it is off, with a needle
+      and a strobe. On a steady string it is within a few hundredths of a cent, and it finds
+      the pitch from all the harmonics of the string, with their inharmonicity, so it works even
+      when a small microphone hardly picks up the fundamental of a low string.
+    </p>
+    <p xml:lang="es">
+      py-tuner escucha la tarjeta de sonido, reconoce la nota que suena, la compara con la cuerda
+      más cercana de la afinación elegida y muestra cuántos cents se aparta, con una aguja y un
+      estroboscopio. En una cuerda estable se equivoca en unas centésimas de cent, y halla la
+      altura con todos los armónicos de la cuerda y su inarmonicidad, así que funciona aunque un
+      micrófono pequeño apenas recoja la fundamental de una cuerda grave.
+    </p>
+    <ul>
+      <li>A chromatic mode, and guitar, bass, double bass and violin with their usual tunings and others</li>
+      <li xml:lang="es">Un modo cromático, y guitarra, bajo, contrabajo y violín con sus afinaciones habituales y otras</li>
+      <li>A reference A from 380 to 480 Hz, in tenths of a hertz</li>
+      <li xml:lang="es">Un La de referencia de 380 a 480 Hz, en décimas de hercio</li>
+      <li>A needle, a strobe of three bands, or both</li>
+      <li xml:lang="es">Una aguja, un estroboscopio de tres bandas, o los dos</li>
+      <li>A window, a full-screen terminal interface and a command line, which can also measure a WAV recording note by note</li>
+      <li xml:lang="es">Una ventana, una interfaz de terminal a pantalla completa y una línea de órdenes, que también mide una grabación WAV nota por nota</li>
+      <li>Note names in English, Latin (Do Re Mi) or German, with sharps, flats or both</li>
+      <li xml:lang="es">Nombres de las notas en inglés, latinos (Do Re Mi) o alemanes, con sostenidos, bemoles o ambos</li>
+      <li>An interface in English or Spanish</li>
+      <li xml:lang="es">Una interfaz en inglés o en español</li>
+    </ul>
+  </description>
+  <launchable type="desktop-id">py-tuner.desktop</launchable>
+  <icon type="stock">py-tuner</icon>
+  <categories>
+    <category>AudioVideo</category>
+    <category>Audio</category>
+  </categories>
+  <keywords>
+    <keyword>tuner</keyword>
+    <keyword>guitar</keyword>
+    <keyword>violin</keyword>
+    <keyword>strobe</keyword>
+    <keyword xml:lang="es">afinador</keyword>
+    <keyword xml:lang="es">guitarra</keyword>
+    <keyword xml:lang="es">violín</keyword>
+  </keywords>
+  <url type="homepage">https://github.com/nivaca/py-tuner</url>
+  <url type="bugtracker">https://github.com/nivaca/py-tuner/issues</url>
+  <screenshots>
+    <screenshot type="default">
+      <caption>A guitar's G string, 0.4 cents sharp</caption>
+      <image>https://raw.githubusercontent.com/nivaca/py-tuner/main/docs/img/main_en.png</image>
+    </screenshot>
+  </screenshots>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="0.1.0" date="2026-11-27"/>
+  </releases>
+</component>

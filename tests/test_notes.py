@@ -67,6 +67,18 @@ def test_names():
     assert notes.full_name(11) == "B-1"
 
 
+def test_both_accidentals():
+    assert notes.full_name(66, accidentals="both") == "F" + notes.SHARP + "/G" + notes.FLAT + "4"
+    assert notes.full_name(66, accidentals="both", unicode=False) == "F#/Gb4"
+    assert notes.full_name(64, accidentals="both") == "E4"
+    assert notes.full_name(66, "latin", "both", unicode=False) == "Fa#/Solb4"
+    assert notes.full_name(66, "german", "both") == "Fis/Ges4"
+    assert notes.full_name(70, "german", "both") == "B4"
+    assert notes.parse("F#/Gb3") == notes.parse("F#3")
+    with pytest.raises(ValueError):
+        notes.parse("F#/Ab3")
+
+
 def test_names_round_trip():
     for system in ("english", "latin"):
         for acc in notes.ACCIDENTALS:

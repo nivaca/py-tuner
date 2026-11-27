@@ -35,6 +35,13 @@ def test_needle_row():
     assert tui.needle_row(None, 41)[1] is None
 
 
+def test_wrap_keys():
+    halves = ["q quit   0 A4 = 440", "i instrument   l language"]
+    assert tui.wrap_keys(halves, 200) == ["q quit   0 A4 = 440   i instrument   l language"]
+    assert tui.wrap_keys(halves, 30) == ["q quit   0 A4 = 440", "i instrument   l language"]
+    assert tui.wrap_keys(halves, 12) == ["q quit", "0 A4 = 440", "i instrument", "l language"]
+
+
 def test_strobe_row_moves_with_phase():
     a = tui.strobe_row(0.0, 16)
     b = tui.strobe_row(0.25, 16)
