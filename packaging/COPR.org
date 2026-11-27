@@ -19,7 +19,8 @@ to Copr.
 #+begin_src sh
 sudo dnf install copr-cli rpm-build rpm-sign rpmdevtools \
     python3-devel pyproject-rpm-macros python3-uv-build \
-    python3-pikepdf python3-pyside6 python3-pytest desktop-file-utils
+    python3-numpy python3-sounddevice python3-pyside6 python3-pytest \
+    desktop-file-utils appstream
 #+end_src
 =rpmbuild= checks the build dependencies of the spec (=%generate_buildrequires=
 and =BuildRequires=), so they must be installed here too.
@@ -66,18 +67,17 @@ folder; =build-rpm.sh= refuses to pack a private key it finds in the tree.)
 copr-cli create py-tuner \
   --chroot fedora-45-x86_64 \
   --chroot fedora-rawhide-x86_64 \
-  --description "Change the page labels of PDF documents (the numbering a viewer shows: i, ii, iii ... 1, 2, 3 ...); a command line and a window (Qt), in English or Spanish." \
+  --description "An accurate tuner for guitar, bass, double bass and violin, with a chromatic mode; a needle and a strobe, in a window (Qt), a terminal or a command line, in English or Spanish." \
   --instructions "sudo dnf copr enable nivaca/py-tuner && sudo dnf install py-tuner" \
   --repo-priority 99
 #+end_src
 - The package is =noarch=: one architecture per Fedora is enough.
 - Everything it needs is in Fedora: python3-uv-build (the build backend),
-  python3-pikepdf, python3-pyside6. The build makes the
+  python3-numpy, python3-sounddevice (with portaudio), python3-pyside6. The build makes the
   wheel with Fedora's Python macros (=%pyproject_wheel=) and runs the whole
   test suite in =%check=, without network, as =tools/test.py= does: each
   test file in a pytest of its own, as many at once as there are processors.
-- Python 3.15 or later is required: Fedora 45 has it; Fedora 44, with 3.14, is no
-  longer built.
+- Built for Fedora 45 and rawhide (the program needs Python 3.14 or later).
 
 * Releasing a new version
 1. Bump the version in =pyproject.toml= and =src/py_tuner/__init__.py=,
