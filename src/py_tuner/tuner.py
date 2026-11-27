@@ -24,6 +24,8 @@ from .stabilizer import Stabilizer
 
 # Cada cuánto se analiza (segundos): 40 lecturas por segundo.
 HOP = 0.025
+# The note or string compared against holds this far (semitones) past halfway to the next
+HOLD_PAST_HALF = 0.1
 # Semitones searched below the lowest string and above the highest, in an instrument's tuning
 STRING_BELOW = 5
 STRING_ABOVE = 7
@@ -77,6 +79,7 @@ class Tuner:
         self.settings = settings.validated()
         s = self.settings
         self.instrument = s.instrument_preset()
+        self._held: tuple[int, int | None] | None = None  # (nota, cuerda) con que se compara ahora
         self.tuning = self.instrument.tuning(s.tuning) if self.instrument.tunings else None
         self.string_midis = self.tuning.midis if self.tuning else ()
         if self.string_midis:
@@ -104,15 +107,31 @@ class Tuner:
         return self.detector.history
 
     def target(self, freq: float) -> tuple[int, int | None]:
-        """(nota MIDI, índice de la cuerda o None) contra la que se compara FREQ."""
+        """(nota MIDI, índice de la cuerda o None) contra la que se compara FREQ.
+
+        The note or string held is kept until FREQ is HOLD_PAST_HALF semitones past halfway to the next one (as
+        Strobie, by Davorin Šego, holds its note 10 cents past halfway): a string sitting near the boundary
+        between two doesn't flicker from one to the other.
+        """
         s = self.settings
-        if not self.string_midis:
-            return notes.nearest(freq, s.a4), None
-        if s.string is not None and s.string < len(self.string_midis):
-            return self.string_midis[s.string], s.string
         m = notes.midi_of(freq, s.a4)
-        best = min(range(len(self.string_midis)), key=lambda i: abs(self.string_midis[i] - m))
-        return self.string_midis[best], best
+        if not self.string_midis:
+            choices = {notes.nearest(freq, s.a4): None}
+            held = self._held if self._held and self._held[1] is None else None
+            if held:
+                choices[held[0]] = None
+        else:
+            if s.string is not None and s.string < len(self.string_midis):
+                return self.string_midis[s.string], s.string
+            choices = {self.string_midis[i]: i for i in range(len(self.string_midis))}
+            held = self._held if self._held and self._held[1] is not None else None
+        best = min(choices, key=lambda midi: abs(midi - m))
+        if held and best != held[0]:
+            gap = abs(best - held[0])
+            if abs(m - held[0]) <= gap / 2 + HOLD_PAST_HALF:
+                best = held[0]
+        self._held = (best, choices[best])
+        return best, choices[best]
 
     def analyze(self, samples: np.ndarray, now: float) -> Reading:
         """The reading after the newest SAMPLES (their end is at time NOW, in seconds)."""
@@ -122,6 +141,7 @@ class Tuner:
         est: Estimate = self.detector.analyze(samples, prefer)
         smooth = self.stabilizer.push(now, est.frequency, onset)
         if smooth is None:
+            self._held = None
             return Reading(raw=est.frequency, level=est.level, clarity=est.clarity, time=now)
         midi, string = self.target(smooth.frequency)
         target = notes.frequency(midi, self.settings.a4)

@@ -155,3 +155,24 @@ def test_a_pluck_is_an_onset():
     assert not tuner._onset(quiet, 0.5)
     assert not tuner._onset(quiet, 0.525)
     assert tuner._onset(loud, 0.55)
+
+
+def test_the_note_held_holds_past_halfway():
+    # Una nota a 55 cents sobre La sigue siendo La si ya lo era; desde el silencio es La sostenido.
+    tuner = Tuner(Settings(), RATE)
+    a = notes.frequency(notes.parse("A3"))
+    assert tuner.target(a)[0] == notes.parse("A3")
+    assert tuner.target(a * 2 ** (55 / 1200))[0] == notes.parse("A3")
+    assert tuner.target(a * 2 ** (65 / 1200))[0] == notes.parse("A#3")
+    tuner._held = None
+    assert tuner.target(a * 2 ** (55 / 1200))[0] == notes.parse("A#3")
+
+
+def test_the_string_held_holds_past_halfway():
+    tuner = Tuner(Settings(instrument="guitar"), RATE)
+    e2, a2 = notes.parse("E2"), notes.parse("A2")
+    assert tuner.target(notes.frequency(e2))[1] == 0
+    # halfway from E2 to A2 is 2.5 semitones up; 2.55 still holds E2, 2.7 goes to A2
+    assert tuner.target(notes.frequency(e2 + 2.55))[1] == 0
+    assert tuner.target(notes.frequency(e2 + 2.7))[1] == 1
+    assert tuner.target(notes.frequency(a2 - 2.55))[1] == 1
