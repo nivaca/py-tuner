@@ -38,6 +38,7 @@ class Needle(QWidget):
         self.shown = 0.0  # la posición dibujada, que sigue a la real con algo de inercia
         self.tolerance = 1.0
         self.scale = "linear"  # o "fine" (display.needle_fraction)
+        self.response = "normal"  # la inercia de la aguja (display.NEEDLE_LAG)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.setMinimumHeight(140)
 
@@ -47,10 +48,8 @@ class Needle(QWidget):
     def set_cents(self, cents: float | None, dt: float) -> None:
         self.cents = cents
         if cents is not None:
-            target = max(-display.NEEDLE_RANGE, min(display.NEEDLE_RANGE, cents))
-            # Seguimiento de primer orden, con constante de tiempo de 60 ms.
-            k = 1 - math.exp(-dt / 0.06) if dt > 0 else 1.0
-            self.shown += (target - self.shown) * k
+            # Seguimiento de primer orden, con la inercia de la respuesta.
+            self.shown = display.follow(self.shown, cents, dt, self.response)
         self.update()
 
     def paintEvent(self, event) -> None:  # noqa: ARG002

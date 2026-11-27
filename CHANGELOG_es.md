@@ -5,6 +5,17 @@ AppImage, el wheel y el código, están en
 [Codeberg](https://codeberg.org/nivaca/py-tuner/releases) y en
 [GitHub](https://github.com/nivaca/py-tuner/releases).
 
+## Sin publicar
+
+- Una respuesta estable para el contrabajo (`--response steady`, `r` en la
+  terminal, Respuesta en la configuración): se deja fuera el primer medio
+  segundo de cada pulsación mientras la nota sigue en pantalla, la lectura
+  promedia al menos 1,5 s, la aguja se mueve más despacio y, con las
+  cuerdas de un instrumento, se sigue leyendo la cola débil. En cuerdas
+  sintéticas de contrabajo, la lectura se movió 2 cents dentro de una
+  pulsación en lugar de 11, y 1,2 en lugar de 3,5 en una nota con arco. La
+  respuesta normal no cambia.
+
 ## 0.3.0 — 2026-11-27
 
 El ruido del cuarto, un espectro y una aguja más fina.

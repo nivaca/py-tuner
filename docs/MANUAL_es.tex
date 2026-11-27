@@ -552,6 +552,8 @@ lo mismo en la terminal. En la línea de órdenes:
   cambia): más es más estable, menos sigue más rápido.
 \item[Cuadro de análisis] la longitud de cada cuadro, en períodos de la
   nota (16 si no se cambia): más es más preciso, menos reacciona más rápido.
+\item[Respuesta] normal (si no se cambia) o estable, para el contrabajo
+  (sección~\ref{sec:how}).
 \item[Estroboscopio] vernier o armónicos (sección~\ref{sec:strobe}).
 \item[Escala de la aguja] lineal o fina (sección~\ref{sec:strobe}).
 \item[Mostrar el espectro] el espectro y sus picos
@@ -600,6 +602,7 @@ Tecla & Lo que hace\\
 \key{c} & Subir la cejilla un traste (tras el 7.º, se quita) \\
 \key{f} & Mostrar u ocultar el espectro, con sus picos nombrados \\
 \key{g} & La escala de la aguja: lineal, o fina (el centro abierto) \\
+\key{r} & La respuesta: normal, o estable (para el contrabajo) \\
 \key{p} & Tocar el tono de referencia: la cuerda fija, o la nota que se muestra, o el La 4 \\
 \key{l} & El idioma siguiente de la interfaz \\
 \bottomrule
@@ -661,6 +664,7 @@ Opción & Lo que hace\\
 \texttt{-{}-min-level DBFS} & ignorar los sonidos más débiles que esto\\
 \texttt{-{}-smoothing SEGUNDOS} & los segundos que promedia la lectura\\
 \texttt{-{}-periods N} & los períodos de la nota en cada cuadro de análisis\\
+\texttt{-{}-response} & \texttt{normal} o \texttt{steady}: normal o estable (para el contrabajo)\\
 \texttt{-{}-display} & \texttt{both}, \texttt{needle} o \texttt{strobe}\\
 \texttt{-{}-offset NOTA=CENTS} & afinar un nombre de nota fuera del temperamento igual, en todas las octavas\\
 \texttt{-{}-transpose N} & los nombres para un instrumento transpositor\\
@@ -711,6 +715,22 @@ o la quinta de la que suena. Y con las cuerdas de un instrumento solo se
 buscan las notas cercanas a ellas. En once grabaciones de cuerdas reales de
 guitarra, estas reglas dejaron una nota falsa donde había quince.
 
+\index{contrabajo}\index{respuesta}%
+La altura de una cuerda grave no está quieta. La cuerda pulsada de un
+contrabajo se estira con su propio vaivén, así que empieza alta (varios
+cents, si se pulsa fuerte) y baja mientras se apaga; el arco también la
+mueve un poco. La respuesta normal muestra todo eso, y la aguja vaga con
+ello. La respuesta estable (\menu{Respuesta} en la configuración, \key{r}
+en la terminal, \texttt{-{}-response steady}) deja fuera el primer medio
+segundo de cada pulsación, mientras la nota que sonaba sigue en pantalla;
+promedia al menos un segundo y medio (más, si el \menu{Suavizado} lo
+pide); mueve la aguja más despacio, y, con las cuerdas de un instrumento,
+sigue leyendo la cola débil de la nota mientras las otras cuerdas resuenan
+con ella. Una nota que surge del silencio sin pulsación, con arco por
+ejemplo, espera entonces 0,3~s antes de mostrarse. En cuerdas sintéticas de
+contrabajo, pulsadas y con arco, la lectura se movió entre un quinto y un
+tercio de lo que se movía.
+
 \index{consejos}%
 Algunas costumbres ayudan:
 
@@ -720,7 +740,8 @@ Algunas costumbres ayudan:
 \item Acercar el micrófono al instrumento, lejos de ventiladores y otros
   ruidos; si el cuarto es ruidoso, subir \menu{Ignorar por debajo de}.
 \item Con las cuerdas graves, darle a la lectura medio segundo más: el
-  cuadro de un Mi grave del bajo dura casi 0,4~s.
+  cuadro de un Mi grave del bajo dura casi 0,4~s. En un contrabajo, usar la
+  respuesta estable.
 \item Para afinar fino, mirar la banda de abajo del estroboscopio.
 \end{itemize}
 

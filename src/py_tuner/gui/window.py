@@ -28,6 +28,7 @@ from .widgets import GREEN, Level, Needle, Spectrum, Strobe, Trace, deviation_co
 
 # Los textos de las listas, en inglés (las claves de su traducción)
 SCALE_LABELS = {"linear": "Linear", "fine": "Fine (the centre spread out)"}
+RESPONSE_LABELS = {"normal": "Normal", "steady": "Steady (double bass)"}
 STROBE_LABELS = {"vernier": "Vernier (one partial, three speeds)", "harmonics": "Harmonics (partials 1, 2, 3)"}
 NAME_LABELS = {"english": "English (C D E)", "latin": "Latin (Do Re Mi)", "german": "German (C D E … H)"}
 DISPLAY_LABELS = {"both": "Needle and strobe", "needle": "Needle", "strobe": "Strobe"}
@@ -107,6 +108,15 @@ class SettingsDialog(QDialog):
         self.periods.setToolTip(tr("Length of each analysis frame, in periods of the note: more is more "
                                    "precise, fewer reacts faster."))
         form.addRow(tr("Analysis frame"), self.periods)
+        self.response = QComboBox()
+        for key in settings_mod.RESPONSES:
+            self.response.addItem(tr(RESPONSE_LABELS[key]), key)
+        self.response.setCurrentIndex(self.response.findData(s.response))
+        self.response.setToolTip(tr("Steady: for the double bass and other low strings whose pitch moves as "
+                                    "they sound. The attack of each pluck is left out, the reading averages "
+                                    "at least 1.5 s, the quiet tail of the note is still read (with an "
+                                    "instrument's strings), and the needle moves more slowly."))
+        form.addRow(tr("Response"), self.response)
 
         self.strobe_mode = QComboBox()
         for key in settings_mod.STROBE_MODES:
@@ -174,7 +184,8 @@ class SettingsDialog(QDialog):
                        display=self.view.currentData(), language=self.language.currentData(),
                        tolerance=self.tolerance.value(),
                        min_level=self.min_level.value(), smoothing=self.smoothing.value(),
-                       periods=self.periods.value(), strobe_mode=self.strobe_mode.currentData(),
+                       periods=self.periods.value(), response=self.response.currentData(),
+                       strobe_mode=self.strobe_mode.currentData(),
                        show_trace=self.trace.isChecked(), show_spectrum=self.spectrum.isChecked(),
                        needle_scale=self.needle_scale.currentData(), learn_noise=self.learn_noise.isChecked(),
                        transpose=self.transpose.value(),
@@ -351,6 +362,7 @@ class Window(QMainWindow):
         self.fill_strings(s)
         self.needle.tolerance = self.strobe.tolerance = s.tolerance
         self.needle.scale = s.needle_scale
+        self.needle.response = s.response
         self.level.gate = s.min_level
         self.needle.setVisible(s.display in ("both", "needle"))
         self.strobe.setVisible(s.display in ("both", "strobe"))

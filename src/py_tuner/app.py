@@ -80,6 +80,9 @@ def parser() -> argparse.ArgumentParser:
                    help=tr("seconds the reading averages (default 0.5)"))
     g.add_argument("--periods", type=float, metavar="N",
                    help=tr("periods per analysis frame: more is steadier, fewer is faster (default 16)"))
+    g.add_argument("--response", choices=settings_mod.RESPONSES,
+                   help=tr("normal, or steady: the attack of each pluck left out, a longer average and a slower "
+                           "needle, for the double bass (default normal)"))
     g = p.add_argument_group(tr("output"))
     g.add_argument("--offset", action="append", metavar=tr("NOTE=CENTS"),
                    help=tr("tune a note name this many cents off equal temperament, in every octave (e.g. B=-2; "
@@ -169,7 +172,7 @@ def apply(args: argparse.Namespace, base: Settings) -> Settings:
             raise ValueError(tr("--{option} must be from {low} to {high}", option=name, low=low, high=high))
     for name in ("tolerance", "device", "rate", "min_level", "smoothing", "periods", "display", "language",
                  "strobe_mode", "show_trace", "transpose", "capo", "show_spectrum", "needle_scale",
-                 "learn_noise"):
+                 "learn_noise", "response"):
         value = getattr(args, name)
         if value is not None:
             setattr(s, name, value)

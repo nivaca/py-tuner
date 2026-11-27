@@ -22,7 +22,7 @@ from .tuner import LiveTuner, Reading
 # La ayuda de las teclas, en dos mitades (en inglés: las claves de su traducción)
 KEYS = ("q quit   ←→ A4 ±0.1 Hz   ↑↓ A4 ±1 Hz   0 A4 = 440",
         "i instrument   t tuning   s string   c capo   n names   b accidentals   v view   m strobe   h history   "
-        "f spectrum   g scale   p tone   l language")
+        "f spectrum   g scale   r response   p tone   l language")
 
 # Las teclas, una por fila, para la página de manual y el manual (en inglés: las claves de su traducción)
 KEY_ROWS = (
@@ -41,6 +41,7 @@ KEY_ROWS = (
     ("c", "Move the capo one fret up (after the 7th, off)"),
     ("f", "Show or hide the spectrum, with its peaks named"),
     ("g", "The needle's scale: linear, or fine (the centre spread out)"),
+    ("r", "The response: normal, or steady (for the double bass)"),
     ("p", "Play the reference tone: the locked string, or the note shown, or A4"),
     ("l", "The next language of the interface"),
 )
@@ -171,6 +172,7 @@ class App:
         self.strobe = display.Strobe()
         self.follower = display.Follower()
         self.history: list[float | None] = []  # la desviación, diez veces por segundo
+        self.needle: float | None = None  # where the needle is drawn, which follows the reading with some lag
         self.sampled = 0.0
         self.message = ""
         self.last = time.monotonic()
@@ -255,6 +257,9 @@ class App:
         elif ch == ord("g"):
             scales = settings_mod.NEEDLE_SCALES
             self.change(needle_scale=scales[(scales.index(s.needle_scale) + 1) % len(scales)])
+        elif ch == ord("r"):
+            kinds = settings_mod.RESPONSES
+            self.change(response=kinds[(kinds.index(s.response) + 1) % len(kinds)])
         elif ch == ord("p"):
             self.play_tone()
         return True
@@ -298,6 +303,12 @@ class App:
         # las bandas del estroboscopio de verdad (strobe.py), si las hay; si no, el modelo
         self.follower.update(r.strobe if r.active else (), now)
         phases = self.follower.phases(now) or [(p, 1.0) for p in model]
+        # la aguja sigue a la lectura con la inercia de la respuesta; aparece donde está la nota, sin barrer
+        if r.active:
+            start = r.cents if self.needle is None else self.needle
+            self.needle = display.follow(start, r.cents, now - self.last, s.response)
+        else:
+            self.needle = None
         self.last = now
         scr = self.screen
         scr.erase()
@@ -325,7 +336,7 @@ class App:
         width = min(w - 4, 81)
         left = (w - width) // 2
         if s.display in ("both", "needle"):
-            scale, pos = needle_row(r.cents if r.active else None, width, s.needle_scale)
+            scale, pos = needle_row(self.needle, width, s.needle_scale)
             self.put(y, left - 1, "-50", curses.A_DIM)
             self.put(y, left + width - 2, "+50", curses.A_DIM)
             self.put(y + 1, left, scale, curses.A_DIM)

@@ -35,6 +35,17 @@ STRING_ABOVE = 7
 # (as Strobie, by Davorin Šego, finds its onsets: 1.5 over 0.3 s)
 ONSET_RATIO = 1.5
 ONSET_ENVELOPE_S = 0.3
+# La respuesta estable, para el contrabajo: una cuerda grave pulsada empieza alta (tanto más cuanto más fuerte se
+# pulsa) y baja unos cents mientras se asienta, y el arco la mueve un poco. Se deja fuera el ataque de cada
+# pulsación (STEADY_ATTACK segundos desde la primera señal de ataque), se promedia al menos STEADY_WINDOW segundos,
+# y se sigue leyendo la cola de la nota mientras las otras cuerdas resuenan con ella (que le quitan claridad). Esto
+# último, solo con las cuerdas de un instrumento: en el modo cromático, que busca hasta bajo el La más grave, la
+# claridad menor deja pasar el submúltiplo común de dos cuerdas que resuenan (Re2/3 y Sol2/4, cerca de 24,5 Hz).
+STEADY_ATTACK = 0.5
+STEADY_WINDOW = 1.5
+STEADY_CLARITY = 0.6
+# The clarity a frame needs in the normal response (pitch.Detector's own)
+NORMAL_CLARITY = 0.75
 
 
 @dataclass(frozen=True)
@@ -101,13 +112,16 @@ class Tuner:
             fmax = notes.frequency(self.instrument.highest, s.a4) * 1.1
         fmax = min(fmax, 0.4 * self.rate)
         old = getattr(self, "detector", None)
+        steady = s.response == "steady"
+        clarity = STEADY_CLARITY if steady and self.string_midis else NORMAL_CLARITY
         self.detector = Detector(rate=self.rate, fmin=fmin, fmax=fmax, periods=s.periods,
-                                 min_level=s.min_level)
+                                 min_level=s.min_level, min_clarity=clarity)
         if old is None or (old.fmin, old.fmax, old.periods) != (fmin, fmax, s.periods):
-            self.stabilizer = Stabilizer(window=s.smoothing)
+            self.stabilizer = Stabilizer()
         if not hasattr(self, "noise"):
             self.noise = NoiseFloor()
-        self.stabilizer.window = s.smoothing
+        self.stabilizer.window = max(s.smoothing, STEADY_WINDOW) if steady else s.smoothing
+        self.stabilizer.attack = STEADY_ATTACK if steady else 0.0
 
     @property
     def history(self) -> int:

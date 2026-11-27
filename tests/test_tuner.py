@@ -10,7 +10,7 @@ from conftest import RATE, string
 
 from py_tuner import audio, notes
 from py_tuner.settings import Settings
-from py_tuner.tuner import LiveTuner, Tuner
+from py_tuner.tuner import LiveTuner, Tuner, STEADY_ATTACK, STEADY_CLARITY, STEADY_WINDOW
 
 
 def detuned(midi: int, c: float, a4: float = 440.0) -> float:
@@ -233,3 +233,43 @@ def test_readings_say_how_much_sound_they_span():
     r = [x for x in tuner.analyze_all(string(220.0, seconds=1.0)) if x.active]
     assert r[0].span == 0.0
     assert 0.4 < r[-1].span <= 0.5 + 1e-9  # (la ventana de 0,5 s)
+
+
+def gliding_pluck(f1: float, glide: float, seconds: float = 3.0, lead: float = 0.5) -> np.ndarray:
+    """A low plucked string, after LEAD seconds of silence, that starts GLIDE cents sharp and settles on F1 as it
+    fades (a pluck stretches the string: the louder, the sharper)."""
+    t = np.arange(int(seconds * RATE)) / RATE
+    env = np.exp(-t / 1.5)
+    phase = 2 * np.pi * np.cumsum(f1 * 2 ** (glide * env ** 2 / 1200)) / RATE
+    x = sum(env * np.exp(-0.2 * n * t) * np.sin(n * phase) / n for n in range(1, 9))
+    x *= np.minimum(1.0, t / 0.002)
+    rng = np.random.default_rng(0)
+    return np.concatenate((np.zeros(int(lead * RATE)), 0.5 * x / np.max(np.abs(x)))) + rng.normal(0, 1e-4, int(
+        (seconds + lead) * RATE))
+
+
+def test_steady_response_configures_the_analysis():
+    t = Tuner(Settings(instrument="double-bass", response="steady"), RATE)
+    assert (t.stabilizer.window, t.stabilizer.attack, t.detector.min_clarity) == \
+           (STEADY_WINDOW, STEADY_ATTACK, STEADY_CLARITY)
+    t.configure(Settings(instrument="double-bass", response="steady", smoothing=3.0))
+    assert t.stabilizer.window == 3.0  # (un promedio más largo que el suyo se respeta)
+    t.configure(Settings(instrument="double-bass"))
+    assert (t.stabilizer.window, t.stabilizer.attack, t.detector.min_clarity) == (0.5, 0.0, 0.75)
+    # en el modo cromático, la claridad de siempre
+    assert Tuner(Settings(response="steady"), RATE).detector.min_clarity == 0.75
+
+
+def test_steady_response_holds_a_settling_double_bass_string():
+    a1 = notes.frequency(notes.parse("A1"))
+    x = gliding_pluck(a1, glide=10.0)
+    shown = {}
+    for response in ("normal", "steady"):
+        rs = Tuner(Settings(instrument="double-bass", response=response), RATE).analyze_all(x)
+        shown[response] = [(r.time, r.cents) for r in rs if r.active]
+    normal = np.array([c for _, c in shown["normal"]])
+    steady = np.array([c for _, c in shown["steady"]])
+    # nothing during the attack, then far less movement while the string settles
+    assert shown["steady"][0][0] >= 0.5 + STEADY_ATTACK
+    assert np.ptp(steady) < 0.5 * np.ptp(normal)
+    assert abs(steady[-1]) < 1.0

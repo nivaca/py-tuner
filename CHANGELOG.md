@@ -5,6 +5,16 @@ the wheel and the source, are on
 [Codeberg](https://codeberg.org/nivaca/py-tuner/releases) and
 [GitHub](https://github.com/nivaca/py-tuner/releases).
 
+## Unreleased
+
+- A steady response for the double bass (`--response steady`, `r` in the
+  terminal, Response in the settings): the first half second of each
+  pluck is left out while the note stays shown, the reading averages at
+  least 1.5 s, the needle moves more slowly, and with an instrument's
+  strings the faint tail is still read. On synthetic double bass strings
+  the reading moved 2 cents within a pluck instead of 11, and 1.2 instead
+  of 3.5 on a bowed note. The normal response is unchanged.
+
 ## 0.3.0 — 2026-11-27
 
 The room's noise, a spectrum, and a finer needle.

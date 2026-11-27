@@ -41,6 +41,9 @@ Lo que hace
   sus picos más claros nombrados.
 - La aguja en una escala lineal o en una fina, donde los últimos cents se
   abren.
+- Una respuesta estable para el contrabajo, cuya altura se mueve mientras
+  suena: sin el ataque de cada pulsación, con un promedio más largo y una
+  aguja más lenta.
 - Se ignoran los sonidos que no sobresalen 10 dB del ruido del cuarto,
   aprendido mientras no suena nada.
 - Desviaciones de unos cents para cualquier nota, los nombres transpuestos
@@ -156,8 +159,9 @@ La configuración se guarda en `~/.config/py-tuner/settings.json` (o bajo
 el acto. Además de lo dicho: `tolerance` (los cents dentro de los cuales una
 nota está afinada, 1 por omisión), `min_level` (los sonidos más débiles que
 esto, en dBFS, se ignoran), `smoothing` (los segundos que promedia la
-lectura) y `periods` (la longitud de cada cuadro de análisis, en períodos de
-la nota: más es más estable, menos reacciona más rápido). Las afinaciones
+lectura), `periods` (la longitud de cada cuadro de análisis, en períodos de
+la nota: más es más estable, menos reacciona más rápido) y `response`
+(`normal`, o `steady`, estable, para el contrabajo). Las afinaciones
 propias van en `custom_tunings`:
 
     "custom_tunings": [

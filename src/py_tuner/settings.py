@@ -22,6 +22,8 @@ NEEDLE_SCALES = ("linear", "fine")
 MAX_OFFSET = 50.0
 # (los de strobe.MODES: vernier, la parcial más clara a 1, 2 y 4 veces; harmonics, cada banda la suya)
 STROBE_MODES = ("vernier", "harmonics")
+# (los de tuner.RESPONSES: normal, o estable, para el contrabajo y las cuerdas graves que suenan movidas)
+RESPONSES = ("normal", "steady")
 
 
 @dataclass
@@ -37,6 +39,9 @@ class Settings:
     what does not stand 10 dB over the room's noise, learned while nothing
     plays. smoothing: seconds the
     reading averages. periods: periods of the note in each fine frame.
+    response: "normal" or "steady" (the attack of each pluck left out, a
+    longer average, the quiet tail still read, a slower needle: for the
+    double bass, whose pitch moves as it sounds).
     tolerance: cents within which a note counts as in tune.
     display: "both", "needle" or "strobe". strobe_mode: "vernier" (three
     speeds of the clearest partial) or "harmonics" (partials 1, 2 and 3).
@@ -63,6 +68,7 @@ class Settings:
     learn_noise: bool = True
     smoothing: float = 0.5
     periods: float = 16.0
+    response: str = "normal"
     tolerance: float = 1.0
     display: str = "both"
     strobe_mode: str = "vernier"
@@ -93,6 +99,7 @@ class Settings:
             "learn_noise": lambda v: isinstance(v, bool),
             "smoothing": lambda v: 0.05 <= float(v) <= 5,
             "periods": lambda v: 4 <= float(v) <= 64,
+            "response": lambda v: v in RESPONSES,
             "tolerance": lambda v: 0.1 <= float(v) <= 50,
             "display": lambda v: v in DISPLAYS,
             "strobe_mode": lambda v: v in STROBE_MODES,

@@ -543,6 +543,8 @@ command line:
   changed): longer is steadier, shorter follows faster.
 \item[Analysis frame] the length of each frame, in periods of the note (16
   unless changed): more is more precise, fewer reacts faster.
+\item[Response] normal (unless changed) or steady, for the double bass
+  (section~\ref{sec:how}).
 \item[Strobe] vernier or harmonics (section~\ref{sec:strobe}).
 \item[Needle scale] linear or fine (section~\ref{sec:strobe}).
 \item[Show the spectrum] the spectrum and its peaks
@@ -591,6 +593,7 @@ Key & What it does\\
 \key{c} & Move the capo one fret up (after the 7th, off) \\
 \key{f} & Show or hide the spectrum, with its peaks named \\
 \key{g} & The needle's scale: linear, or fine (the centre spread out) \\
+\key{r} & The response: normal, or steady (for the double bass) \\
 \key{p} & Play the reference tone: the locked string, or the note shown, or A4 \\
 \key{l} & The next language of the interface \\
 \bottomrule
@@ -652,6 +655,7 @@ Option & What it does\\
 \texttt{-{}-min-level DBFS} & ignore sounds quieter than this\\
 \texttt{-{}-smoothing SECONDS} & seconds the reading averages\\
 \texttt{-{}-periods N} & periods of the note in each analysis frame\\
+\texttt{-{}-response} & \texttt{normal} or \texttt{steady} (for the double bass)\\
 \texttt{-{}-display} & \texttt{both}, \texttt{needle} or \texttt{strobe}\\
 \texttt{-{}-offset NOTE=CENTS} & tune a note name off equal temperament, in every octave\\
 \texttt{-{}-transpose N} & the names for a transposing instrument\\
@@ -702,6 +706,21 @@ sounding. And with an instrument's strings, only the notes near them are
 looked for. On eleven recordings of real guitar strings, these rules left
 one false note where there were fifteen.
 
+\index{double bass}\index{response}%
+The pitch of a low string is not still. A plucked double bass string is
+stretched by its own swing, so it starts sharp, several cents if it is
+plucked hard, and goes down as it fades; the bow moves it a little too.
+The normal response shows all of this, and the needle wanders with it.
+The steady response (\menu{Response} in the settings, \key{r} in the
+terminal, \texttt{-{}-response steady}) leaves out the first half second
+of each pluck, while the note that was sounding stays on the screen;
+averages at least a second and a half (more, if \menu{Smoothing} says
+more); moves the needle more slowly; and, with an instrument's strings,
+keeps reading the faint tail of the note while the other strings ring
+with it. A note that rises from silence without a pluck, a bowed one for
+instance, then waits 0.3~s before it is shown. On synthetic double bass
+strings, plucked and bowed, the reading moved a fifth to a third as much.
+
 \index{tips}%
 A few habits help:
 
@@ -711,7 +730,8 @@ A few habits help:
 \item Bring the microphone near the instrument, away from fans and other
   noise; if the room is noisy, raise \menu{Ignore below}.
 \item For low strings, give the reading half a second more: the frame of a
-  low E of a bass lasts almost 0.4~s.
+  low E of a bass lasts almost 0.4~s. On a double bass, use the steady
+  response.
 \item To tune finely, watch the bottom band of the strobe.
 \end{itemize}
 

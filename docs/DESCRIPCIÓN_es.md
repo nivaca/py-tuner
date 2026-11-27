@@ -18,7 +18,7 @@ La decisión principal fue separar la estimación en dos pasos, como FMIT, pero 
 
 ## Implementación
 
-Está escrito en Python 3.14, con numpy para el análisis, sounddevice (y PortAudio) para la tarjeta de sonido, PySide6 para la ventana y el módulo curses de la biblioteca estándar para la terminal. Tiene 49 archivos de Python, unas 9100 líneas, de las cuales unas 2450 son pruebas; las herramientas de la carpeta `tools` hacen los íconos, las páginas de manual, las imágenes de los manuales, la AppImage, las firmas y el depósito en Zenodo, y miden el afinador con grabaciones reales (`tools/evaluate.py`).
+Está escrito en Python 3.14, con numpy para el análisis, sounddevice (y PortAudio) para la tarjeta de sonido, PySide6 para la ventana y curses, de la biblioteca estándar, para la terminal. Tiene 49 archivos de Python, unas 9300 líneas, de las cuales unas 2600 son pruebas; las de `tools` hacen los íconos, las páginas de manual, las imágenes de los manuales, la AppImage, las firmas y el depósito en Zenodo, y miden el afinador con grabaciones reales (`tools/evaluate.py`).
 
 ### El paso grueso
 
@@ -30,19 +30,21 @@ Trabaja sobre dieciséis períodos de la nota, con una ventana de Blackman-Harri
 
 ### La octava
 
-Los candidatos alrededor del período (un tercio, la mitad, el doble, el triple) se puntúan por lo que sobresalen sus armónicos del fondo del espectro, como la pila de armónicos de Strobie, menos lo que hay en sus medios armónicos, como los pesos negativos del reconocedor de teclas de Entropy Piano Tuner. Uno más agudo que el período solo vale si el sonido también se repite a su retardo, y la nota que ya suena lleva ventaja mientras se apaga, como en Tuneo. Bajo el margen, un filtro paso alto sin desfase quita la continua y el retumbo; con cuerdas, el margen va de una cuarta bajo la más grave a una quinta sobre la más aguda.
+Los candidatos alrededor del período (un tercio, la mitad, el doble, el triple) se puntúan por lo que sobresalen sus armónicos del fondo del espectro, como la pila de armónicos de Strobie, menos lo que hay en sus medios armónicos, como los pesos negativos del reconocedor de teclas de Entropy Piano Tuner. Uno más agudo que el período solo vale si el sonido también se repite a su retardo, y la nota que ya suena lleva ventaja mientras se apaga, como en Tuneo. Un filtro paso alto sin desfase quita la continua y el retumbo; con cuerdas, se busca de una cuarta bajo la más grave a una quinta sobre la más aguda.
 
 ### La lectura estable
 
-Es la media recortada, la mitad central, del último medio segundo de estimaciones. Solo cuenta lo que sobresale 10 dB del ruido del cuarto, aprendido mientras no suena nada (como en Strobie). Un ataque es el nivel 1,5 veces su envolvente: tras uno, una nota nueva se acepta en dos cuadros; sin él, debe durar 0,3 s seguidos, o 0,6 s si es armónico o subarmónico de la que suena o de una que acaba de callar. La nota o la cuerda elegida se mantiene hasta 10 cents pasada la mitad hacia la siguiente. La nota se apaga tras 0,4 s sin tono.
+Es la media recortada (la mitad central) del último medio segundo de estimaciones que sobresalen 10 dB del ruido aprendido. Un ataque es el nivel 1,5 veces su envolvente: tras uno, una nota nueva se acepta en dos cuadros; sin él, debe durar 0,3 s, o 0,6 s si es armónico o subarmónico de la que suena. La cuerda elegida se mantiene hasta 10 cents pasada la mitad hacia la siguiente.
+
+La respuesta estable, para el contrabajo, cuya cuerda empieza alta y baja al apagarse, deja fuera el primer medio segundo de cada pulsación (contado desde su primer ataque), promedia al menos 1,5 s, frena la aguja (0,3 s, no 0,06) y, con cuerdas, lee la cola con claridad 0,6; una nota surgida del silencio sin ataque espera 0,3 s.
 
 ### El estroboscopio
 
-Cada banda demodula el sonido en una parcial del objetivo, como el estroboscopio de Entropy Piano Tuner, con dos promedios en cascada; su fase mueve las franjas, una por segundo por cada cent, y se apagan si la parcial no sobresale del ruido, como en Strobie. Las parciales se buscan donde las pone la inarmonicidad medida. Se completan con la traza de la desviación, el espectro con sus picos nombrados (de Strobie), la escala fina de la aguja (la de Tuneo), las desviaciones por nota, la transposición, la cejilla y el tono de referencia, como el de pianito.
+Cada banda demodula el sonido en una parcial del objetivo, como el estroboscopio de Entropy Piano Tuner, con dos promedios en cascada; su fase mueve las franjas, una por segundo por cada cent, y se apagan si la parcial no sobresale del ruido, como en Strobie. Las parciales se buscan donde las pone la inarmonicidad medida. Lo completan la traza de la desviación, el espectro con sus picos nombrados (de Strobie), la escala fina de la aguja (de Tuneo) y el tono de referencia (de pianito).
 
 ### Idiomas
 
-Cada texto de la interfaz pasa por `tr()`, y la prueba de la interfaz comprueba que el archivo en español los tenga todos, y nada más. En español, las cifras llevan coma decimal en las tres interfaces.
+Cada texto de la interfaz pasa por `tr()`, y una prueba comprueba que el archivo en español los tenga todos, y nada más. En español, las cifras llevan coma decimal.
 
 ### Empaquetado
 
@@ -50,13 +52,15 @@ El RPM se construye y se prueba con los paquetes de Fedora y se firma con la cla
 
 ## Validación
 
-Las 218 pruebas corren a la vez con `tools/test.py`, cada archivo en un proceso propio, en unos ocho segundos. Las del detector usan cuerdas sintéticas de frecuencia conocida, con armónicos, inarmonicidad, decaimiento y ruido: las cuerdas al aire de los cuatro instrumentos, desde el Si 0 del bajo de cinco cuerdas hasta el Mi 5 del violín, deben dar en cada cuadro menos de una décima de cent de error con ruido 40 dB por debajo; con ruido a 20 dB, la media de los errores debe quedarse junto a cero. También se prueban una fundamental débil o ausente, una cuerda muy inarmónica, un segundo armónico más fuerte que la fundamental, una cuerda de armónicos impares débiles (que el período solo lee una octava arriba), el silencio y el ruido puro, que no deben dar nota. Otras comprueban las esperas de una nota nueva con ataque y sin él, que las bandas del estroboscopio avancen una, dos y cuatro franjas por segundo por cada cent y se queden quietas en una cuerda rígida afinada, las desviaciones por nota, la cejilla, la transposición, el tono, el ruido aprendido (que no aprende una nota y deja pasar un tono 25 dB sobre el ruido pero no uno 5 dB sobre él), los picos del espectro y las escalas de la aguja.
+Las 228 pruebas corren a la vez con `tools/test.py`, cada archivo en un proceso propio, en unos ocho segundos. Las del detector usan cuerdas sintéticas de frecuencia conocida, con armónicos, inarmonicidad, decaimiento y ruido: las cuerdas al aire de los cuatro instrumentos, desde el Si 0 del bajo de cinco cuerdas hasta el Mi 5 del violín, deben dar en cada cuadro menos de una décima de cent de error con ruido 40 dB por debajo; con ruido a 20 dB, la media de los errores debe quedarse junto a cero. También se prueban una fundamental débil o ausente, una cuerda muy inarmónica, un segundo armónico más fuerte que la fundamental, una cuerda de armónicos impares débiles (que el período solo lee una octava arriba), el silencio y el ruido puro, que no deben dar nota. Otras comprueban las esperas de una nota nueva con ataque y sin él, que las bandas del estroboscopio avancen una, dos y cuatro franjas por segundo por cada cent y se queden quietas en una cuerda rígida afinada, las desviaciones por nota, la cejilla, la transposición, el tono, el ruido aprendido (que no aprende una nota y deja pasar un tono 25 dB sobre el ruido pero no uno 5 dB sobre él), los picos del espectro, las escalas de la aguja y la respuesta estable (el ataque fuera, la cuerda nueva tomada enseguida, una cuerda de contrabajo que se asienta movida menos de la mitad que con la normal).
 
 Las demás comprueban los nombres y frecuencias de las notas y las afinaciones, la respuesta del estabilizador a valores sueltos y a notas nuevas, la configuración (incluido un archivo dañado), los WAV de 8 a 32 bits, las opciones de la línea de órdenes y el informe de una grabación completa. La interfaz de terminal se prueba corriendo de verdad en una pseudoterminal, donde la prueba pulsa teclas y lee la pantalla; la ventana se dibuja fuera de la pantalla. Otras comprueban que el archivo en español esté completo, que las versiones del programa, del spec y de los metadatos coincidan, que las páginas de manual estén al día, que la AppImage use su propia PortAudio, y la firma de una versión y su depósito en Zenodo, con una clave hecha para la prueba.
 
 Además, la ventana y la terminal se revisaron a ojo mientras sonaba un WAV de seis cuerdas de guitarra desafinadas en cantidades conocidas (+3, -7,5, 0, +0,4, -1,2 y +12 cents), que el programa midió con errores de una centésima de cent, y la línea de órdenes se probó con el micrófono del computador. La AppImage se corrió en el mismo equipo, y halló los dispositivos de sonido con su propia PortAudio.
 
 Con once grabaciones reales de cuerdas de guitarra (las de Tuneo, que no pueden distribuirse con el programa), `tools/evaluate.py` cuenta las notas falsas y, como Strobie, mide la exactitud con la misma grabación declarada a otra frecuencia de muestreo, que suena tantos cents desplazada como se quiera. Las notas falsas bajaron de 15 (9,1 s) a ninguna en modo guitarra y de 26 a 1 en modo cromático; el 95 % de las lecturas desplazadas coincide a 0,15 cents.
+
+Para la respuesta estable se sintetizaron cuatro pulsaciones de cada cuerda al aire del contrabajo, con el golpe, el batido de las dos polarizaciones, las otras cuerdas resonando y el ruido de un cuarto. Dentro de cada pulsación la lectura se movió 11 cents de punta a punta con la respuesta normal y 2 con la estable, y duró lo mismo; en una nota con arco, 1,2 cents en lugar de 3,5. Con las grabaciones de guitarra no dio ninguna nota falsa.
 
 ## Plataforma
 

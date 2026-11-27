@@ -344,8 +344,8 @@
     <tr>gui (la ventana, por omisión), tui (la terminal a pantalla completa), cli (una línea de texto), tone (tocar una nota de referencia), devices (las entradas), instruments (las afinaciones)</tr>
   </text>
   <text>
-    <en>i instrument   t tuning   s string   c capo   n names   b accidentals   v view   m strobe   h history   f spectrum   g scale   p tone   l language</en>
-    <tr>i instrumento   t afinación   s cuerda   c cejilla   n nombres   b alteraciones   v vista   m estroboscopio   h historia   f espectro   g escala   p tono   l idioma</tr>
+    <en>i instrument   t tuning   s string   c capo   n names   b accidentals   v view   m strobe   h history   f spectrum   g scale   r response   p tone   l language</en>
+    <tr>i instrumento   t afinación   s cuerda   c cejilla   n nombres   b alteraciones   v vista   m estroboscopio   h historia   f espectro   g escala   r respuesta   p tono   l idioma</tr>
   </text>
   <text>
     <en>ignore sounds quieter than this (default -60)</en>
@@ -782,5 +782,33 @@
   <text>
     <en>the needle's scale: linear, or fine (the centre spread out)</en>
     <tr>la escala de la aguja: lineal, o fina (el centro abierto)</tr>
+  </text>
+  <text>
+    <en>Normal</en>
+    <tr>Normal</tr>
+  </text>
+  <text>
+    <en>Response</en>
+    <tr>Respuesta</tr>
+  </text>
+  <text>
+    <en>Steady (double bass)</en>
+    <tr>Estable (contrabajo)</tr>
+  </text>
+  <text>
+    <en>Steady: for the double bass and other low strings whose pitch moves as they sound. The attack of each pluck is left out, the reading averages at least 1.5 s, the quiet tail of the note is still read (with an instrument's strings), and the needle moves more slowly.</en>
+    <tr>Estable: para el contrabajo y otras cuerdas graves cuya altura se mueve mientras suenan. Se deja fuera el ataque de cada pulsación, la lectura promedia al menos 1,5 s, se sigue leyendo la cola débil de la nota (con las cuerdas de un instrumento) y la aguja se mueve más despacio.</tr>
+  </text>
+  <text>
+    <en>The response: normal, or steady (for the double bass)</en>
+    <tr>La respuesta: normal, o estable (para el contrabajo)</tr>
+  </text>
+  <text>
+    <en>normal, or steady: the attack of each pluck left out, a longer average and a slower needle, for the double bass (default normal)</en>
+    <tr>normal, o estable: sin el ataque de cada pulsación, con un promedio más largo y una aguja más lenta, para el contrabajo (por omisión normal)</tr>
+  </text>
+  <text>
+    <en>steady</en>
+    <tr>estable</tr>
   </text>
 </interface>

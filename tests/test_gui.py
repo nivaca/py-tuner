@@ -92,11 +92,13 @@ def test_settings_dialog_applies(make):
     dlg.names.setCurrentIndex(dlg.names.findData("german"))
     dlg.view.setCurrentIndex(dlg.view.findData("strobe"))
     dlg.tolerance.setValue(2.5)
+    dlg.response.setCurrentIndex(dlg.response.findData("steady"))
     new = dlg.apply_to(s)
-    assert (new.names, new.display, new.tolerance) == ("german", "strobe", 2.5)
+    assert (new.names, new.display, new.tolerance, new.response) == ("german", "strobe", 2.5, "steady")
     win = make(window.Window, s)
     win.apply(new)
     assert not win.needle.isVisibleTo(win) and win.strobe.isVisibleTo(win)
+    assert win.needle.response == "steady"
 
 
 @pytest.mark.parametrize("cents", [None, 0.0, 3.0, -40.0])
@@ -120,6 +122,14 @@ def test_needle_follows_with_inertia(make):
     for _ in range(50):
         n.set_cents(20.0, 0.03)
     assert n.shown == pytest.approx(20.0, abs=0.01)
+
+
+def test_needle_lags_more_when_steady(make):
+    normal, steady = make(widgets.Needle), make(widgets.Needle)
+    steady.response = "steady"
+    for n in (normal, steady):
+        n.set_cents(20.0, 0.1)
+    assert 0 < steady.shown < normal.shown < 20
 
 
 def test_deviation_colors():

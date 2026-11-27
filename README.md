@@ -40,6 +40,8 @@ What it does
   with its clearest peaks named.
 - The needle on a linear scale or a fine one, where the last few cents
   spread out.
+- A steady response for the double bass, whose pitch moves as it sounds:
+  the attack of each pluck left out, a longer average and a slower needle.
 - Sounds that don't stand 10 dB over the room's noise, learned while
   nothing plays, are ignored.
 - Offsets of a few cents for any note, the names transposed for a
@@ -152,9 +154,10 @@ The settings are kept in `~/.config/py-tuner/settings.json` (or under
 line, and every change made in the window or the terminal is saved there at
 once. Besides the ones above: `tolerance` (cents within which a note counts
 as in tune, default 1), `min_level` (sounds quieter than this, in dBFS, are
-ignored), `smoothing` (seconds the reading averages) and `periods` (the
+ignored), `smoothing` (seconds the reading averages), `periods` (the
 length of each analysis frame, in periods of the note: more is steadier,
-fewer reacts faster). Your own tunings go in `custom_tunings`:
+fewer reacts faster) and `response` (`normal`, or `steady` for the double
+bass). Your own tunings go in `custom_tunings`:
 
     "custom_tunings": [
       {"instrument": "guitar", "name": "Nashville", "strings": "E3 A3 D4 G4 B3 E4"}

@@ -7,7 +7,7 @@ November 2026.  Its starting point was the study of FMIT (Free Music
 Instrument Tuner), the C++ and Qt tuner that Gilles Degottex wrote from
 2004; nothing of its code was copied, but reading it showed what a tuner
 needs and where its precision is lost.  Here I explain how it was made, in
-eight stages.
+nine stages.
 
 py-tuner is free software, under the GNU General Public License, version 3
 or later.  It uses numpy (BSD licence) for the analysis, sounddevice (MIT
@@ -242,10 +242,57 @@ in the terminal.  The third is Tuneo's gauge: a fine scale for the needle,
 an arctangent, on which the last five cents take half of each side and the
 rest up to fifty the other half.
 
+9. A steady response for the double bass
+----------------------------------------
+
+On my own acoustic double bass the reading was never quiet: the needle
+wandered some cents while the string sounded.  The detector was not the
+cause.  On a synthetic string with the same weak fundamental, the two
+slightly different vibrations of a real string beating together, the
+other open strings ringing in sympathy and the rumble of a room, each
+frame still came within a few hundredths of a cent.  What moves is the
+string itself.  A plucked low string is stretched by its own swing, so it
+starts sharp, several cents if the pluck is strong, and goes down as it
+fades; the bow, too, moves the pitch a little.  The reading followed all
+of it faithfully, and the needle with it.
+
+So there is now a setting, the response, normal or steady.  The steady
+response leaves out the attack of each pluck, the first half second from
+its first onset, and keeps the note that was sounding on the screen
+meanwhile.  The onset of py-tuner stays on for about a third of a second
+while its envelope catches up, so the attack had to be counted from the
+first onset of a run, not from the last one.  The reading then averages
+at least a second and a half, and the needle follows it with a lag of
+0.3 s instead of 0.06.  With an instrument's strings, the tail of the
+note is still read at a lower clarity (0.6 instead of 0.75), as the
+other strings ringing with it make the sound less periodic.  In the
+chromatic mode it is not: there the search goes below the lowest A, and
+the lower clarity let through 24.5 Hz, the undertone that D2 and G2 share
+(D2/3, G2/4) when both ring.
+
+Two rules were needed for the lower clarity.  The grace that lets a new
+string be taken quickly after a pluck now ends as soon as the pluck's own
+note is taken; before that, a harmonic of the E string ringing beside an
+A (its octave, a fifth above the A) could replace the A just after the
+attack.  And a note that rises from silence without a pluck must last 0.3
+s, as a jump between notes must; without this, the dying tail of a guitar
+D string gave a false note of 0.4 s.
+
+I measured it on sequences of four plucks of each open string, of
+different strengths, with a knock at each pluck, the polarisations
+beating, the other strings ringing and a room before the first note.
+Within each pluck the reading moved 11 cents from end to end with the
+normal response and 2 with the steady one, its drift fell from 9 to 1.4
+cents per second, and it lasted as long.  On a bowed note it moved 1.2
+cents instead of 3.5.  On the eleven guitar recordings the steady
+response gave no false note, and its largest error over the shifted
+recordings was 1.7 cents, against 4.0 with the normal one.  The normal
+response is what it was.
+
 Testing
 -------
 
-The program has 218 tests, which run all at once with `tools/test.py`,
+The program has 228 tests, which run all at once with `tools/test.py`,
 each file in a process of its own, in about eight seconds.  Most of them
 measure: the open strings of the four instruments must come out within a
 tenth of a cent of their known pitch, with noise the mean error must stay
@@ -257,8 +304,11 @@ without a pluck, the strobe's bands moving one, two and four stripes per
 second for each cent and standing still on a stiff string in tune, the
 offsets, the capo and the transposition, the reference tone, the noise
 floor (which learns the room, never a note, and lets through a tone 25 dB
-over the noise but not one 5 dB over it), the spectrum's peaks and the
-needle's scales.  Others
+over the noise but not one 5 dB over it), the spectrum's peaks, the
+needle's scales, and the steady response (an attack left out from its
+first onset while the note stays, a new string taken at once after it
+but a fifth from a ringing string not, and a gliding double bass string
+held to less than half the movement of the normal response).  Others
 check the names and frequencies of the notes, the tunings, the
 reading's response to wrong values and new notes, the settings, the WAV
 files of 8 to 32 bits, the options of the command line, a whole recording
@@ -273,6 +323,6 @@ as a user sees them, in both languages, while a WAV file of six detuned
 guitar strings played; ran the command line with the computer's
 microphone; and ran the AppImage, which found the sound devices through its
 own PortAudio.  The real recordings, which cannot be distributed with it,
-measure it on this computer with `tools/evaluate.py`.  The program has 47
-files of Python, around 9,100 lines, of
-which some 2,450 are tests.
+measure it on this computer with `tools/evaluate.py`, with either
+response.  The program has 49 files of Python, around 9,300 lines, of
+which some 2,600 are tests.

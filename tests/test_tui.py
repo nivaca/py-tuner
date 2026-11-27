@@ -85,6 +85,8 @@ def test_tui_runs_in_a_terminal(tmp_path, config_home):
         out = read_for(master, 2.5)
         os.write(master, b"\x1bOC\x1bOC")  # dos veces la flecha derecha (modo keypad de xterm): La + 0,2 Hz
         out += read_for(master, 0.5)
+        os.write(master, b"r")  # la respuesta estable
+        out += read_for(master, 0.5)
         os.write(master, b"q")
         assert proc.wait(timeout=10) == 0
     finally:
@@ -96,6 +98,7 @@ def test_tui_runs_in_a_terminal(tmp_path, config_home):
     assert "-3.0" in text or "-3.1" in text or "-2.9" in text
     # las flechas cambiaron el La, y quedó guardado
     assert settings.load().a4 == pytest.approx(440.2)
+    assert settings.load().response == "steady" and "steady" in text
 
 
 def test_trace_rows():

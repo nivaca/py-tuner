@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Mide el afinador con grabaciones reales: cuántas notas falsas da y cuán exacto es.
 
-    uv run python tools/evaluate.py [CARPETA ...] [--instrument guitar] [--shifts -30,-7,13,45]
+    uv run python tools/evaluate.py [CARPETA ...] [--instrument guitar] [--response steady] [--shifts -30,-7,13,45]
 
 Para cada archivo WAV de las CARPETAS (por omisión local-only/tuneo/notebooks, que no está en el repositorio):
 
@@ -88,10 +88,12 @@ def main(argv=None) -> int:
                                      description="Measure the tuner on real recordings: false notes and accuracy.")
     parser.add_argument("folders", nargs="*", type=Path, default=[DEFAULT])
     parser.add_argument("-i", "--instrument", default="guitar")
+    parser.add_argument("--response", default="normal", choices=("normal", "steady"))
     parser.add_argument("--shifts", default="-30,-7,13,45", help="cents the recordings are shifted by")
     parser.add_argument("-v", "--verbose", action="store_true", help="list every note found")
     args = parser.parse_args(argv)
-    settings = Settings(instrument=args.instrument, tuning="Standard" if args.instrument != "chromatic" else "")
+    settings = Settings(instrument=args.instrument, tuning="Standard" if args.instrument != "chromatic" else "",
+                        response=args.response)
     shifts = [float(c) for c in args.shifts.split(",") if c]
     files = sorted(p for folder in args.folders for p in folder.glob("*.wav"))
     if not files:

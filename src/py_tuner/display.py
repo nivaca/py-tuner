@@ -16,6 +16,9 @@ from .tuner import Reading
 
 # The needle's scale, in cents either side.
 NEEDLE_RANGE = 50.0
+# La inercia de la aguja (segundos, la constante de tiempo con que sigue a la lectura) en cada respuesta: en la
+# estable, lo bastante lenta para que el temblor de un cent no la sacuda
+NEEDLE_LAG = {"normal": 0.06, "steady": 0.3}
 # Velocidad del estroboscopio: celdas (o franjas) por segundo por cada cent de
 # desviación, en la primera banda; las siguientes van al doble y al cuádruple,
 # como los armónicos 1, 2 y 4 de un estroboscopio mecánico.
@@ -71,6 +74,8 @@ def summary(s: Settings) -> str:
         parts.append(tr("transposed {semitones}", semitones=f"{s.transpose:+d}"))
     if s.offsets:
         parts.append(tr("offsets"))
+    if s.response == "steady":
+        parts.append(tr("steady"))
     parts.append(f"A4 = {number(f'{s.a4:.1f}')} Hz")
     return " · ".join(parts)
 
@@ -133,6 +138,14 @@ class Follower:
 NEEDLE_SCALES = ("linear", "fine")
 # La rodilla de la escala fina (cents): a ±FINE_KNEE queda la mitad de cada lado de la escala
 FINE_KNEE = 5.0
+
+
+def follow(shown: float, cents: float, dt: float, response: str = "normal") -> float:
+    """The needle's next position: SHOWN moved towards CENTS (clipped to the scale) over DT seconds, with the
+    lag of RESPONSE."""
+    target = max(-NEEDLE_RANGE, min(NEEDLE_RANGE, cents))
+    k = 1 - math.exp(-dt / NEEDLE_LAG.get(response, NEEDLE_LAG["normal"])) if dt > 0 else 1.0
+    return shown + (target - shown) * k
 
 
 def needle_fraction(cents: float, scale: str = "linear") -> float:

@@ -58,3 +58,8 @@ def test_new_settings_are_checked():
     assert s.offsets == {}  # (una clave mala invalida el conjunto)
     ok = Settings(offsets={"E": 0, "B": -2, "C#": 1.25}).validated()
     assert ok.offsets == {"C#": 1.25, "B": -2.0}
+
+
+def test_response_is_checked():
+    assert Settings(response="steady").validated().response == "steady"
+    assert Settings(response="sluggish").validated().response == "normal"

@@ -174,3 +174,8 @@ def test_scale_spectrum_and_noise_options():
     assert (s.needle_scale, s.show_spectrum, s.learn_noise) == ("fine", True, False)
     assert parse().learn_noise is True and parse().needle_scale == "linear"
     assert cli.needle(2.0, scale="fine") != cli.needle(2.0)
+
+
+def test_response_option():
+    assert parse("--response", "steady").response == "steady"
+    assert parse().response == "normal"

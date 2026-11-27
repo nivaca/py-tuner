@@ -111,3 +111,48 @@ def test_reset():
     feed(st, [110.0] * 5)
     st.reset()
     assert st.reading() is None
+
+
+def cents_of(f: float, ref: float) -> float:
+    return 1200 * np.log2(f / ref)
+
+
+def test_the_attack_is_left_out_and_the_note_stays():
+    # La respuesta estable: lo que suena en el ataque (la cuerda alta) no entra en la lectura, y la nota sigue.
+    st = Stabilizer(attack=0.5)
+    feed(st, [110.0] * 20)
+    sharp = 110.0 * 2 ** (10 / 1200)
+    st.push(0.5, sharp, onset=True)
+    r = feed(st, [sharp] * 15, start=0.525)
+    assert r is not None and abs(cents_of(r.frequency, 110.0)) < 0.01
+
+
+def test_the_attack_counts_from_the_first_onset_of_a_pluck():
+    # The onset of tuner.py stays on for about a third of a second: the attack starts at the first one.
+    st = Stabilizer(attack=0.5)
+    for i in range(14):
+        st.push(i * 0.025, 0.0, onset=True)
+    assert st.push(0.475, 110.0) is None
+    assert st.push(0.5, 110.0) is not None
+
+
+def test_after_the_attack_a_new_string_is_taken_at_once_but_only_once():
+    st = Stabilizer(attack=0.5)
+    feed(st, [55.0] * 20)
+    st.push(0.5, 73.42, onset=True)
+    r = feed(st, [73.42] * 19, start=0.525)
+    assert r.frequency == pytest.approx(55.0)  # (durante el ataque, la nota que sonaba)
+    r = feed(st, [73.42] * 2, start=1.0)
+    assert r.frequency == pytest.approx(73.42)
+    # Tomada ya la cuerda nueva, un salto a la quinta (un armónico de otra cuerda que resuena) espera.
+    r = feed(st, [110.0] * 3, start=1.05)
+    assert r.frequency == pytest.approx(73.42)
+
+
+def test_with_an_attack_a_note_from_silence_without_a_pluck_waits():
+    st = Stabilizer(attack=0.5)
+    assert feed(st, [98.0] * 8) is None
+    r = feed(st, [98.0] * 6, start=0.2)
+    assert r.frequency == pytest.approx(98.0)
+    # sin ataque que dejar fuera (la respuesta normal), enseguida
+    assert Stabilizer().push(0.0, 98.0) is not None
