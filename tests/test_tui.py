@@ -96,3 +96,12 @@ def test_tui_runs_in_a_terminal(tmp_path, config_home):
     assert "-3.0" in text or "-3.1" in text or "-2.9" in text
     # las flechas cambiaron el La, y quedó guardado
     assert settings.load().a4 == pytest.approx(440.2)
+
+
+def test_trace_rows():
+    rows = tui.trace_rows([0.0, 3.0, -30.0, None, 0.5], 8, 1.0)
+    assert len(rows) == 5 and all(len(r) == 8 for r in rows)
+    # columnas 3..7: afinada, alta, muy baja, sin nota, afinada
+    assert rows[2][3] == "•" and rows[1][4] == "•" and rows[4][5] == "•"
+    assert rows[2][6] == "·" and rows[2][7] == "•"
+    assert rows[0].strip() == ""

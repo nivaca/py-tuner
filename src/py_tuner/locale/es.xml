@@ -340,12 +340,12 @@
     <tr>cli: escribir la primera lectura estable y terminar</tr>
   </text>
   <text>
-    <en>gui (the window, default), tui (full-screen terminal), cli (a line of text), devices (list the inputs), instruments (list the tunings)</en>
-    <tr>gui (la ventana, por omisión), tui (la terminal a pantalla completa), cli (una línea de texto), devices (las entradas), instruments (las afinaciones)</tr>
+    <en>gui (the window, default), tui (full-screen terminal), cli (a line of text), tone (play a reference note), devices (list the inputs), instruments (list the tunings)</en>
+    <tr>gui (la ventana, por omisión), tui (la terminal a pantalla completa), cli (una línea de texto), tone (tocar una nota de referencia), devices (las entradas), instruments (las afinaciones)</tr>
   </text>
   <text>
-    <en>i instrument   t tuning   s string   n names   b accidentals   v view   l language</en>
-    <tr>i instrumento   t afinación   s cuerda   n nombres   b alteraciones   v vista   l idioma</tr>
+    <en>i instrument   t tuning   s string   c capo   n names   b accidentals   v view   m strobe   h history   p tone   l language</en>
+    <tr>i instrumento   t afinación   s cuerda   c cejilla   n nombres   b alteraciones   v vista   m estroboscopio   h historia   p tono   l idioma</tr>
   </text>
   <text>
     <en>ignore sounds quieter than this (default -60)</en>
@@ -562,5 +562,165 @@
   <text>
     <en>The next language of the interface</en>
     <tr>El idioma siguiente de la interfaz</tr>
+  </text>
+  <text>
+    <en>--offset needs NOTE=CENTS, e.g. B=-2, not {value}</en>
+    <tr>--offset pide NOTA=CENTS, p. ej. B=-2, no {value}</tr>
+  </text>
+  <text>
+    <en>--offset {value}: at most {most} cents either way</en>
+    <tr>--offset {value}: como mucho {most} cents hacia cada lado</tr>
+  </text>
+  <text>
+    <en>--{option} must be from {low} to {high}</en>
+    <tr>--{option} debe ir de {low} a {high}</tr>
+  </text>
+  <text>
+    <en>A capo at this fret raises every string as many semitones.</en>
+    <tr>Una cejilla en este traste sube cada cuerda otros tantos semitonos.</tr>
+  </text>
+  <text>
+    <en>All to zero</en>
+    <tr>Todas a cero</tr>
+  </text>
+  <text>
+    <en>Capo</en>
+    <tr>Cejilla</tr>
+  </text>
+  <text>
+    <en>FRET</en>
+    <tr>TRASTE</tr>
+  </text>
+  <text>
+    <en>Move the capo one fret up (after the 7th, off)</en>
+    <tr>Subir la cejilla un traste (tras el 7.º, se quita)</tr>
+  </text>
+  <text>
+    <en>NOTE</en>
+    <tr>NOTA</tr>
+  </text>
+  <text>
+    <en>NOTE=CENTS</en>
+    <tr>NOTA=CENTS</tr>
+  </text>
+  <text>
+    <en>Note offsets</en>
+    <tr>Desviaciones de las notas</tr>
+  </text>
+  <text>
+    <en>Note offsets…</en>
+    <tr>Desviaciones de las notas…</tr>
+  </text>
+  <text>
+    <en>Offsets</en>
+    <tr>Desviaciones</tr>
+  </text>
+  <text>
+    <en>Play the note: the locked string, or the note shown, or A4</en>
+    <tr>Tocar la nota: la cuerda fija, o la nota que se muestra, o el La 4</tr>
+  </text>
+  <text>
+    <en>Play the reference tone: the locked string, or the note shown, or A4</en>
+    <tr>Tocar el tono de referencia: la cuerda fija, o la nota que se muestra, o el La 4</tr>
+  </text>
+  <text>
+    <en>SEMITONES</en>
+    <tr>SEMITONOS</tr>
+  </text>
+  <text>
+    <en>Show or hide the history of the deviation</en>
+    <tr>Mostrar u ocultar la historia de la desviación</tr>
+  </text>
+  <text>
+    <en>Show the history of the deviation</en>
+    <tr>Mostrar la historia de la desviación</tr>
+  </text>
+  <text>
+    <en>The names shown are moved this many semitones, for a transposing instrument (2 for one in B-flat); the pitch measured is the same.</en>
+    <tr>Los nombres se mueven estos semitonos, para un instrumento transpositor (2 para uno en si bemol); la altura que se mide es la misma.</tr>
+  </text>
+  <text>
+    <en>The strobe: vernier (one partial, three speeds) or harmonics (partials 1, 2, 3)</en>
+    <tr>El estroboscopio: vernier (una parcial, tres velocidades) o armónicos (parciales 1, 2, 3)</tr>
+  </text>
+  <text>
+    <en>Tone</en>
+    <tr>Tono</tr>
+  </text>
+  <text>
+    <en>Transpose</en>
+    <tr>Transponer</tr>
+  </text>
+  <text>
+    <en>Tune some notes a few cents off equal temperament, in every octave.</en>
+    <tr>Afinar algunas notas unos cents fuera del temperamento igual, en todas las octavas.</tr>
+  </text>
+  <text>
+    <en>Vernier: every band follows the clearest partial, at one, two and four times the speed. Harmonics: each band shows a partial of its own.</en>
+    <tr>Vernier: cada banda sigue la parcial más clara, a una, dos y cuatro veces la velocidad. Armónicos: cada banda muestra una parcial propia.</tr>
+  </text>
+  <text>
+    <en>Vernier (one partial, three speeds)</en>
+    <tr>Vernier (una parcial, tres velocidades)</tr>
+  </text>
+  <text>
+    <en>Harmonics (partials 1, 2, 3)</en>
+    <tr>Armónicos (parciales 1, 2, 3)</tr>
+  </text>
+  <text>
+    <en>a capo at this fret raises every string</en>
+    <tr>una cejilla en este traste sube todas las cuerdas</tr>
+  </text>
+  <text>
+    <en>a note is given only to tone</en>
+    <tr>solo tone recibe una nota</tr>
+  </text>
+  <text>
+    <en>cannot play the tone: {error}</en>
+    <tr>no se puede tocar el tono: {error}</tr>
+  </text>
+  <text>
+    <en>capo {fret}</en>
+    <tr>cejilla {fret}</tr>
+  </text>
+  <text>
+    <en>hide the history of the deviation</en>
+    <tr>ocultar la historia de la desviación</tr>
+  </text>
+  <text>
+    <en>offsets</en>
+    <tr>desviaciones</tr>
+  </text>
+  <text>
+    <en>semitones</en>
+    <tr>semitonos</tr>
+  </text>
+  <text>
+    <en>show the history of the deviation (gui, tui)</en>
+    <tr>mostrar la historia de la desviación (gui, tui)</tr>
+  </text>
+  <text>
+    <en>show the names transposed, for a transposing instrument (e.g. 2 for B-flat)</en>
+    <tr>mostrar los nombres transpuestos, para un instrumento transpositor (p. ej. 2 para si bemol)</tr>
+  </text>
+  <text>
+    <en>the strobe: vernier (the clearest partial at three speeds) or harmonics (partials 1, 2 and 3)</en>
+    <tr>el estroboscopio: vernier (la parcial más clara a tres velocidades) o harmonics (las parciales 1, 2 y 3)</tr>
+  </text>
+  <text>
+    <en>tone: the note to play (e.g. E2), or a string number with --instrument; A4 if none</en>
+    <tr>tone: la nota que se toca (p. ej. E2), o un número de cuerda con --instrument; el La 4 si no se da</tr>
+  </text>
+  <text>
+    <en>transposed {semitones}</en>
+    <tr>transpuesto {semitones}</tr>
+  </text>
+  <text>
+    <en>tune a note name this many cents off equal temperament, in every octave (e.g. B=-2; B=0 removes it); may be repeated</en>
+    <tr>afinar una nota tantos cents fuera del temperamento igual, en todas las octavas (p. ej. B=-2; B=0 la quita); puede repetirse</tr>
+  </text>
+  <text>
+    <en>{note}: {frequency} Hz</en>
+    <tr>{note}: {frequency} Hz</tr>
   </text>
 </interface>

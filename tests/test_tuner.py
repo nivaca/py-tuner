@@ -200,3 +200,29 @@ def test_live_strobe_moves_with_the_deviation():
         assert speeds == pytest.approx([2, 4, 8], rel=0.2)
     finally:
         live.stop()
+
+
+def test_offsets_move_the_target():
+    s = Settings(instrument="guitar", offsets={"B": -2.0, "G": 1.5})
+    tuner = Tuner(s, RATE)
+    b3 = notes.parse("B3")
+    assert tuner.target_frequency(b3) == pytest.approx(notes.frequency(b3) * 2 ** (-2 / 1200))
+    r = last(tuner, string(notes.frequency(b3) * 2 ** (-2 / 1200), seconds=1.2))
+    assert r.cents == pytest.approx(0.0, abs=0.05) and r.in_tune
+
+
+def test_capo_raises_the_strings():
+    tuner = Tuner(Settings(instrument="guitar", capo=2), RATE)
+    assert tuner.string_midis[0] == notes.parse("F#2")
+    r = last(tuner, string(notes.frequency(notes.parse("B2")), seconds=1.2))
+    assert (r.target_midi, r.string) == (notes.parse("B2"), 1)
+
+
+def test_transpose_changes_only_the_names():
+    from py_tuner import display
+
+    s = Settings(transpose=2)
+    tuner = Tuner(s, RATE)
+    r = last(tuner, string(notes.frequency(notes.parse("Bb3")), seconds=1.2))
+    assert r.target_midi == notes.parse("Bb3")
+    assert display.note_full(r.target_midi, s, unicode=False) == "C4"

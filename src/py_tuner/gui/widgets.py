@@ -195,3 +195,65 @@ class Level(QWidget):
         p.setPen(QPen(pal.color(QPalette.ColorRole.WindowText), 1))
         gx = x_of(self.gate)
         p.drawLine(QPointF(gx, 0), QPointF(gx, h))
+
+
+class Trace(QWidget):
+    """The deviation over the last SECONDS, newest at the right, over the bands of the tolerance: a string
+    settling or a peg turned the wrong way shows at a glance (as the trace of Strobie and the moving grid of
+    Tuneo)."""
+
+    SECONDS = 10.0
+
+    def __init__(self, parent=None) -> None:
+        super().__init__(parent)
+        self.points: list[tuple[float, float | None]] = []  # (tiempo del reloj, cents o None)
+        self.tolerance = 1.0
+        self._last_time = None
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.setFixedHeight(90)
+
+    def scale(self) -> float:
+        """The cents at the top and bottom edges: ten times the tolerance, at least 10."""
+        return max(10.0, 10 * self.tolerance)
+
+    def add(self, cents: float | None, reading_time: float, now: float | None = None) -> None:
+        """Adds a reading (CENTS None: no note), once per reading (its READING_TIME)."""
+        if reading_time == self._last_time and cents is not None:
+            return
+        self._last_time = reading_time
+        now = time.monotonic() if now is None else now
+        self.points.append((now, cents))
+        while self.points and self.points[0][0] < now - self.SECONDS:
+            self.points.pop(0)
+        self.update()
+
+    def paintEvent(self, event) -> None:  # noqa: ARG002
+        p = QPainter(self)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        pal = self.palette()
+        w, h = self.width(), self.height()
+        p.fillRect(self.rect(), pal.color(QPalette.ColorRole.Base))
+        top = self.scale()
+
+        def y_of(c: float) -> float:
+            return h / 2 - max(-1.0, min(1.0, c / top)) * (h / 2 - 3)
+
+        zone = QColor(GREEN)
+        zone.setAlphaF(0.2)
+        p.fillRect(QRectF(0, y_of(self.tolerance), w, y_of(-self.tolerance) - y_of(self.tolerance)), zone)
+        dim = QColor(pal.color(QPalette.ColorRole.WindowText))
+        dim.setAlphaF(0.3)
+        p.setPen(QPen(dim, 1))
+        p.drawLine(QPointF(0, h / 2), QPointF(w, h / 2))
+        now = time.monotonic()
+        prev = None
+        for t, c in self.points:
+            x = w - (now - t) / self.SECONDS * w
+            if c is None:
+                prev = None
+                continue
+            pt = QPointF(x, y_of(c))
+            if prev is not None:
+                p.setPen(QPen(deviation_color(c, self.tolerance), 2.0))
+                p.drawLine(prev, pt)
+            prev = pt

@@ -15,18 +15,19 @@ from dataclasses import replace
 
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QAction, QFont, QKeySequence
-from PySide6.QtWidgets import (QApplication, QButtonGroup, QComboBox, QDialog, QDialogButtonBox,
+from PySide6.QtWidgets import (QApplication, QButtonGroup, QCheckBox, QComboBox, QDialog, QDialogButtonBox,
                                QDoubleSpinBox, QFormLayout, QHBoxLayout, QLabel, QMainWindow, QMenu,
-                               QMessageBox, QPushButton, QToolButton, QVBoxLayout, QWidget)
+                               QMessageBox, QPushButton, QSpinBox, QToolButton, QVBoxLayout, QWidget)
 
 from .. import __version__, audio, display, instruments, interface, notes
 from .. import settings as settings_mod
 from ..interface import tr
 from ..settings import Settings
 from ..tuner import LiveTuner, Reading
-from .widgets import GREEN, Level, Needle, Strobe, deviation_color
+from .widgets import GREEN, Level, Needle, Strobe, Trace, deviation_color
 
 # Los textos de las listas, en inglés (las claves de su traducción)
+STROBE_LABELS = {"vernier": "Vernier (one partial, three speeds)", "harmonics": "Harmonics (partials 1, 2, 3)"}
 NAME_LABELS = {"english": "English (C D E)", "latin": "Latin (Do Re Mi)", "german": "German (C D E … H)"}
 DISPLAY_LABELS = {"both": "Needle and strobe", "needle": "Needle", "strobe": "Strobe"}
 
@@ -106,10 +107,50 @@ class SettingsDialog(QDialog):
                                    "precise, fewer reacts faster."))
         form.addRow(tr("Analysis frame"), self.periods)
 
+        self.strobe_mode = QComboBox()
+        for key in settings_mod.STROBE_MODES:
+            self.strobe_mode.addItem(tr(STROBE_LABELS[key]), key)
+        self.strobe_mode.setCurrentIndex(self.strobe_mode.findData(s.strobe_mode))
+        self.strobe_mode.setToolTip(tr("Vernier: every band follows the clearest partial, at one, two and four "
+                                       "times the speed. Harmonics: each band shows a partial of its own."))
+        form.addRow(tr("Strobe"), self.strobe_mode)
+        self.trace = QCheckBox(tr("Show the history of the deviation"))
+        self.trace.setChecked(s.show_trace)
+        form.addRow("", self.trace)
+
+        def whole(value: int, lo: int, hi: int) -> QSpinBox:
+            box = QSpinBox()
+            box.setRange(lo, hi)
+            box.setValue(value)
+            return box
+
+        self.transpose = whole(s.transpose, -12, 12)
+        self.transpose.setSuffix(" " + tr("semitones"))
+        self.transpose.setToolTip(tr("The names shown are moved this many semitones, for a transposing "
+                                     "instrument (2 for one in B-flat); the pitch measured is the same."))
+        form.addRow(tr("Transpose"), self.transpose)
+        self.capo = whole(s.capo, 0, 12)
+        self.capo.setToolTip(tr("A capo at this fret raises every string as many semitones."))
+        form.addRow(tr("Capo"), self.capo)
+        self.offsets = dict(s.offsets)
+        offsets = QPushButton(tr("Note offsets…"))
+        offsets.setToolTip(tr("Tune some notes a few cents off equal temperament, in every octave."))
+        offsets.clicked.connect(self.edit_offsets)
+        form.addRow(tr("Offsets"), offsets)
+
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         form.addRow(buttons)
+
+    def edit_offsets(self) -> None:
+        dlg = OffsetsDialog(self.offsets, self._names, self)
+        if dlg.exec() == QDialog.DialogCode.Accepted:
+            self.offsets = dlg.offsets()
+
+    @property
+    def _names(self) -> tuple[str, str]:
+        return self.names.currentData(), self.accidentals.currentData()
 
     def apply_to(self, s: Settings) -> Settings:
         return replace(s, device=self.device.currentData(), channel=self.channel.currentData(),
@@ -117,7 +158,39 @@ class SettingsDialog(QDialog):
                        display=self.view.currentData(), language=self.language.currentData(),
                        tolerance=self.tolerance.value(),
                        min_level=self.min_level.value(), smoothing=self.smoothing.value(),
-                       periods=self.periods.value()).validated()
+                       periods=self.periods.value(), strobe_mode=self.strobe_mode.currentData(),
+                       show_trace=self.trace.isChecked(), transpose=self.transpose.value(),
+                       capo=self.capo.value(), offsets=dict(self.offsets)).validated()
+
+
+class OffsetsDialog(QDialog):
+    """The cents each note name is tuned off equal temperament, in every octave (as Strobie's note offsets)."""
+
+    def __init__(self, offsets: dict[str, float], names: tuple[str, str], parent=None) -> None:
+        super().__init__(parent)
+        self.setWindowTitle(tr("Note offsets"))
+        form = QFormLayout(self)
+        self.boxes: dict[str, QDoubleSpinBox] = {}
+        system, accidentals = names
+        for i, key in enumerate(notes.OFFSET_NAMES):
+            box = QDoubleSpinBox()
+            box.setRange(-settings_mod.MAX_OFFSET, settings_mod.MAX_OFFSET)
+            box.setDecimals(1)
+            box.setSingleStep(0.5)
+            box.setSuffix(" " + tr("cents"))
+            box.setValue(offsets.get(key, 0.0))
+            self.boxes[key] = box
+            form.addRow(notes.name(i, system, accidentals), box)
+        clear = QPushButton(tr("All to zero"))
+        clear.clicked.connect(lambda: [b.setValue(0.0) for b in self.boxes.values()])
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        buttons.addButton(clear, QDialogButtonBox.ButtonRole.ResetRole)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        form.addRow(buttons)
+
+    def offsets(self) -> dict[str, float]:
+        return {k: b.value() for k, b in self.boxes.items() if b.value() != 0}
 
 
 class Window(QMainWindow):
@@ -168,6 +241,11 @@ class Window(QMainWindow):
         top.addWidget(self.a4)
         top.addWidget(presets)
         top.addSpacing(12)
+        self.tone_button = QToolButton()
+        self.tone_button.setText(tr("Tone"))
+        self.tone_button.setToolTip(tr("Play the note: the locked string, or the note shown, or A4"))
+        self.tone_button.clicked.connect(self.play_tone)
+        top.addWidget(self.tone_button)
         top.addWidget(gear)
         layout.addLayout(top)
 
@@ -197,6 +275,8 @@ class Window(QMainWindow):
         self.strobe = Strobe()
         layout.addWidget(self.needle, 1)
         layout.addWidget(self.strobe)
+        self.trace = Trace()
+        layout.addWidget(self.trace)
 
         # las cuerdas
         self.strings_row = QHBoxLayout()
@@ -252,6 +332,8 @@ class Window(QMainWindow):
         self.level.gate = s.min_level
         self.needle.setVisible(s.display in ("both", "needle"))
         self.strobe.setVisible(s.display in ("both", "strobe"))
+        self.trace.tolerance = s.tolerance
+        self.trace.setVisible(s.show_trace)
         self._loading = False
 
     def fill_tunings(self, s: Settings) -> None:
@@ -357,6 +439,29 @@ class Window(QMainWindow):
             self.live.stop()
         super().closeEvent(event)
 
+    def play_tone(self) -> None:
+        """Plays the locked string, or else the note shown, or else A4 (as pianito's tone, by Axel Stevens)."""
+        from .. import tone
+        from ..tuner import Tuner
+
+        s = self._s
+        tuner = self.live.tuner if self.live is not None else Tuner(s, 48000)
+        shown = getattr(self, "shown", None)
+        if s.string is not None and tuner.string_midis and s.string < len(tuner.string_midis):
+            midi = tuner.string_midis[s.string]
+        elif shown is not None and shown.active:
+            midi = shown.target_midi
+        else:
+            midi = 69
+        freq = tuner.target_frequency(midi)
+        try:
+            tone.play(freq)
+        except Exception as exc:  # noqa: BLE001 (PortAudio levanta varios tipos)
+            self.status.setText(tr("cannot play the tone: {error}", error=exc))
+            return
+        self.status.setText(tr("{note}: {frequency} Hz", note=display.note_full(midi, s),
+                               frequency=display.freq_text(freq)))
+
     # --- la pantalla ---
 
     def tick(self) -> None:
@@ -373,6 +478,8 @@ class Window(QMainWindow):
         cents = r.cents if r.active else None
         self.needle.set_cents(cents, dt)
         self.strobe.advance(cents, dt, r.strobe)
+        self.trace.add(cents, r.time)
+        self.shown = r
         if not r.active:
             self.note.setText("--")
             self.note.setStyleSheet("")

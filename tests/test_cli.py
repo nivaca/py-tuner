@@ -126,3 +126,44 @@ def test_cli_realtime_file_once(tmp_path):
 def test_version():
     done = subprocess.run([sys.executable, "-m", "py_tuner", "--version"], capture_output=True, text=True)
     assert done.stdout.strip().startswith("py-tuner ")
+
+
+def test_new_options():
+    s = parse("--offset", "B=-2", "--offset", "Gb=1.5", "--transpose", "-3", "--capo", "4", "--strobe",
+              "harmonics", "--no-trace")
+    assert s.offsets == {"F#": 1.5, "B": -2.0}
+    assert (s.transpose, s.capo, s.strobe_mode, s.show_trace) == (-3, 4, "harmonics", False)
+    assert parse("--offset", "B=0").offsets == {}
+
+
+@pytest.mark.parametrize("argv", [["--offset", "B"], ["--offset", "Q=1"], ["--offset", "B=70"],
+                                  ["--capo", "13"], ["--transpose", "-13"]])
+def test_bad_new_options(argv):
+    with pytest.raises(ValueError):
+        parse(*argv)
+
+
+def test_tone_targets():
+    s = parse("-i", "guitar", "--capo", "2", "--offset", "F#=-5")
+    name, f = app.tone_target(s, "1")
+    assert name == "F" + notes.SHARP + "2"
+    assert f == pytest.approx(notes.frequency(notes.parse("F#2")) * 2 ** (-5 / 1200))
+    assert app.tone_target(Settings(), None) == ("A4", 440.0)
+    assert app.tone_target(Settings(a4=442), "A3")[1] == pytest.approx(221.0)
+    with pytest.raises(ValueError):
+        app.tone_target(s, "9")
+
+
+def test_a_note_only_with_tone(capsys):
+    with pytest.raises(SystemExit):
+        app.main(["cli", "E2"])
+
+
+def test_tone_command_plays(monkeypatch, capsys):
+    from py_tuner import tone
+
+    played = []
+    monkeypatch.setattr(tone, "play", lambda f, seconds=3.0, wait=False: played.append((round(f, 3), wait)))
+    assert app.main(["tone", "E2"]) == 0
+    assert played == [(82.407, True)]
+    assert "E2" in capsys.readouterr().out

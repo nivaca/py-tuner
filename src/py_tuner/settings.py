@@ -16,6 +16,8 @@ from pathlib import Path
 from . import instruments, interface, notes
 
 DISPLAYS = ("both", "needle", "strobe")
+# Note offsets go up to this many cents either way
+MAX_OFFSET = 50.0
 # (los de strobe.MODES: vernier, la parcial más clara a 1, 2 y 4 veces; harmonics, cada banda la suya)
 STROBE_MODES = ("vernier", "harmonics")
 
@@ -33,8 +35,13 @@ class Settings:
     reading averages. periods: periods of the note in each fine frame.
     tolerance: cents within which a note counts as in tune.
     display: "both", "needle" or "strobe". strobe_mode: "vernier" (three
-    speeds of the clearest partial) or "harmonics" (partials 1, 2 and 3). language: of the interface ("en",
-    "es"; "" follows the system's). custom_tunings: the user's own.
+    speeds of the clearest partial) or "harmonics" (partials 1, 2 and 3).
+    show_trace: the history of the deviation. offsets: cents off equal
+    temperament for each note name (C, C#, ... B), in every octave.
+    transpose: semitones added to the names shown (a B-flat instrument: 2).
+    capo: the fret of a capo, which raises every string. language: of the
+    interface ("en", "es"; "" follows the system's). custom_tunings: the
+    user's own.
     """
 
     a4: float = notes.DEFAULT_A4
@@ -52,6 +59,10 @@ class Settings:
     tolerance: float = 1.0
     display: str = "both"
     strobe_mode: str = "vernier"
+    show_trace: bool = True
+    offsets: dict[str, float] = field(default_factory=dict)
+    transpose: int = 0
+    capo: int = 0
     language: str = ""
     custom_tunings: list[dict] = field(default_factory=list)
 
@@ -75,6 +86,11 @@ class Settings:
             "tolerance": lambda v: 0.1 <= float(v) <= 50,
             "display": lambda v: v in DISPLAYS,
             "strobe_mode": lambda v: v in STROBE_MODES,
+            "show_trace": lambda v: isinstance(v, bool),
+            "offsets": lambda v: isinstance(v, dict) and all(
+                k in notes.OFFSET_NAMES and -MAX_OFFSET <= float(c) <= MAX_OFFSET for k, c in v.items()),
+            "transpose": lambda v: isinstance(v, int) and not isinstance(v, bool) and -12 <= v <= 12,
+            "capo": lambda v: isinstance(v, int) and not isinstance(v, bool) and 0 <= v <= 12,
             "language": lambda v: v == "" or v in interface.names(),
             "custom_tunings": lambda v: isinstance(v, list) and all(isinstance(e, dict) for e in v),
         }
@@ -88,6 +104,9 @@ class Settings:
                 setattr(out, f.name, getattr(good, f.name))
         for name in ("a4", "min_level", "smoothing", "periods", "tolerance"):
             setattr(out, name, float(getattr(out, name)))
+        # (sin las de cero, y en el orden de la escala)
+        out.offsets = {k: round(float(out.offsets[k]), 2) for k in notes.OFFSET_NAMES
+                       if k in out.offsets and float(out.offsets[k]) != 0}
         out.channel = str(out.channel)
         return out
 

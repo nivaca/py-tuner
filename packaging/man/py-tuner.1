@@ -17,7 +17,10 @@ show this help and quit
 show the version and quit
 .TP
 .B mode
-gui (the window, default), tui (full\-screen terminal), cli (a line of text), devices (list the inputs), instruments (list the tunings)
+gui (the window, default), tui (full\-screen terminal), cli (a line of text), tone (play a reference note), devices (list the inputs), instruments (list the tunings)
+.TP
+.B NOTE
+tone: the note to play (e.g. E2), or a string number with \-\-instrument; A4 if none
 .TP
 .B \-a, \-\-a4
 reference A4 in Hz, 380 to 480 (default 440)
@@ -67,8 +70,26 @@ seconds the reading averages (default 0.5)
 .B \-\-periods
 periods per analysis frame: more is steadier, fewer is faster (default 16)
 .TP
+.B \-\-offset
+tune a note name this many cents off equal temperament, in every octave (e.g. B=\-2; B=0 removes it); may be repeated
+.TP
+.B \-\-transpose
+show the names transposed, for a transposing instrument (e.g. 2 for B\-flat)
+.TP
+.B \-\-capo
+a capo at this fret raises every string
+.TP
 .B \-\-display
 needle, strobe or both (gui, tui) (one of: both, needle, strobe)
+.TP
+.B \-\-strobe
+the strobe: vernier (the clearest partial at three speeds) or harmonics (partials 1, 2 and 3) (one of: vernier, harmonics)
+.TP
+.B \-\-trace
+show the history of the deviation (gui, tui)
+.TP
+.B \-\-no\-trace
+hide the history of the deviation
 .TP
 .B \-\-language
 the language of the interface (default: the system's) (one of: en, es)
@@ -112,6 +133,18 @@ Sharps, flats or both
 .TP
 .B v
 Needle and strobe, the needle alone or the strobe alone
+.TP
+.B m
+The strobe: vernier (one partial, three speeds) or harmonics (partials 1, 2, 3)
+.TP
+.B h
+Show or hide the history of the deviation
+.TP
+.B c
+Move the capo one fret up (after the 7th, off)
+.TP
+.B p
+Play the reference tone: the locked string, or the note shown, or A4
 .TP
 .B l
 The next language of the interface

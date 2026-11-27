@@ -23,7 +23,7 @@ DESCRIPTION = ("An accurate tuner for guitar, bass, double bass and violin (and 
 EPILOG = ("Without a command, the window opens. Options given here override the saved settings for this "
           "session only, unless --save is given. Settings: {path}")
 
-MODES = ("gui", "tui", "cli", "devices", "instruments")
+MODES = ("gui", "tui", "cli", "tone", "devices", "instruments")
 
 
 def shown_path(path: Path) -> str:
@@ -43,7 +43,10 @@ def parser() -> argparse.ArgumentParser:
                    help=tr("show the version and quit"))
     p.add_argument("mode", nargs="?", choices=MODES, default="gui",
                    help=tr("gui (the window, default), tui (full-screen terminal), cli (a line of text), "
-                           "devices (list the inputs), instruments (list the tunings)"))
+                           "tone (play a reference note), devices (list the inputs), instruments (list the "
+                           "tunings)"))
+    p.add_argument("note", nargs="?", metavar=tr("NOTE"),
+                   help=tr("tone: the note to play (e.g. E2), or a string number with --instrument; A4 if none"))
     g = p.add_argument_group(tr("tuning"))
     g.add_argument("-a", "--a4", type=float, metavar="HZ",
                    help=tr("reference A4 in Hz, {low} to {high} (default 440)", low=f"{notes.MIN_A4:g}",
@@ -73,7 +76,20 @@ def parser() -> argparse.ArgumentParser:
     g.add_argument("--periods", type=float, metavar="N",
                    help=tr("periods per analysis frame: more is steadier, fewer is faster (default 16)"))
     g = p.add_argument_group(tr("output"))
+    g.add_argument("--offset", action="append", metavar=tr("NOTE=CENTS"),
+                   help=tr("tune a note name this many cents off equal temperament, in every octave (e.g. B=-2; "
+                           "B=0 removes it); may be repeated"))
+    g.add_argument("--transpose", type=int, metavar=tr("SEMITONES"),
+                   help=tr("show the names transposed, for a transposing instrument (e.g. 2 for B-flat)"))
+    g.add_argument("--capo", type=int, metavar=tr("FRET"), help=tr("a capo at this fret raises every string"))
     g.add_argument("--display", choices=settings_mod.DISPLAYS, help=tr("needle, strobe or both (gui, tui)"))
+    g.add_argument("--strobe", dest="strobe_mode", choices=settings_mod.STROBE_MODES,
+                   help=tr("the strobe: vernier (the clearest partial at three speeds) or harmonics (partials "
+                           "1, 2 and 3)"))
+    g.add_argument("--trace", dest="show_trace", action="store_const", const=True,
+                   help=tr("show the history of the deviation (gui, tui)"))
+    g.add_argument("--no-trace", dest="show_trace", action="store_const", const=False,
+                   help=tr("hide the history of the deviation"))
     g.add_argument("--language", choices=list(interface.names()),
                    help=tr("the language of the interface (default: the system's)"))
     g.add_argument("--once", action="store_true", help=tr("cli: print the first steady reading and exit"))
@@ -122,7 +138,26 @@ def apply(args: argparse.Namespace, base: Settings) -> Settings:
         s.names = args.names
     if args.accidentals is not None:
         s.accidentals = args.accidentals
-    for name in ("tolerance", "device", "rate", "min_level", "smoothing", "periods", "display", "language"):
+    if args.offset:
+        offsets = dict(s.offsets)
+        for item in args.offset:
+            name, _, value = item.partition("=")
+            try:
+                key = notes.OFFSET_NAMES[notes.parse(name.strip() + "4") % 12]
+                cents = float(value)
+            except ValueError:
+                raise ValueError(tr("--offset needs NOTE=CENTS, e.g. B=-2, not {value}", value=item)) from None
+            if not -settings_mod.MAX_OFFSET <= cents <= settings_mod.MAX_OFFSET:
+                raise ValueError(tr("--offset {value}: at most {most} cents either way", value=item,
+                                    most=f"{settings_mod.MAX_OFFSET:g}"))
+            offsets[key] = cents
+        s.offsets = offsets
+    for name, low, high in (("transpose", -12, 12), ("capo", 0, 12)):
+        value = getattr(args, name)
+        if value is not None and not low <= value <= high:
+            raise ValueError(tr("--{option} must be from {low} to {high}", option=name, low=low, high=high))
+    for name in ("tolerance", "device", "rate", "min_level", "smoothing", "periods", "display", "language",
+                 "strobe_mode", "show_trace", "transpose", "capo"):
         value = getattr(args, name)
         if value is not None:
             setattr(s, name, value)
@@ -145,6 +180,42 @@ def open_source(s: Settings, file: str | None, realtime: bool = True) -> audio.S
     if file:
         return audio.FileSource(file, seconds, s.channel)
     return audio.MicSource(seconds, s.device, s.rate, s.channel)
+
+
+def tone_target(s: Settings, note: str | None) -> tuple[str, float]:
+    """(name, frequency) of the reference tone: NOTE (a name, or a string number of the instrument), the locked
+    string, or A4; tuned as the tuner tunes it (A4, the offsets, the capo)."""
+    from .tuner import Tuner
+
+    tuner = Tuner(s, 48000)
+    if note is None and s.string is not None and tuner.string_midis:
+        midi = tuner.string_midis[s.string]
+    elif note is not None and note.isdigit() and tuner.string_midis:
+        if not 1 <= int(note) <= len(tuner.string_midis):
+            raise ValueError(tr("--string must be auto or 1..{count}", count=len(tuner.string_midis)))
+        midi = tuner.string_midis[int(note) - 1]
+    else:
+        midi = notes.parse(note) if note else 69
+    from . import display
+
+    return display.note_full(midi, s), tuner.target_frequency(midi)
+
+
+def play_tone(s: Settings, note: str | None, seconds: float = 3.0) -> int:
+    try:
+        name, freq = tone_target(s, note)
+    except ValueError as exc:
+        print(f"py-tuner: {exc}", file=sys.stderr)
+        return 2
+    from . import display, tone
+
+    print(tr("{note}: {frequency} Hz", note=name, frequency=display.freq_text(freq)))
+    try:
+        tone.play(freq, seconds, wait=True)
+    except Exception as exc:  # noqa: BLE001 (PortAudio levanta varios tipos)
+        print("py-tuner: " + tr("cannot play the tone: {error}", error=exc), file=sys.stderr)
+        return 1
+    return 0
 
 
 def list_devices() -> int:
@@ -191,6 +262,10 @@ def main(argv: list[str] | None = None) -> int:
         p.error(str(exc))
     if args.save:
         settings_mod.save(s)
+    if args.note is not None and args.mode != "tone":
+        p.error(tr("a note is given only to tone"))
+    if args.mode == "tone":
+        return play_tone(s, args.note)
     if args.mode == "devices":
         return list_devices()
     if args.mode == "instruments":

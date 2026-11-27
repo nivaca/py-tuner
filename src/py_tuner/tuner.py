@@ -83,7 +83,8 @@ class Tuner:
         self.instrument = s.instrument_preset()
         self._held: tuple[int, int | None] | None = None  # (nota, cuerda) con que se compara ahora
         self.tuning = self.instrument.tuning(s.tuning) if self.instrument.tunings else None
-        self.string_midis = self.tuning.midis if self.tuning else ()
+        # con cejilla, cada cuerda suena tantos semitonos más alta como el traste
+        self.string_midis = tuple(m + s.capo for m in self.tuning.midis) if self.tuning else ()
         if self.string_midis:
             # Con cuerdas, se busca solo cerca de ellas: de una cuarta bajo la más grave (una cuerda muy floja) a
             # una quinta sobre la más aguda. Lo que queda fuera (el golpe de la pulsación, un submúltiplo de dos
@@ -146,12 +147,18 @@ class Tuner:
             self._held = None
             return Reading(raw=est.frequency, level=est.level, clarity=est.clarity, time=now)
         midi, string = self.target(smooth.frequency)
-        target = notes.frequency(midi, self.settings.a4)
+        target = self.target_frequency(midi)
         c = notes.cents(smooth.frequency, target)
         return Reading(frequency=smooth.frequency, raw=est.frequency, target_midi=midi,
                        target_frequency=target, cents=c, string=string, spread=smooth.spread, count=smooth.count,
                        level=est.level, clarity=est.clarity, inharmonicity=est.inharmonicity,
                        harmonics=est.harmonics, in_tune=abs(c) <= self.settings.tolerance, time=now)
+
+    def target_frequency(self, midi: int) -> float:
+        """The frequency MIDI is tuned to: equal temperament on A4, moved by its note's offset (as Strobie's
+        note offsets, by Davorin Šego)."""
+        offset = self.settings.offsets.get(notes.OFFSET_NAMES[midi % 12], 0.0)
+        return notes.frequency(midi, self.settings.a4) * 2 ** (offset / 1200)
 
     def _onset(self, samples: np.ndarray, now: float) -> bool:
         """Whether the newest samples are a pluck: their level jumps ONSET_RATIO over the envelope."""

@@ -21,7 +21,8 @@ from .tuner import LiveTuner, Reading
 
 # La ayuda de las teclas, en dos mitades (en inglés: las claves de su traducción)
 KEYS = ("q quit   ←→ A4 ±0.1 Hz   ↑↓ A4 ±1 Hz   0 A4 = 440",
-        "i instrument   t tuning   s string   n names   b accidentals   v view   l language")
+        "i instrument   t tuning   s string   c capo   n names   b accidentals   v view   m strobe   h history   "
+        "p tone   l language")
 
 # Las teclas, una por fila, para la página de manual y el manual (en inglés: las claves de su traducción)
 KEY_ROWS = (
@@ -35,6 +36,10 @@ KEY_ROWS = (
     ("n", "The next system of note names: English, Latin, German"),
     ("b", "Sharps, flats or both"),
     ("v", "Needle and strobe, the needle alone or the strobe alone"),
+    ("m", "The strobe: vernier (one partial, three speeds) or harmonics (partials 1, 2, 3)"),
+    ("h", "Show or hide the history of the deviation"),
+    ("c", "Move the capo one fret up (after the 7th, off)"),
+    ("p", "Play the reference tone: the locked string, or the note shown, or A4"),
     ("l", "The next language of the interface"),
 )
 
@@ -112,6 +117,30 @@ def needle_row(cents: float | None, width: int) -> tuple[str, int | None]:
     return "".join(cells), pos
 
 
+def trace_rows(history: list[float | None], width: int, tolerance: float) -> list[str]:
+    """The history of the deviation as five rows of text, the newest at the right: more than five tolerances
+    sharp, sharp, in tune, flat, more than five flat. A column without a note is blank but for a dot in tune."""
+    rows = [[" "] * width for _ in range(5)]
+    recent = history[-width:]
+    start = width - len(recent)
+    for x, c in enumerate(recent, start):
+        if c is None:
+            rows[2][x] = "\u00b7"
+            continue
+        if c > 5 * tolerance:
+            band = 0
+        elif c > tolerance:
+            band = 1
+        elif c >= -tolerance:
+            band = 2
+        elif c >= -5 * tolerance:
+            band = 3
+        else:
+            band = 4
+        rows[band][x] = "\u2022"
+    return ["".join(r) for r in rows]
+
+
 def strobe_row(phase: float, width: int, period: int = 8) -> str:
     shift = phase * period
     return "".join("█" if ((x - shift) % period) < period / 2 else " " for x in range(width))
@@ -123,6 +152,9 @@ class App:
         self.live = live
         self.strobe = display.Strobe()
         self.follower = display.Follower()
+        self.history: list[float | None] = []  # la desviación, diez veces por segundo
+        self.sampled = 0.0
+        self.message = ""
         self.last = time.monotonic()
         curses.curs_set(0)
         screen.nodelay(True)
@@ -193,7 +225,35 @@ class App:
         elif ch == ord("v"):
             views = settings_mod.DISPLAYS
             self.change(display=views[(views.index(s.display) + 1) % len(views)])
+        elif ch == ord("m"):
+            modes = settings_mod.STROBE_MODES
+            self.change(strobe_mode=modes[(modes.index(s.strobe_mode) + 1) % len(modes)])
+        elif ch == ord("h"):
+            self.change(show_trace=not s.show_trace)
+        elif ch == ord("c"):
+            self.change(capo=0 if s.capo >= 7 else s.capo + 1)
+        elif ch == ord("p"):
+            self.play_tone()
         return True
+
+    def play_tone(self) -> None:
+        """The reference tone: the locked string, or the note shown, or A4."""
+        from . import tone
+
+        s, r, tuner = self.s, self.live.reading, self.live.tuner
+        if s.string is not None and tuner.string_midis and s.string < len(tuner.string_midis):
+            midi = tuner.string_midis[s.string]
+        elif r.active:
+            midi = r.target_midi
+        else:
+            midi = 69
+        freq = tuner.target_frequency(midi)
+        try:
+            tone.play(freq)
+            self.message = tr("{note}: {frequency} Hz", note=display.note_full(midi, s),
+                              frequency=display.freq_text(freq))
+        except Exception as exc:  # noqa: BLE001 (PortAudio levanta varios tipos)
+            self.message = tr("cannot play the tone: {error}", error=exc)
 
     def put(self, y: int, x: int, text: str, attr: int = 0) -> None:
         h, w = self.screen.getmaxyx()
@@ -256,6 +316,16 @@ class App:
                 # (una banda que se apaga, en la terminal, se atenúa)
                 self.put(y + i, left, row, attr if r.active and alpha >= 0.5 else curses.A_DIM)
             y += len(phases) + 1
+        if now - self.sampled >= 0.1:
+            self.sampled = now
+            self.history.append(r.cents if r.active else None)
+            del self.history[:-max(1, width)]
+        if s.show_trace:
+            for i, row in enumerate(trace_rows(self.history, width, s.tolerance)):
+                # (de arriba abajo: muy alta, alta, afinada, baja, muy baja; con los colores de la aguja)
+                colour = (3, 2, 1, 2, 3)[i]
+                self.put(y + i, left, row, curses.color_pair(colour) if self.colors else 0)
+            y += 6
         labels = display.string_labels(s)
         if labels:
             x = left
@@ -282,6 +352,9 @@ class App:
         err = self.live.error or getattr(self.live.source, "error", None)
         if err:
             self.put(h - len(keys) - 1, 1, err, curses.color_pair(3) if self.colors else 0)
+        elif self.message:
+            # (lo que dijo la última tecla, como el tono que suena)
+            self.put(h - len(keys) - 1, 1, self.message, curses.A_DIM)
         scr.refresh()
 
     def loop(self) -> None:

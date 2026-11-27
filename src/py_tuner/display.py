@@ -22,11 +22,12 @@ STROBE_BANDS = (1, 2, 4)
 
 
 def note_name(midi: int, s: Settings, unicode: bool = True) -> str:
-    return notes.name(midi, s.names, s.accidentals, unicode)
+    """The name of MIDI as shown: transposed for a transposing instrument (only the name; the pitch is the same)."""
+    return notes.name(midi + s.transpose, s.names, s.accidentals, unicode)
 
 
 def note_full(midi: int, s: Settings, unicode: bool = True) -> str:
-    return notes.full_name(midi, s.names, s.accidentals, unicode)
+    return notes.full_name(midi + s.transpose, s.names, s.accidentals, unicode)
 
 
 def string_labels(s: Settings, unicode: bool = True) -> list[str]:
@@ -34,7 +35,7 @@ def string_labels(s: Settings, unicode: bool = True) -> list[str]:
     inst = s.instrument_preset()
     if not inst.tunings:
         return []
-    return [note_full(m, s, unicode) for m in inst.tuning(s.tuning).midis]
+    return [note_full(m + s.capo, s, unicode) for m in inst.tuning(s.tuning).midis]
 
 
 def cents_text(r: Reading) -> str:
@@ -62,6 +63,12 @@ def summary(s: Settings) -> str:
             labels = string_labels(s)
             if s.string < len(labels):
                 parts.append(tr("string {name}", name=labels[s.string]))
+    if inst.tunings and s.capo:
+        parts.append(tr("capo {fret}", fret=s.capo))
+    if s.transpose:
+        parts.append(tr("transposed {semitones}", semitones=f"{s.transpose:+d}"))
+    if s.offsets:
+        parts.append(tr("offsets"))
     parts.append(f"A4 = {number(f'{s.a4:.1f}')} Hz")
     return " · ".join(parts)
 

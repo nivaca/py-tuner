@@ -30,6 +30,8 @@ _GERMAN_SHARPS = ("C", "Cis", "D", "Dis", "E", "F", "Fis", "G", "Gis", "A", "B",
 _GERMAN_FLATS = ("C", "Des", "D", "Es", "E", "F", "Ges", "G", "As", "A", "B", "H")
 
 NAME_SYSTEMS = ("english", "latin", "german")
+# The names the note offsets are kept under, whatever names are shown
+OFFSET_NAMES = ("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B")
 # "both" escribe las teclas negras de las dos maneras: F♯/G♭
 ACCIDENTALS = ("sharps", "flats", "both")
 

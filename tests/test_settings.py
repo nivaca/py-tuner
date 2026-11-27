@@ -48,3 +48,13 @@ def test_unreadable_file_gives_defaults():
 def test_numbers_are_floats():
     s = Settings(a4=441, tolerance=2, smoothing=1, periods=8, min_level=-50).validated()
     assert all(isinstance(v, float) for v in (s.a4, s.tolerance, s.smoothing, s.periods, s.min_level))
+
+
+def test_new_settings_are_checked():
+    s = Settings(offsets={"B": -2, "X": 3, "E": 0}, transpose=20, capo=-1, strobe_mode="spiral",
+                 show_trace="yes").validated()
+    d = Settings()
+    assert (s.transpose, s.capo, s.strobe_mode, s.show_trace) == (d.transpose, d.capo, d.strobe_mode, d.show_trace)
+    assert s.offsets == {}  # (una clave mala invalida el conjunto)
+    ok = Settings(offsets={"E": 0, "B": -2, "C#": 1.25}).validated()
+    assert ok.offsets == {"C#": 1.25, "B": -2.0}

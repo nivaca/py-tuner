@@ -17,7 +17,10 @@ mostrar esta ayuda y terminar
 mostrar la versión y terminar
 .TP
 .B mode
-gui (la ventana, por omisión), tui (la terminal a pantalla completa), cli (una línea de texto), devices (las entradas), instruments (las afinaciones)
+gui (la ventana, por omisión), tui (la terminal a pantalla completa), cli (una línea de texto), tone (tocar una nota de referencia), devices (las entradas), instruments (las afinaciones)
+.TP
+.B NOTA
+tone: la nota que se toca (p. ej. E2), o un número de cuerda con \-\-instrument; el La 4 si no se da
 .TP
 .B \-a, \-\-a4
 La de referencia (A4) en Hz, de 380 a 480 (por omisión 440)
@@ -67,8 +70,26 @@ segundos que promedia la lectura (por omisión 0.5)
 .B \-\-periods
 períodos por cuadro de análisis: más es más estable, menos es más rápido (por omisión 16)
 .TP
+.B \-\-offset
+afinar una nota tantos cents fuera del temperamento igual, en todas las octavas (p. ej. B=\-2; B=0 la quita); puede repetirse
+.TP
+.B \-\-transpose
+mostrar los nombres transpuestos, para un instrumento transpositor (p. ej. 2 para si bemol)
+.TP
+.B \-\-capo
+una cejilla en este traste sube todas las cuerdas
+.TP
 .B \-\-display
 aguja, estroboscopio o ambos (gui, tui) (uno de: both, needle, strobe)
+.TP
+.B \-\-strobe
+el estroboscopio: vernier (la parcial más clara a tres velocidades) o harmonics (las parciales 1, 2 y 3) (uno de: vernier, harmonics)
+.TP
+.B \-\-trace
+mostrar la historia de la desviación (gui, tui)
+.TP
+.B \-\-no\-trace
+ocultar la historia de la desviación
 .TP
 .B \-\-language
 el idioma de la interfaz (por omisión, el del sistema) (uno de: en, es)
@@ -112,6 +133,18 @@ Sostenidos, bemoles o ambos
 .TP
 .B v
 Aguja y estroboscopio, la aguja sola o el estroboscopio solo
+.TP
+.B m
+El estroboscopio: vernier (una parcial, tres velocidades) o armónicos (parciales 1, 2, 3)
+.TP
+.B h
+Mostrar u ocultar la historia de la desviación
+.TP
+.B c
+Subir la cejilla un traste (tras el 7.º, se quita)
+.TP
+.B p
+Tocar el tono de referencia: la cuerda fija, o la nota que se muestra, o el La 4
 .TP
 .B l
 El idioma siguiente de la interfaz
