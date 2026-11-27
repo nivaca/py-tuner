@@ -83,6 +83,10 @@ def main(argv=None) -> int:
     work = Path(tempfile.mkdtemp(prefix="py-tuner-tests-"))
     # (las ventanas de las pruebas se dibujan fuera de la pantalla: lo decide conftest.py)
     env = {**os.environ}
+    # Un hilo de álgebra (OpenBLAS) por proceso: con uno por procesador en cada uno de los procesos que corren a la
+    # vez, la suite tardaba en el %check del RPM 185 s en lugar de 7.
+    for name in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "FLEXIBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
+        env.setdefault(name, "1")
     start = time.time()
     failed: list[tuple[Path, str]] = []
     totals: dict[str, int] = {}

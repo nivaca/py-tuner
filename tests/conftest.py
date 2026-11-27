@@ -6,7 +6,12 @@ from __future__ import annotations
 import os
 import wave
 
-import numpy as np
+# Un hilo de álgebra por proceso, antes de importar numpy (como py_tuner/__init__.py): las pruebas corren en
+# paralelo, y con un hilo por procesador en cada una iban decenas de veces más lentas.
+for _name in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "FLEXIBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
+    os.environ.setdefault(_name, "1")
+
+import numpy as np  # noqa: E402
 import pytest
 
 # Las ventanas de las pruebas se dibujan fuera de la pantalla, y la interfaz está en inglés, sea cual sea el
