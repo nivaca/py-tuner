@@ -2,7 +2,7 @@
 
 import os
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 # Las cuentas del análisis son productos de matrices pequeñas: los hilos que la biblioteca de álgebra de numpy
 # (OpenBLAS, por FlexiBLAS en Fedora) abre en cada procesador no las aceleran, compiten entre sí y, con varios

@@ -5,7 +5,9 @@ the wheel and the source, are on
 [Codeberg](https://codeberg.org/nivaca/py-tuner/releases) and
 [GitHub](https://github.com/nivaca/py-tuner/releases).
 
-## Unreleased
+## 0.2.0 — 2026-11-27
+
+The right note on real strings, and a real strobe.
 
 - Fewer wrong notes on real strings: an octave and twelfth decision by the
   harmonics of each candidate, a new note without a pluck waits (longer if

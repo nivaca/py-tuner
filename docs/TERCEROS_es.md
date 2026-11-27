@@ -7,7 +7,7 @@ py-tuner es software libre, bajo la Licencia Pública General de GNU,
 versión 3 o posterior (GPL-3.0-or-later). Está hecho sobre el software de
 código abierto que se lista aquí: las bibliotecas que usa y las
 herramientas que lo construyen, lo prueban y lo empaquetan. Las versiones
-son las de py-tuner 0.1.0 (como las resuelve `uv.lock`); `uv tree` muestra
+son las de py-tuner 0.2.0 (como las resuelve `uv.lock`); `uv tree` muestra
 las de cualquier versión posterior. Las licencias se dan como
 identificadores SPDX, tal como las declara cada proyecto.
 

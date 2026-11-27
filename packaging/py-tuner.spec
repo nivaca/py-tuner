@@ -10,7 +10,7 @@
 # Build with packaging/build-rpm.sh, which makes the source tarball.
 
 Name:           py-tuner
-Version:        0.1.0
+Version:        0.2.0
 Release:        1%{?dist}
 Summary:        An accurate tuner for guitar, bass, double bass and violin
 
@@ -90,6 +90,12 @@ export HOME="$PWD/check-home"
 %lang(es) %{_mandir}/es/man1/py-tuner.1*
 
 %changelog
+* Fri Nov 27 2026 Nicolas Vaughan <nicolasvaughan@proton.me> - 0.2.0-1
+- Fewer wrong notes on real strings (an octave decision, note changes gated by
+  plucks, a range tied to the strings); a real strobe that follows the phase of
+  each partial, in vernier or harmonics mode; the history of the deviation; note
+  offsets, transposition, a capo and a reference tone
+
 * Fri Nov 27 2026 Nicolas Vaughan <nicolasvaughan@proton.me> - 0.1.0-1
 - First package: the window, the terminal interface and the command line,
   in English or Spanish

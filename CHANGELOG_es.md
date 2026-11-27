@@ -5,7 +5,9 @@ AppImage, el wheel y el código, están en
 [Codeberg](https://codeberg.org/nivaca/py-tuner/releases) y en
 [GitHub](https://github.com/nivaca/py-tuner/releases).
 
-## Sin publicar
+## 0.2.0 — 2026-11-27
+
+La nota correcta en cuerdas reales, y un estroboscopio de verdad.
 
 - Menos notas equivocadas en cuerdas reales: una decisión de la octava y la
   duodécima por los armónicos de cada candidato, una nota nueva sin
