@@ -43,9 +43,10 @@ En orden, y cada paso solo si hace falta:
    la API en $UV_PUBLISH_TOKEN). PyPI nunca acepta dos veces el mismo archivo: con
    --redo, los que ya estén allí se saltan, no se reemplazan.
 
-Hecha la versión, aquí solo queda el RPM (en build/rpm/, y su copia en dist/, donde no
-hay nada más): al final se borran build/release/ y build/zenodo/, porque las forjas y
-Zenodo ya tienen lo que había en ellas.
+Hecha la versión, aquí solo quedan, en dist/, el RPM (que packaging/build-rpm.sh copia allí y deja
+también en build/rpm/), el paquete del código (.tar.gz) y el ZIP del código, cada uno en lugar de los de
+versiones anteriores; al final se borran build/release/ y build/zenodo/, porque las forjas y Zenodo ya
+tienen lo demás (el wheel, la AppImage, SHA256SUMS y todas las firmas).
 
 Antes de hacer nada, muestra las órdenes que va a correr y pregunta; con --yes no
 pregunta, con --dry-run solo las muestra. Las notas de una versión nueva son las de
@@ -77,11 +78,14 @@ VERSION = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]["versi
 TAG = f"v{VERSION}"
 TITLE = f"py-tuner {VERSION}"
 BRANCH = "main"
-# Lo que se publica se hace en build/release/, no en dist/: en local solo se guarda el RPM (en build/rpm/, y su
-# copia en dist/, que no tiene nada más)
+# Lo que se publica se hace en build/release/, no en dist/: en local se guardan, en dist/, solo el RPM, el paquete
+# del código y el ZIP, la última versión de cada uno
 OUT = "build/release"
 WHEEL = f"{OUT}/py_tuner-{VERSION}-py3-none-any.whl"
 SDIST = f"{OUT}/py_tuner-{VERSION}.tar.gz"
+ZIP = f"{OUT}/py-tuner-{VERSION}.zip"
+# Los paquetes que se guardan en dist/ (además del RPM), la última versión de cada clase: (archivo, patrón de los viejos)
+KEPT = ((SDIST, "py_tuner-*.tar.gz"), (ZIP, "py-tuner-*.zip"))
 APPIMAGE = f"{OUT}/py-tuner-{VERSION}-x86_64.AppImage"
 SPEC = "packaging/py-tuner.spec"
 PUBLIC_KEY = "packaging/RPM-GPG-KEY-py-tuner"  # (the public key published with every release)
@@ -236,6 +240,8 @@ class Release:
             return
         (ROOT / OUT).mkdir(parents=True, exist_ok=True)
         self.plan("Make the wheel and the source package", "uv", "build", "--out-dir", OUT)
+        self.plan("Make the ZIP of the source", "git", "archive", "--format=zip", f"--prefix=py-tuner-{VERSION}/",
+                  "--output", ZIP, "HEAD")
         if APPIMAGE in self.files:
             self.plan("Make the AppImage", "uv", "run", "python", "tools/bundle-appimage.py", "--output", OUT)
         if self.args.rpm:
@@ -348,7 +354,7 @@ class Release:
         a = self.args
         self.forges = [a.only] if a.only else ["github", "codeberg"]
         a.rpm = not a.no_rpm  # (el RPM firmado, siempre, salvo con --no-rpm)
-        self.files = [WHEEL, SDIST] + ([] if a.no_appimage else [APPIMAGE])
+        self.files = [WHEEL, SDIST, ZIP] + ([] if a.no_appimage else [APPIMAGE])
         if a.rpm:
             self.files += [rpm()]
         self.files += [PUBLIC_KEY]
@@ -370,9 +376,12 @@ class Release:
         self.run_plan()
 
     def clean_up(self):
-        """Once all is published: only the RPM stays here (build/rpm/, and its copy in dist/); the rest is on the
-        forges and on Zenodo."""
-        self.plan("Delete what was published from build/ (only the RPM stays)", "rm", "-rf", OUT, "build/zenodo")
+        """Once all is published: dist/ keeps the RPM (copied by build-rpm.sh), the source package and the ZIP, the
+        newest of each; the rest of build/release/ is deleted, as it is on the forges and on Zenodo."""
+        self.plan("Keep the source package and the ZIP in dist/, in place of older ones", sys.executable,
+                  "tools/release.py", "--keep-in-dist")
+        self.plan("Delete what was published from build/ (only the RPM stays there)", "rm", "-rf", OUT,
+                  "build/zenodo")
 
 
 def main(argv=None):
@@ -405,12 +414,35 @@ def main(argv=None):
     parser.add_argument("--zenodo", action="store_true",
                         help="(the upload to Zenodo is made always now, unless --no-zenodo: kept "
                              "for older scripts)")
+    parser.add_argument("--keep-in-dist", action="store_true",
+                        help="only copy the source package and the ZIP of build/release/ to dist/, in place of "
+                             "older ones (the release does it at the end)")
     parser.add_argument("-n", "--dry-run", action="store_true", help="only show the commands")
     parser.add_argument("-y", "--yes", action="store_true", help="don't ask before running them")
     args = parser.parse_args(argv)
     if args.notes_file:
         args.notes_file = str(Path(args.notes_file).resolve())
+    if args.keep_in_dist:
+        sys.exit(keep_in_dist())
     Release(args)()
+
+
+def keep_in_dist(root: Path = ROOT) -> int:
+    """Copies the source package and the ZIP of build/release/ to dist/, deleting their older versions there. Copias,
+    no movimientos: la publicación los borra de build/release/ después, con todo lo demás."""
+    dist = root / "dist"
+    dist.mkdir(exist_ok=True)
+    for made, pattern in KEPT:
+        source = root / made
+        if not source.is_file():
+            print(f"release.py: there is no {made}", file=sys.stderr)
+            return 1
+        for old in dist.glob(pattern):
+            if old.name != source.name:
+                old.unlink()
+        shutil.copy2(source, dist / source.name)
+        print(f"Kept {source.name} in dist/")
+    return 0
 
 
 if __name__ == "__main__":
