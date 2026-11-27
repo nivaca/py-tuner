@@ -1,1 +1,7 @@
 local-only/
+__pycache__/
+*.pyc
+.venv/
+build/
+dist/
+.pytest_cache/

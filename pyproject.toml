@@ -1,0 +1,42 @@
+[project]
+name = "py-tuner"
+version = "0.1.0"
+description = "An accurate tuner for guitar, bass, double bass and violin, with a needle and a strobe, in a window, a terminal or a command line"
+readme = "README.md"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Nicolas Vaughan", email = "nicolasvaughan@proton.me" }
+]
+requires-python = ">=3.14"
+keywords = ["tuner", "guitar", "bass", "double bass", "violin", "pitch", "strobe", "audio"]
+classifiers = [
+    "Environment :: Console :: Curses",
+    "Environment :: X11 Applications :: Qt",
+    "Intended Audience :: End Users/Desktop",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Multimedia :: Sound/Audio :: Analysis",
+]
+dependencies = [
+    "numpy>=2.3",
+    "pyside6-essentials>=6.10",
+    "sounddevice>=0.5",
+]
+
+[project.scripts]
+py-tuner = "py_tuner.app:main"
+
+[build-system]
+requires = ["uv_build>=0.10,<0.14"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["tests"]
+addopts = ["--import-mode=importlib"]

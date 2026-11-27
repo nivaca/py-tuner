@@ -1,0 +1,313 @@
+"""Estimación de la frecuencia fundamental de un sonido de cuerda, en dos pasos.
+
+Primero, una estimación gruesa del período con el método de McLeod (la función
+de diferencia cuadrada normalizada, NSDF, calculada con la FFT), que resiste
+bien los errores de octava. Después, un refinamiento fino: la frecuencia de
+cada armónico se busca como el máximo exacto de la transformada de Fourier en
+tiempo discreto de la señal enventanada (Newton sobre |X(f)|², sin el sesgo de
+la interpolación entre casillas de la FFT), y la fundamental sale de un ajuste
+por mínimos cuadrados ponderados al modelo de una cuerda real,
+f_n = n·f0·√(1 + B·n²), que tiene en cuenta su inarmonicidad B.
+
+El módulo solo usa numpy y no sabe nada del audio ni de las notas: recibe
+muestras y devuelve una frecuencia en Hz, con su claridad y su nivel.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+
+import numpy as np
+
+# Ventana de Blackman-Harris de cuatro términos: lóbulos laterales a -92 dB,
+# de modo que un armónico vecino casi no desplaza el máximo de otro.
+_BH = (0.35875, 0.48829, 0.14128, 0.01168)
+
+# The smallest frame the fine stage uses, whatever the pitch.
+MIN_FINE = 4096
+
+
+def blackman_harris(n: int) -> np.ndarray:
+    """Una ventana simétrica de Blackman-Harris de cuatro términos y N puntos."""
+    k = np.arange(n) * (2 * np.pi / (n - 1))
+    a0, a1, a2, a3 = _BH
+    return a0 - a1 * np.cos(k) + a2 * np.cos(2 * k) - a3 * np.cos(3 * k)
+
+
+@dataclass(frozen=True)
+class Estimate:
+    """What one analysis frame says.
+
+    frequency: the first partial in Hz (0.0 when no pitch was found).
+    clarity: the height of the chosen NSDF peak, 0..1 (1 = perfectly periodic).
+    level: the RMS level of the frame in dBFS.
+    inharmonicity: the fitted B coefficient (0.0 when it could not be fitted).
+    harmonics: how many partials took part in the fit.
+    """
+
+    frequency: float
+    clarity: float
+    level: float
+    inharmonicity: float = 0.0
+    harmonics: int = 0
+    partials: tuple[tuple[int, float, float], ...] = field(default=(), repr=False)
+
+    @property
+    def found(self) -> bool:
+        return self.frequency > 0.0
+
+
+def level_db(x: np.ndarray) -> float:
+    """El nivel RMS de X en dBFS (-inf para el silencio)."""
+    rms = float(np.sqrt(np.mean(np.square(x)))) if len(x) else 0.0
+    return 20 * np.log10(rms) if rms > 0 else float("-inf")
+
+
+def nsdf(x: np.ndarray, max_lag: int) -> np.ndarray:
+    """McLeod's normalized square difference function of X for lags 0..MAX_LAG.
+
+    n(τ) = 2·r(τ) / m(τ), with r the autocorrelation and
+    m(τ) = Σ (x[j]² + x[j+τ]²) over the overlapping part.
+    """
+    w = len(x)
+    size = 1 << int(np.ceil(np.log2(2 * w)))
+    spec = np.fft.rfft(x, size)
+    r = np.fft.irfft(spec * np.conj(spec), size)[: max_lag + 1]
+    # m(τ) con sumas acumuladas: la energía de x[0:w-τ] más la de x[τ:w]
+    sq = np.concatenate(([0.0], np.cumsum(x * x)))
+    lags = np.arange(max_lag + 1)
+    m = (sq[w - lags] - sq[0]) + (sq[w] - sq[lags])
+    out = np.zeros(max_lag + 1)
+    ok = m > 1e-12
+    out[ok] = 2 * r[ok] / m[ok]
+    return out
+
+
+def coarse_period(x: np.ndarray, rate: float, fmin: float, fmax: float,
+                  k: float = 0.9) -> tuple[float, float]:
+    """The period of X in samples (fractional) and its clarity, by McLeod's method.
+
+    Among the "key maxima" (the highest point between each pair of upward and
+    downward zero crossings of the NSDF) inside [rate/fmax, rate/fmin], the
+    first whose height reaches K times the highest one is taken: the first,
+    and not the highest, so that twice the period is never chosen.
+    Returns (0.0, 0.0) when there is none.
+    """
+    lo = max(2, int(np.floor(rate / fmax)))
+    hi = int(np.ceil(rate / fmin))
+    if hi + 2 >= len(x) // 2 + len(x) // 4:
+        hi = len(x) // 2 + len(x) // 4 - 3
+    if hi <= lo:
+        return 0.0, 0.0
+    n = nsdf(x, hi + 1)
+    # Los máximos clave: el más alto de cada tramo positivo de la curva,
+    # pasado el primer cruce por cero (antes está el pico trivial de τ = 0).
+    pos = n > 0
+    first_neg = np.argmax(~pos)
+    if first_neg == 0 and pos[0]:
+        return 0.0, 0.0
+    peaks: list[int] = []
+    i = int(first_neg)
+    end = len(n) - 1
+    while i < end:
+        while i < end and not pos[i]:
+            i += 1
+        if i >= end:
+            break
+        j = i
+        best = i
+        while j < end and pos[j]:
+            if n[j] > n[best]:
+                best = j
+            j += 1
+        if j >= end and pos[j - 1]:
+            # un tramo que no se cierra puede no tener aún su máximo
+            if best < end - 1:
+                peaks.append(best)
+            break
+        peaks.append(best)
+        i = j
+    peaks = [p for p in peaks if lo <= p <= hi and 0 < p < end]
+    if not peaks:
+        return 0.0, 0.0
+    top = max(n[p] for p in peaks)
+    if top <= 0:
+        return 0.0, 0.0
+    chosen = next(p for p in peaks if n[p] >= k * top)
+    # Interpolación parabólica del pico, para un período fraccionario.
+    a, b, c = n[chosen - 1], n[chosen], n[chosen + 1]
+    den = a - 2 * b + c
+    shift = 0.5 * (a - c) / den if den < 0 else 0.0
+    clarity = b - 0.25 * (a - c) * shift
+    return chosen + shift, float(min(1.0, clarity))
+
+
+def _peak_frequencies(y: np.ndarray, rate: float, guesses: np.ndarray,
+                      iterations: int = 4) -> tuple[np.ndarray, np.ndarray]:
+    """The frequencies near GUESSES where |DTFT(Y)| is highest, and their amplitudes.
+
+    Y is the already windowed frame. Newton's method on P(f) = |X(f)|², with
+    the first and second derivatives of X computed in the same pass, so each
+    iteration is three matrix products. Every harmonic is solved at once.
+    """
+    n = len(y)
+    t = (np.arange(n) - (n - 1) / 2) / rate  # tiempo centrado: fases pequeñas, mejor condicionado
+    ty = t * y
+    tty = t * ty
+    f = guesses.astype(float).copy()
+    # Paso máximo: un cuarto del lóbulo principal (4 casillas de la FFT para Blackman-Harris).
+    max_step = rate / n
+    for _ in range(iterations):
+        e = _phasors(f, n, rate)
+        x0 = e @ y
+        x1 = (-2j * np.pi) * (e @ ty)
+        x2 = (-4 * np.pi ** 2) * (e @ tty)
+        d1 = 2 * np.real(np.conj(x0) * x1)
+        d2 = 2 * (np.abs(x1) ** 2 + np.real(np.conj(x0) * x2))
+        step = np.where(d2 < 0, -d1 / np.where(d2 < 0, d2, -1.0), np.sign(d1) * max_step)
+        f += np.clip(step, -max_step, max_step)
+    return f, np.abs(_phasors(f, n, rate) @ y)
+
+
+def _phasors(f: np.ndarray, n: int, rate: float, block: int = 128) -> np.ndarray:
+    """exp(-2πi·f·t) for each frequency of F (rows) and the N centred times t (columns).
+
+    Built as the product of a coarse grid (one value per BLOCK samples) and a
+    fine one (BLOCK values): two small exponentials instead of one large one,
+    about nine times faster, with the same precision (errors near 1e-13).
+    """
+    blocks = -(-n // block)
+    start = -(n - 1) / 2 / rate
+    coarse = np.exp(-2j * np.pi * np.outer(f, start + np.arange(blocks) * (block / rate)))
+    fine = np.exp(-2j * np.pi * np.outer(f, np.arange(block) / rate))
+    return (coarse[:, :, None] * fine[:, None, :]).reshape(len(f), -1)[:, :n]
+
+
+def refine(x: np.ndarray, rate: float, f_guess: float, max_harmonics: int = 16,
+           floor_db: float = -50.0) -> tuple[float, float, list[tuple[int, float, float]]]:
+    """The first partial of X, refined from F_GUESS with the harmonics.
+
+    Each harmonic up to MAX_HARMONICS (and below Nyquist·0.9) is located
+    exactly; those weaker than FLOOR_DB below the strongest, or not clearly
+    above the noise floor, are dropped. Then
+    (f_n/n)² = f0²·(1 + B·n²) is fitted by weighted least squares (weights
+    (n·A_n)², which is how the variance of each estimate falls), and the
+    first partial is f0·√(1+B). Returns (frequency, B, [(n, f_n, A_n), ...]).
+    """
+    win = blackman_harris(len(x))
+    y = (x - np.average(x, weights=win)) * win
+    count = int(min(max_harmonics, (0.45 * rate) // f_guess))
+    if count < 1:
+        return 0.0, 0.0, []
+    ns = np.arange(1, count + 1)
+    floor = 10 ** (floor_db / 20)
+    # El ruido de fondo, en las mismas unidades que |X(f)|: la mediana del
+    # espectro, que los pocos armónicos casi no mueven. Un pico que no le saque
+    # 12 dB es ruido, y con el peso n² de los armónicos altos dañaría el ajuste.
+    noise = 4 * float(np.median(np.abs(np.fft.rfft(y))))
+    # Primera pasada con los armónicos bajos, donde la inarmonicidad casi no
+    # mueve nada; de ahí salen f0 y B para predecir dónde están los altos.
+    low = ns[: min(count, 6)]
+    guesses = low * f_guess
+    freqs, amps = _peak_frequencies(y, rate, guesses)
+    keep = _plausible(freqs, guesses, amps, f_guess, floor, noise)
+    f0, b = _fit(low[keep], freqs[keep], amps[keep]) if keep.any() else (0.0, 0.0)
+    if f0 > 0 and count > len(low):
+        guesses = ns * f0 * np.sqrt(1 + b * ns ** 2)
+        freqs, amps = _peak_frequencies(y, rate, guesses)
+        keep = _plausible(freqs, guesses, amps, f_guess, floor, noise)
+        ns = ns[keep]
+        f0, b = _fit(ns, freqs[keep], amps[keep])
+        freqs, amps = freqs[keep], amps[keep]
+    else:
+        ns, freqs, amps = low[keep], freqs[keep], amps[keep]
+    partials = [(int(n), float(f), float(a)) for n, f, a in zip(ns, freqs, amps)]
+    if f0 <= 0:
+        return 0.0, 0.0, partials
+    return float(f0 * np.sqrt(1 + b)), float(b), partials
+
+
+def _plausible(freqs: np.ndarray, guesses: np.ndarray, amps: np.ndarray, f_guess: float,
+               floor: float, noise: float) -> np.ndarray:
+    """Which found peaks count as harmonics: strong enough (FLOOR times the
+    strongest, and above NOISE) and still near where they were looked for (a
+    peak that wandered a quarter of f0 away is something else)."""
+    if not len(amps) or amps.max() <= 0:
+        return np.zeros(len(amps), dtype=bool)
+    return ((amps >= amps.max() * floor) & (amps > noise)
+            & (np.abs(freqs - guesses) < 0.25 * f_guess))
+
+
+def _fit(ns: np.ndarray, freqs: np.ndarray, amps: np.ndarray) -> tuple[float, float]:
+    """f0 y B a partir de los parciales (n, f_n, A_n), con B ≥ 0; (0, 0) si no se puede."""
+    if len(ns) == 0:
+        return 0.0, 0.0
+    y = freqs / ns
+    w = (ns * amps) ** 2
+    if len(ns) >= 3 and ns.max() >= 3:
+        # Al cuadrado, el modelo es lineal sin aproximación alguna:
+        # (f_n/n)² = f0² + f0²·B·n². Los pesos casi no cambian (y es casi constante).
+        a_mat = np.stack([np.ones_like(y), ns.astype(float) ** 2], axis=1)
+        sw = np.sqrt(w)
+        (a, c), *_ = np.linalg.lstsq(a_mat * sw[:, None], y * y * sw, rcond=None)
+        if a > 0 and c >= 0:
+            b = c / a
+            # Los valores reales de B en estas cuerdas no pasan de unas milésimas.
+            if b < 0.02:
+                return float(np.sqrt(a)), float(b)
+    # Sin ajuste posible: la media ponderada de f_n/n, sin inarmonicidad.
+    return float(np.sum(w * y) / np.sum(w)), 0.0
+
+
+@dataclass
+class Detector:
+    """The analysis settings, and the frame sizes they imply.
+
+    rate: sample rate in Hz. fmin, fmax: the range of the fundamental.
+    periods: how many periods of the found pitch the fine frame holds (more:
+    steadier and slower). min_level: frames quieter than this (dBFS) are
+    silence. min_clarity: frames less periodic than this have no pitch.
+    """
+
+    rate: float = 48000.0
+    fmin: float = 27.5
+    fmax: float = 1500.0
+    periods: float = 16.0
+    min_level: float = -60.0
+    min_clarity: float = 0.75
+    max_harmonics: int = 16
+
+    @property
+    def coarse_size(self) -> int:
+        """Las muestras que pide el paso grueso: tres períodos de la nota más grave."""
+        return int(np.ceil(3 * self.rate / self.fmin))
+
+    def fine_size(self, frequency: float) -> int:
+        """Las muestras que usa el paso fino para una altura de FREQUENCY."""
+        return int(max(MIN_FINE, np.ceil(self.periods * self.rate / frequency)))
+
+    @property
+    def history(self) -> int:
+        """Samples a caller should keep: enough for both stages at the lowest note."""
+        return max(self.coarse_size, self.fine_size(self.fmin))
+
+    def analyze(self, samples: np.ndarray) -> Estimate:
+        """The pitch of the most recent samples (the end of SAMPLES)."""
+        x = np.asarray(samples, dtype=np.float64)
+        if len(x) == 0:
+            return Estimate(0.0, 0.0, float("-inf"))
+        coarse = x[-min(len(x), self.coarse_size):]
+        level = level_db(coarse[-min(len(coarse), MIN_FINE * 2):])
+        if level < self.min_level or len(coarse) < 4 * self.rate / self.fmax:
+            return Estimate(0.0, 0.0, level)
+        coarse = coarse - coarse.mean()
+        period, clarity = coarse_period(coarse, self.rate, self.fmin, self.fmax)
+        if period <= 0 or clarity < self.min_clarity:
+            return Estimate(0.0, clarity, level)
+        guess = self.rate / period
+        size = min(len(x), self.fine_size(guess))
+        freq, b, partials = refine(x[-size:], self.rate, guess, self.max_harmonics)
+        # El refinamiento no debe alejarse del período: si lo hace, algo lo engañó.
+        if freq <= 0 or abs(1200 * np.log2(freq / guess)) > 60:
+            return Estimate(guess, clarity, level)
+        return Estimate(freq, clarity, level, b, len(partials), tuple(partials))
