@@ -16,7 +16,9 @@ cent de la altura verdadera; con ruido 20 dB por debajo de la señal, la
 lectura que se muestra (que promedia medio segundo) sigue a una décima de
 cent, más o menos. La fundamental sale de todos los armónicos de la cuerda,
 con su inarmonicidad, así que funciona aunque un micrófono pequeño apenas
-recoja la fundamental de una cuerda grave.
+recoja la fundamental de una cuerda grave; y distingue la nota verdadera de
+su octava, de su duodécima y del golpe de la pulsación: en once grabaciones
+reales de guitarra quedó una nota falsa donde había quince.
 
 
 Lo que hace
@@ -30,8 +32,14 @@ Lo que hace
 - La cuerda de comparación es la más cercana, o una que se fije.
 - El La de referencia, de 380 a 480 Hz, en décimas de hercio, con un menú
   de los habituales (415, 432, 440, 442, 443 Hz...).
-- Una aguja con la zona afinada en verde, un estroboscopio de tres bandas
-  que se mueven a una, dos y cuatro veces la desviación, o los dos.
+- Una aguja con la zona afinada en verde, un estroboscopio de verdad, o los
+  dos. Cada banda del estroboscopio sigue la fase de una parcial de la
+  cuerda: en modo vernier, la parcial más clara a una, dos y cuatro veces la
+  velocidad; en modo de armónicos, las parciales 1, 2 y 3, cada una donde la
+  pone la inarmonicidad de la cuerda.
+- La historia de la desviación en los últimos segundos.
+- Desviaciones de unos cents para cualquier nota, los nombres transpuestos
+  para un instrumento transpositor, una cejilla y un tono de referencia.
 - Nombres de las notas en inglés, latinos (Do Re Mi) o alemanes (con H y
   B), con sostenidos, bemoles o ambos (F♯/G♭).
 - `py-tuner cli --file grabación.wav` mide una grabación WAV nota por nota.
@@ -77,6 +85,7 @@ Uso
     py-tuner              # la ventana
     py-tuner tui          # la terminal
     py-tuner cli          # una línea de texto
+    py-tuner tone E2      # tocar una nota de referencia (o una cuerda: -i guitar tone 1)
     py-tuner devices      # las entradas de sonido
     py-tuner instruments  # los instrumentos y sus afinaciones
 
@@ -88,6 +97,11 @@ Las opciones comunes, para los tres:
     -s, --string N|auto  afinar solo contra la cuerda N (1 = la más grave)
     --names              english, latin (Do Re Mi) o german (H, B)
     --accidentals        sharps, flats o both: sostenidos, bemoles o ambos (F#/Gb); también --flats, --sharps
+    --offset NOTA=CENTS  afinar una nota fuera del temperamento igual, p. ej. B=-2
+    --transpose N        nombres para un instrumento transpositor (2 para si bemol)
+    --capo TRASTE        una cejilla, que sube todas las cuerdas
+    --strobe MODO        vernier o harmonics
+    --trace, --no-trace  la historia de la desviación
     -d, --device DISP    el dispositivo de entrada, por su número o parte de su nombre
     -f, --file WAV       leer un archivo WAV en lugar de la tarjeta de sonido
     --language en|es     el idioma de la interfaz
@@ -104,9 +118,12 @@ estable, la escribe y termina.
 
 En la terminal, las flechas cambian el La (izquierda y derecha, 0,1 Hz;
 arriba y abajo, 1 Hz), `0` lo devuelve a 440, `i` cambia el instrumento,
-`t` la afinación, `s` fija una cuerda, `n` los nombres de las notas, `b`
-sostenidos, bemoles o ambos, `v` la vista, `l` el idioma, y `q` sale. En la
-ventana, un clic en el botón de una cuerda la fija, y otro la suelta.
+`t` la afinación, `s` fija una cuerda, `c` mueve la cejilla, `n` los
+nombres de las notas, `b` sostenidos, bemoles o ambos, `v` la vista, `m` el
+modo del estroboscopio, `h` la historia, `p` toca el tono de referencia, `l`
+el idioma, y `q` sale. En la ventana, un clic en el botón de una cuerda la
+fija, y otro la suelta; el botón Tono toca la cuerda fija, o la nota que se
+muestra.
 
 
 Documentación

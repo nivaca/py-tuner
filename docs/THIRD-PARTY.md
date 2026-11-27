@@ -48,8 +48,15 @@ What it learnt from other programs
 | Software | Licence | What py-tuner owes it |
 |---|---|---|
 | [FMIT](https://github.com/gillesdegottex/fmit) (Free Music Instrument Tuner), by Gilles Degottex | GPL-2.0-or-later (its libraries LGPL-2.1-or-later) | The shape of a tuner's analysis: a coarse estimate that cannot be wrong by an octave, then a fine one; and the study of where its precision is lost |
+| [Strobie](https://github.com/dsego/strobe-tuner) (strobe-tuner), by Davorin Šego | GPL-3.0 | The strobe driven by the phase of each partial, its rate scaled to cents and its stripes fading with the noise, and its vernier and harmonic modes; the prominence of a partial over its local background (its harmonic stack); the high-pass under the range; onsets as a level 1.5 times its envelope; a new note that is a harmonic or an undertone of the one sounding waits longer; the note held until 10 cents past halfway; note offsets; the trace of the deviation; and measuring with recordings shifted by known cents |
+| [Entropy Piano Tuner](https://gitlab.com/tp3/Entropy-Piano-Tuner), by Haye Hinrichsen and Christoph Wick | GPL-3.0 | Its stroboscope, which demodulates the sound at each target partial with a decaying average; the negative weights of its key recognizer's kernel, where the partials of a wrong octave would fall |
+| [Tuneo](https://github.com/DonBraulio/tuneo), by Braulio Ríos | "MIT No-Competition" (MIT with a restriction on commercial app stores) | Following the note that is sounding while it decays, and a full search again after a pluck; the scrolling history of the deviation. Its recordings of guitar strings were used to measure py-tuner (`tools/evaluate.py`), on this computer only |
+| [pianito](https://github.com/4esv/pianito), by Axel Stevens | MIT | A search clamped near the strings when they are known; synthetic test tones with an attack, decaying partials and a weak fundamental; the command that plays a reference tone |
 
-No code of FMIT is in py-tuner: it was read, not copied. The methods
+No code of these programs is in py-tuner: their sources were read, and the
+ideas written again in Python. Tuneo's licence adds a restriction that the
+GPL does not allow, so nothing of it (neither code nor recordings) is in
+py-tuner or its releases. The methods
 py-tuner uses come from the literature: McLeod and Wyvill's normalized
 square difference function ("A smarter way to find pitch", 2005), and the
 inharmonicity of stiff strings, f_n = n·f0·√(1+B·n²) (Fletcher, 1964).
@@ -62,6 +69,7 @@ Tools that build, test and package it
 |---|---|---|
 | [uv](https://github.com/astral-sh/uv) and uv_build | Apache-2.0 OR MIT | The environment, the wheel and the source package |
 | [pytest](https://pytest.org) | MIT | The tests |
+| [pyte](https://github.com/selectel/pyte) | LGPL-3.0 | Reads the terminal interface's screen for its pictures (`tools/terminal_images.py`) |
 | [zig](https://ziglang.org) (the ziglang package of PyPI) | MIT | Compiles PortAudio for the AppImage |
 | [appimagetool](https://github.com/AppImage/appimagetool) | MIT | Makes the AppImage |
 | [rpm-build](https://rpm.org), rpm-sign, rpmdevtools | GPL-2.0-or-later | The RPM |

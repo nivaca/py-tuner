@@ -256,6 +256,7 @@ Desde el menú, \menu{py-tuner} abre la ventana. Desde una terminal:
 \texttt{py-tuner} & la ventana\\
 \texttt{py-tuner tui} & la interfaz de terminal (sección~\ref{sec:tui})\\
 \texttt{py-tuner cli} & una línea de texto (sección~\ref{sec:cli})\\
+\texttt{py-tuner tone E2} & una nota de referencia (sección~\ref{sec:tone})\\
 \texttt{py-tuner devices} & la lista de entradas de sonido\\
 \texttt{py-tuner instruments} & la lista de instrumentos y afinaciones\\
 \end{tabular}
@@ -287,6 +288,9 @@ cambian la configuración solo en esa sesión, salvo que se añada
 \item[El estroboscopio] tres bandas de franjas que se mueven a la derecha
   cuando la nota está alta y a la izquierda cuando está baja, y se quedan
   quietas cuando está afinada (sección~\ref{sec:strobe}).
+\item[La historia] la desviación en los últimos diez segundos, la más
+  reciente a la derecha, sobre la banda de la tolerancia
+  (sección~\ref{sec:history}).
 \item[Las cuerdas] un botón por cada cuerda de la afinación. La cuerda con
   que se compara va enmarcada.
 \item[La barra de estado] la entrada en uso, su frecuencia de muestreo y el
@@ -415,15 +419,89 @@ La aguja muestra la desviación de inmediato, y es la más fácil de leer de
 lejos. Sigue la lectura con algo de inercia, para no temblar.
 
 \index{estroboscopio}%
-El estroboscopio es el más sensible. Sus tres bandas se mueven a una
-velocidad proporcional a la desviación: la de arriba, una franja por
-segundo por cada cent; la del medio, el doble, y la de abajo, el cuádruple.
-Así, una desviación de una décima de cent, que la aguja apenas muestra,
-sigue moviendo despacio la banda de abajo. Para afinar con él, se gira la
-clavija hasta que la banda de abajo se quede quieta. Cuál de los dos se
-muestra se elige en la configuración, o con \key{v} en la terminal.
+El estroboscopio es el más sensible, y es uno de verdad. Un estroboscopio
+mecánico gira a la frecuencia de la nota buscada y lo ilumina el sonido:
+afinada, su dibujo se queda quieto. Cada banda del de py-tuner hace lo mismo
+con números: sigue la fase de una parcial de la cuerda y avanza una franja
+por segundo por cada cent que la parcial se aparta, a la derecha si está
+alta, a la izquierda si está baja. Así, una desviación de una décima de
+cent, que la aguja apenas muestra, sigue moviendo despacio una banda. Una
+banda se apaga cuando su parcial se pierde en el ruido. La idea viene del
+estroboscopio de Entropy Piano Tuner (Haye Hinrichsen y Christoph Wick) y
+de Strobie (Davorin Šego).
+
+\index{estroboscopio!vernier}\index{estroboscopio!armónicos}%
+Tiene dos modos, que se eligen en la configuración o con \key{m} en la
+terminal:
+
+\begin{description}
+\item[Vernier] (el de siempre) las tres bandas siguen la parcial más clara,
+  la de arriba a su propia velocidad, la del medio al doble y la de abajo al
+  cuádruple. Para afinar, se gira la clavija hasta que la banda de abajo se
+  quede quieta.
+\item[Armónicos] cada banda sigue una parcial propia: la fundamental, la
+  segunda y la tercera. Una cuerda real es algo rígida, y sus parciales
+  altas suenan un poco agudas; py-tuner busca cada una donde la pone la
+  rigidez de la cuerda, así que en una cuerda afinada las tres se quedan
+  quietas.
+\end{description}
+
+\noindent Cuál de los dos, aguja o estroboscopio, se muestra se elige en la
+configuración, o con \key{v} en la terminal.
 
 \shot{strobe_es}{0.75}{El estroboscopio solo}
+
+\section{La historia}
+\label{sec:history}
+
+\index{historia}\index{traza}%
+Bajo el estroboscopio, la historia muestra la desviación en los últimos
+diez segundos, la más reciente a la derecha, sobre la banda verde de la
+tolerancia: una cuerda que se asienta tras girar la clavija, o una clavija
+girada al revés, se ve enseguida. Un hueco es un momento sin nota. Se
+oculta en la configuración, con \key{h} en la terminal o con
+\texttt{-{}-no-trace}.
+
+\section{Desviaciones, transposición y cejilla}
+\label{sec:offsets}
+
+\index{desviaciones}%
+Algunos músicos afinan unas pocas notas un poco fuera del temperamento
+igual, para que los acordes que más tocan suenen más dulces.
+\menu{Configuración\then Desviaciones de las notas\elipsis} da a cada nombre
+de nota su desviación, de $-50$ a $+50$ cents, en todas las octavas; la
+aguja, el estroboscopio y el tono apuntan entonces a la nota así movida. En
+la línea de órdenes: \texttt{-{}-offset B=-2} (repetida para cada nota;
+\texttt{B=0} la quita).
+
+\shot{offsets_es}{0.35}{Desviaciones de las notas: Si 2 cents bajo, Sol 1,5 alto, Mi 1 bajo}
+
+\index{transposición}%
+\menu{Transponer} muestra los nombres movidos unos semitonos, para un
+instrumento transpositor: 2 para uno en si$\flat$, cuyo Do escrito suena
+si$\flat$. Solo cambian los nombres; la altura que se mide es la misma.
+\index{cejilla}%
+\menu{Cejilla} es el traste de una cejilla: cada cuerda sube otros tantos
+semitonos, y los botones de las cuerdas muestran las notas que entonces
+suenan. En la línea de órdenes, \texttt{-{}-transpose} y \texttt{-{}-capo};
+en la terminal, \key{c} mueve la cejilla.
+
+\section{El tono de referencia}
+\label{sec:tone}
+
+\index{tono de referencia}%
+Para afinar de oído, py-tuner puede tocar la nota por el sonido del
+computador, como lo hace pianito (Axel Stevens): una cuerda pulsada de unos
+segundos, a la frecuencia exacta que se busca, con el La de referencia, la
+desviación de la nota y la cejilla. \menu{Tono}, en la ventana, toca la
+cuerda fija, o si no la nota que se muestra, o si no el La 4; \key{p} hace
+lo mismo en la terminal. En la línea de órdenes:
+
+\begin{quote}
+\texttt{py-tuner tone E2}\\
+\texttt{py-tuner tone -i guitar 1}\quad(la primera cuerda)\\
+\texttt{py-tuner tone -a 442}\quad(el La 4 a 442~Hz)
+\end{quote}
 
 \section{Configuración}
 \label{sec:settings}
@@ -450,6 +528,10 @@ muestra se elige en la configuración, o con \key{v} en la terminal.
   cambia): más es más estable, menos sigue más rápido.
 \item[Cuadro de análisis] la longitud de cada cuadro, en períodos de la
   nota (16 si no se cambia): más es más preciso, menos reacciona más rápido.
+\item[Estroboscopio] vernier o armónicos (sección~\ref{sec:strobe}).
+\item[Mostrar la historia] la historia de la desviación
+  (sección~\ref{sec:history}).
+\item[Transponer, Cejilla, Desviaciones] sección~\ref{sec:offsets}.
 \end{description}
 
 \noindent Cada cambio se guarda en el acto, y la ventana, la terminal y la
@@ -483,6 +565,10 @@ Tecla & Lo que hace\\
 \key{n} & El sistema siguiente de nombres de notas: inglés, latino, alemán \\
 \key{b} & Sostenidos, bemoles o ambos \\
 \key{v} & Aguja y estroboscopio, la aguja sola o el estroboscopio solo \\
+\key{m} & El estroboscopio: vernier (una parcial, tres velocidades) o armónicos (parciales 1, 2, 3) \\
+\key{h} & Mostrar u ocultar la historia de la desviación \\
+\key{c} & Subir la cejilla un traste (tras el 7.º, se quita) \\
+\key{p} & Tocar el tono de referencia: la cuerda fija, o la nota que se muestra, o el La 4 \\
 \key{l} & El idioma siguiente de la interfaz \\
 \bottomrule
 \end{longtable}
@@ -544,6 +630,11 @@ Opción & Lo que hace\\
 \texttt{-{}-smoothing SEGUNDOS} & los segundos que promedia la lectura\\
 \texttt{-{}-periods N} & los períodos de la nota en cada cuadro de análisis\\
 \texttt{-{}-display} & \texttt{both}, \texttt{needle} o \texttt{strobe}\\
+\texttt{-{}-offset NOTA=CENTS} & afinar un nombre de nota fuera del temperamento igual, en todas las octavas\\
+\texttt{-{}-transpose N} & los nombres para un instrumento transpositor\\
+\texttt{-{}-capo TRASTE} & una cejilla, que sube todas las cuerdas\\
+\texttt{-{}-strobe} & \texttt{vernier} o \texttt{harmonics}\\
+\texttt{-{}-trace}, \texttt{-{}-no-trace} & la historia de la desviación\\
 \texttt{-{}-language} & \texttt{es} o \texttt{en}\\
 \texttt{-{}-save} & guardar las opciones dadas como la nueva configuración\\
 \bottomrule
@@ -559,8 +650,22 @@ cada armónico de la cuerda, hasta el decimosexto, en el máximo exacto de su
 espectro, y los ajusta todos a la vez al modelo de una cuerda real, algo
 rígida, $f_n = n f_0 \sqrt{1 + B n^2}$. Los armónicos fuertes cuentan más
 que los débiles, y los que se hunden en el ruido quedan fuera. La lectura
-que se muestra es la media recortada del último medio segundo de cuadros;
-un salto sostenido de más de un tercio de semitono es una nota nueva.
+que se muestra es la media recortada del último medio segundo de cuadros.
+
+\index{octava}%
+Una cuerda real puede engañar a un período: dos cuerdas que resuenan
+comparten un período una octava o una duodécima bajo la nota, y una cuerda
+de acero cuya fundamental el micrófono apenas recoge se repite casi cada
+medio período. Por eso los candidatos alrededor del período (un tercio, la
+mitad, el doble y el triple) se puntúan por lo que sobresalen sus armónicos
+del ruido que los rodea, menos lo que hay donde caerían los armónicos de
+una octava equivocada, una idea tomada de Strobie y de Entropy Piano Tuner;
+la nota que ya suena lleva ventaja mientras se apaga, como en Tuneo
+(Braulio Ríos). Una nota nueva justo después de pulsar se toma enseguida;
+sin pulsación, debe durar 0,3 segundos, o 0,6 si es la octava, la duodécima
+o la quinta de la que suena. Y con las cuerdas de un instrumento solo se
+buscan las notas cercanas a ellas. En once grabaciones de cuerdas reales de
+guitarra, estas reglas dejaron una nota falsa donde había quince.
 
 \index{consejos}%
 Algunas costumbres ayudan:
@@ -604,6 +709,8 @@ arranca. Borrarlo devuelve toda la configuración de fábrica.
   dos tengan el mismo La de referencia.
 \item[``No se puede abrir la entrada''] otro programa tiene la tarjeta de
   sonido, o el dispositivo se desconectó; el mensaje dice la causa.
+\item[El tono no suena] la salida de sonido del computador está
+  silenciada, u otro programa la tiene; el mensaje dice la causa.
 \item[Un ajuste está mal] borre el archivo de configuración
   (sección~\ref{sec:files}).
 \end{description}

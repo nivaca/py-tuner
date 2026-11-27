@@ -30,8 +30,10 @@
       <li xml:lang="es">Un modo cromático, y guitarra, bajo, contrabajo y violín con sus afinaciones habituales y otras</li>
       <li>A reference A from 380 to 480 Hz, in tenths of a hertz</li>
       <li xml:lang="es">Un La de referencia de 380 a 480 Hz, en décimas de hercio</li>
-      <li>A needle, a strobe of three bands, or both</li>
-      <li xml:lang="es">Una aguja, un estroboscopio de tres bandas, o los dos</li>
+      <li>A needle, a real strobe that follows the phase of each partial, or both, and the history of the deviation</li>
+      <li xml:lang="es">Una aguja, un estroboscopio de verdad que sigue la fase de cada parcial, o los dos, y la historia de la desviación</li>
+      <li>Note offsets, transposition, a capo and a reference tone</li>
+      <li xml:lang="es">Desviaciones por nota, transposición, cejilla y tono de referencia</li>
       <li>A window, a full-screen terminal interface and a command line, which can also measure a WAV recording note by note</li>
       <li xml:lang="es">Una ventana, una interfaz de terminal a pantalla completa y una línea de órdenes, que también mide una grabación WAV nota por nota</li>
       <li>Note names in English, Latin (Do Re Mi) or German, with sharps, flats or both</li>

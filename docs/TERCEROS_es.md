@@ -50,8 +50,15 @@ Lo que aprendió de otros programas
 | Software | Licencia | Lo que py-tuner le debe |
 |---|---|---|
 | [FMIT](https://github.com/gillesdegottex/fmit) (Free Music Instrument Tuner), de Gilles Degottex | GPL-2.0-or-later (sus bibliotecas, LGPL-2.1-or-later) | La forma del análisis de un afinador: una estimación gruesa que no puede errar la octava y después una fina; y el estudio de dónde se pierde su precisión |
+| [Strobie](https://github.com/dsego/strobe-tuner) (strobe-tuner), de Davorin Šego | GPL-3.0 | El estroboscopio movido por la fase de cada parcial, con la velocidad escalada a cents y las franjas que se apagan con el ruido, y sus modos vernier y de armónicos; la prominencia de una parcial sobre el fondo que la rodea (su pila de armónicos); el filtro paso alto bajo el margen; los ataques como un nivel 1,5 veces su envolvente; la espera más larga de una nota nueva que es armónico o subarmónico de la que suena; la nota que se mantiene hasta 10 cents pasada la mitad; las desviaciones por nota; la traza de la desviación, y la medida con grabaciones desplazadas tantos cents conocidos |
+| [Entropy Piano Tuner](https://gitlab.com/tp3/Entropy-Piano-Tuner), de Haye Hinrichsen y Christoph Wick | GPL-3.0 | Su estroboscopio, que demodula el sonido en cada parcial buscada con un promedio que se olvida; los pesos negativos del núcleo de su reconocedor de teclas, donde caerían las parciales de una octava equivocada |
+| [Tuneo](https://github.com/DonBraulio/tuneo), de Braulio Ríos | "MIT No-Competition" (MIT con una restricción sobre las tiendas comerciales de aplicaciones) | Seguir la nota que suena mientras se apaga, y volver a buscar en todo el margen tras pulsar; la historia de la desviación que se desplaza. Sus grabaciones de cuerdas de guitarra sirvieron para medir py-tuner (`tools/evaluate.py`), solo en este computador |
+| [pianito](https://github.com/4esv/pianito), de Axel Stevens | MIT | Una búsqueda ceñida a las cuerdas cuando se conocen; sonidos sintéticos de prueba con ataque, parciales que se apagan y una fundamental débil; la orden que toca un tono de referencia |
 
-En py-tuner no hay código de FMIT: se leyó, no se copió. Los métodos que
+En py-tuner no hay código de estos programas: se leyeron sus fuentes y las
+ideas se escribieron de nuevo en Python. La licencia de Tuneo añade una
+restricción que la GPL no admite, así que nada suyo (ni código ni
+grabaciones) está en py-tuner ni en sus versiones. Los métodos que
 usa py-tuner vienen de la bibliografía: la función de diferencia cuadrada
 normalizada de McLeod y Wyvill ("A smarter way to find pitch", 2005) y la
 inarmonicidad de las cuerdas rígidas, f_n = n·f0·√(1+B·n²) (Fletcher,
@@ -65,6 +72,7 @@ Las herramientas que lo construyen, lo prueban y lo empaquetan
 |---|---|---|
 | [uv](https://github.com/astral-sh/uv) y uv_build | Apache-2.0 OR MIT | El entorno, el wheel y el paquete del código |
 | [pytest](https://pytest.org) | MIT | Las pruebas |
+| [pyte](https://github.com/selectel/pyte) | LGPL-3.0 | Lee la pantalla de la interfaz de terminal para sus imágenes (`tools/terminal_images.py`) |
 | [zig](https://ziglang.org) (el paquete ziglang de PyPI) | MIT | Compila PortAudio para la AppImage |
 | [appimagetool](https://github.com/AppImage/appimagetool) | MIT | Hace la AppImage |
 | [rpm-build](https://rpm.org), rpm-sign, rpmdevtools | GPL-2.0-or-later | El RPM |

@@ -7,6 +7,20 @@ the wheel and the source, are on
 
 ## Unreleased
 
+- Fewer wrong notes on real strings: an octave and twelfth decision by the
+  harmonics of each candidate, a new note without a pluck waits (longer if
+  it is a harmonic or an undertone of the note sounding), and with strings
+  the search stays near them. On eleven guitar recordings, one false note
+  where there were fifteen. The note or string held is kept until 10 cents
+  past halfway to the next.
+- A real strobe: each band follows the phase of a partial, in vernier mode
+  (the clearest partial at three speeds) or harmonics mode (partials 1, 2
+  and 3), and fades when the partial is lost in the noise.
+- The history of the deviation, in the window and the terminal.
+- Note offsets, the names transposed, a capo, and a reference tone
+  (`py-tuner tone`, the Tone button, `p` in the terminal).
+- Credits to the tuners these ideas come from: Strobie, Entropy Piano
+  Tuner, Tuneo and pianito (docs/THIRD-PARTY.md).
 - `--once` waits for a dozen frames before it takes a reading as steady
   (with one or two, a wrong one could pass, as on a slow machine), and a
   frame shorter than the analysis needs, or whose harmonics disagree with

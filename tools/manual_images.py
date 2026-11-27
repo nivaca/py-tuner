@@ -13,9 +13,11 @@ una carpeta temporal).
 
 from __future__ import annotations
 
+import math
 import os
 import sys
 import tempfile
+import time
 from dataclasses import replace
 from pathlib import Path
 
@@ -23,7 +25,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "tools"))
 OUT = ROOT / "docs" / "img" / "manual"
-SIZE = (720, 640)
+SIZE = (720, 760)
 
 
 def main() -> int:
@@ -61,6 +63,19 @@ def main() -> int:
         for _ in range(60):
             win.show_reading(r, 0.05)
         win.strobe.model.phases = [phase, (2 * phase) % 1, (4 * phase) % 1]
+        # La historia: una cuerda que se afina, desde 15 cents fuera hasta la lectura, con una pulsación nueva
+        # a la mitad (un hueco sin nota).
+        now = time.monotonic()
+        start = r.cents - 9 if r.cents <= 1 else r.cents + 9  # (desde su mismo lado, más lejos)
+        points = []
+        for k in range(100):
+            t = now - 10 + k * 0.1
+            if 48 <= k < 52:
+                points.append((t, None))
+                continue
+            share = min(1.0, k / 80)
+            points.append((t, start + (r.cents - start) * share + 0.4 * math.sin(k / 3)))
+        win.trace.points = points
         win.strobe.update()
         win.status.setText("pipewire · 48000 Hz")
         app.processEvents()
@@ -84,6 +99,14 @@ def main() -> int:
         shot("chromatic", lang, chromatic, reading(notes.parse("Bb3"), -1.8, None, chromatic))
         strobe = replace(guitar, display="strobe")
         shot("strobe", lang, strobe, reading(notes.parse("E2"), 0.7, 0, strobe), phase=0.55)
+        off = window.OffsetsDialog({"B": -2.0, "G": 1.5, "E": -1.0}, ("english", "sharps"))
+        off.show()
+        app.processEvents()
+        path = OUT / f"offsets_{lang}.png"
+        off.grab().save(str(path))
+        print(f"Wrote {path.relative_to(ROOT)}")
+        off.close()
+        shiboken6.delete(off)
         dlg = window.SettingsDialog(guitar)
         dlg.show()
         app.processEvents()

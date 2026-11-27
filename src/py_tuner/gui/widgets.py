@@ -213,8 +213,8 @@ class Trace(QWidget):
         self.setFixedHeight(90)
 
     def scale(self) -> float:
-        """The cents at the top and bottom edges: ten times the tolerance, at least 10."""
-        return max(10.0, 10 * self.tolerance)
+        """The cents at the top and bottom edges: ten times the tolerance, at least 20."""
+        return max(20.0, 10 * self.tolerance)
 
     def add(self, cents: float | None, reading_time: float, now: float | None = None) -> None:
         """Adds a reading (CENTS None: no note), once per reading (its READING_TIME)."""

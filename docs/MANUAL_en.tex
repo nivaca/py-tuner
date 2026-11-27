@@ -255,6 +255,7 @@ From the menu, \menu{py-tuner} opens the window. From a terminal:
 \texttt{py-tuner} & the window\\
 \texttt{py-tuner tui} & the terminal interface (section~\ref{sec:tui})\\
 \texttt{py-tuner cli} & one line of text (section~\ref{sec:cli})\\
+\texttt{py-tuner tone E2} & a reference note (section~\ref{sec:tone})\\
 \texttt{py-tuner devices} & the list of sound inputs\\
 \texttt{py-tuner instruments} & the list of instruments and tunings\\
 \end{tabular}
@@ -286,6 +287,8 @@ added (section~\ref{sec:settings}).
 \item[The strobe] three bands of stripes that drift to the right when the
   note is sharp and to the left when it is flat, and stand still when it is
   in tune (section~\ref{sec:strobe}).
+\item[The history] the deviation over the last ten seconds, the newest at
+  the right, over the band of the tolerance (section~\ref{sec:history}).
 \item[The strings] a button for each string of the tuning. The string
   compared against is framed.
 \item[The status bar] the input in use, its sample rate, and the level of
@@ -414,15 +417,83 @@ afar. It follows the reading with a little inertia, so that it does not
 tremble.
 
 \index{strobe}%
-The strobe is the more sensitive. Its three bands drift at a speed
-proportional to the deviation: the top one moves one stripe per second for
-each cent, the middle one twice as fast and the bottom one four times. So
-a deviation of a tenth of a cent, which the needle hardly shows, still
-moves the bottom band slowly. To tune with it, turn the peg until the
-bottom band stands still. Which of the two is shown is chosen in the
+The strobe is the more sensitive, and it is a real one. A mechanical strobe
+turns at the frequency of the note wanted and is lit by the sound: in tune,
+its pattern stands still. Each band of py-tuner's does the same with
+numbers: it follows the phase of one partial of the string, and moves one
+stripe per second for each cent the partial is off, to the right when it is
+sharp, to the left when it is flat. So a deviation of a tenth of a cent,
+which the needle hardly shows, still moves a band slowly. A band fades when
+its partial is lost in the noise. Its idea comes from the stroboscope of
+Entropy Piano Tuner (Haye Hinrichsen and Christoph Wick) and from Strobie
+(Davorin Šego).
+
+\index{strobe!vernier}\index{strobe!harmonics}%
+It has two modes, chosen in the settings or with \key{m} in the terminal:
+
+\begin{description}
+\item[Vernier] (the usual) the three bands follow the clearest partial, the
+  top one at its own speed, the middle one twice as fast and the bottom one
+  four times. To tune, turn the peg until the bottom band stands still.
+\item[Harmonics] each band follows a partial of its own: the fundamental,
+  the second and the third. A real string is a little stiff, and its upper
+  partials run sharp; py-tuner looks for each where the string's own
+  stiffness puts it, so on a string in tune the three stand still.
+\end{description}
+
+\noindent Which of the needle and the strobe is shown is chosen in the
 settings, or with \key{v} in the terminal.
 
 \shot{strobe_en}{0.75}{The strobe alone}
+
+\section{The history}
+\label{sec:history}
+
+\index{history}\index{trace}%
+Under the strobe, the history shows the deviation over the last ten
+seconds, the newest at the right, over the green band of the tolerance: a
+string settling after a turn of the peg, or a peg turned the wrong way, is
+seen at once. A gap is a moment without a note. It is hidden in the
+settings, with \key{h} in the terminal, or with \texttt{-{}-no-trace}.
+
+\section{Offsets, transposition and capo}
+\label{sec:offsets}
+
+\index{offsets}%
+Some players tune a few notes a little off equal temperament, so that the
+chords they play most sound sweeter. \menu{Settings\then Note offsets\elipsis}
+gives each note name its offset, from $-50$ to $+50$ cents, in every octave;
+the needle, the strobe and the tone then aim at the note so moved. On the
+command line: \texttt{-{}-offset B=-2} (repeated for each note;
+\texttt{B=0} removes it).
+
+\shot{offsets_en}{0.35}{Note offsets: B 2 cents flat, G 1.5 sharp, E 1 flat}
+
+\index{transposition}%
+\menu{Transpose} shows the names moved some semitones, for a transposing
+instrument: 2 for one in B$\flat$, whose written C sounds B$\flat$. Only the
+names change; the pitch measured is the same. \index{capo}%
+\menu{Capo} is the fret of a capo: every string is raised as many
+semitones, and the buttons of the strings show the notes they then sound.
+On the command line, \texttt{-{}-transpose} and \texttt{-{}-capo}; in the
+terminal, \key{c} moves the capo.
+
+\section{The reference tone}
+\label{sec:tone}
+
+\index{reference tone}\index{tone}%
+To tune by ear, py-tuner can play the note through the computer's sound, as
+pianito (Axel Stevens) does: a plucked string of a few seconds, at the
+exact frequency aimed at, with the reference A, the offset of the note and
+the capo. \menu{Tone}, in the window, plays the locked string, or else the
+note shown, or else A4; \key{p} does the same in the terminal. On the
+command line:
+
+\begin{quote}
+\texttt{py-tuner tone E2}\\
+\texttt{py-tuner tone -i guitar 1}\quad(the first string)\\
+\texttt{py-tuner tone -a 442}\quad(A4 at 442~Hz)
+\end{quote}
 
 \section{Settings}
 \label{sec:settings}
@@ -448,6 +519,10 @@ settings, or with \key{v} in the terminal.
   changed): longer is steadier, shorter follows faster.
 \item[Analysis frame] the length of each frame, in periods of the note (16
   unless changed): more is more precise, fewer reacts faster.
+\item[Strobe] vernier or harmonics (section~\ref{sec:strobe}).
+\item[Show the history] the history of the deviation
+  (section~\ref{sec:history}).
+\item[Transpose, Capo, Offsets] section~\ref{sec:offsets}.
 \end{description}
 
 \noindent Every change is saved at once, and the window, the terminal and
@@ -481,6 +556,10 @@ Key & What it does\\
 \key{n} & The next system of note names: English, Latin, German \\
 \key{b} & Sharps, flats or both \\
 \key{v} & Needle and strobe, the needle alone or the strobe alone \\
+\key{m} & The strobe: vernier (one partial, three speeds) or harmonics (partials 1, 2, 3) \\
+\key{h} & Show or hide the history of the deviation \\
+\key{c} & Move the capo one fret up (after the 7th, off) \\
+\key{p} & Play the reference tone: the locked string, or the note shown, or A4 \\
 \key{l} & The next language of the interface \\
 \bottomrule
 \end{longtable}
@@ -542,6 +621,11 @@ Option & What it does\\
 \texttt{-{}-smoothing SECONDS} & seconds the reading averages\\
 \texttt{-{}-periods N} & periods of the note in each analysis frame\\
 \texttt{-{}-display} & \texttt{both}, \texttt{needle} or \texttt{strobe}\\
+\texttt{-{}-offset NOTE=CENTS} & tune a note name off equal temperament, in every octave\\
+\texttt{-{}-transpose N} & the names for a transposing instrument\\
+\texttt{-{}-capo FRET} & a capo, which raises every string\\
+\texttt{-{}-strobe} & \texttt{vernier} or \texttt{harmonics}\\
+\texttt{-{}-trace}, \texttt{-{}-no-trace} & the history of the deviation\\
 \texttt{-{}-language} & \texttt{en} or \texttt{es}\\
 \texttt{-{}-save} & keep the options given as the new settings\\
 \bottomrule
@@ -557,8 +641,22 @@ locates every harmonic of the string, up to the sixteenth, at the exact
 peak of its spectrum, and fits all of them at once to the model of a real,
 slightly stiff string, $f_n = n f_0 \sqrt{1 + B n^2}$. Strong harmonics
 count more than weak ones, and those buried in noise are left out. The
-reading shown is the trimmed mean of the last half second of frames; a
-sustained jump of more than a third of a semitone is a new note.
+reading shown is the trimmed mean of the last half second of frames.
+
+\index{octave}%
+A real string can fool a period: two strings ringing in sympathy share a
+period an octave or a twelfth below the note, and a steel string whose
+fundamental the microphone hardly picks up repeats almost every half
+period. So the candidates around the period (a third, a half, twice and
+three times it) are scored by how far their harmonics stand over the noise
+around them, less what stands where a wrong octave's harmonics would fall,
+an idea taken from Strobie and from Entropy Piano Tuner; the note already
+sounding is favoured while it decays, as Tuneo (Braulio Ríos) does. A new
+note right after a pluck is taken at once; without a pluck, it must last
+0.3 seconds, or 0.6 if it is an octave, a twelfth or a fifth of the note
+sounding. And with an instrument's strings, only the notes near them are
+looked for. On eleven recordings of real guitar strings, these rules left
+one false note where there were fifteen.
 
 \index{tips}%
 A few habits help:
@@ -601,6 +699,8 @@ Deleting it brings back all the defaults.
   have the same reference A.
 \item[``Cannot open the input''] another program holds the sound card, or
   the device was unplugged; the message gives the reason.
+\item[The tone does not sound] the computer's sound output is muted, or
+  another program holds it; the message says why.
 \item[A setting is wrong] delete the settings file
   (section~\ref{sec:files}).
 \end{description}

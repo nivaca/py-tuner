@@ -7,6 +7,20 @@ AppImage, el wheel y el código, están en
 
 ## Sin publicar
 
+- Menos notas equivocadas en cuerdas reales: una decisión de la octava y la
+  duodécima por los armónicos de cada candidato, una nota nueva sin
+  pulsación espera (más si es armónico o subarmónico de la que suena), y con
+  cuerdas la búsqueda se queda cerca de ellas. En once grabaciones de
+  guitarra, una nota falsa donde había quince. La nota o cuerda elegida se
+  mantiene hasta 10 cents pasada la mitad hacia la siguiente.
+- Un estroboscopio de verdad: cada banda sigue la fase de una parcial, en
+  modo vernier (la parcial más clara a tres velocidades) o de armónicos (las
+  parciales 1, 2 y 3), y se apaga cuando la parcial se pierde en el ruido.
+- La historia de la desviación, en la ventana y en la terminal.
+- Desviaciones por nota, los nombres transpuestos, una cejilla y un tono de
+  referencia (`py-tuner tone`, el botón Tono, `p` en la terminal).
+- El crédito a los afinadores de donde vienen estas ideas: Strobie, Entropy
+  Piano Tuner, Tuneo y pianito (docs/TERCEROS_es.md).
 - `--once` espera una docena de cuadros antes de dar una lectura por
   estable (con uno o dos, una errada podía pasar, como en una máquina
   lenta), y un cuadro más corto de lo que pide el análisis, o cuyos

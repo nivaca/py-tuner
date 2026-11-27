@@ -7,7 +7,7 @@ November 2026.  Its starting point was the study of FMIT (Free Music
 Instrument Tuner), the C++ and Qt tuner that Gilles Degottex wrote from
 2004; nothing of its code was copied, but reading it showed what a tuner
 needs and where its precision is lost.  Here I explain how it was made, in
-six stages.
+seven stages.
 
 py-tuner is free software, under the GNU General Public License, version 3
 or later.  It uses numpy (BSD licence) for the analysis, sounddevice (MIT
@@ -168,16 +168,77 @@ is one.  Every file of a release is signed with my key, and each signature
 is checked with only the published public key before anything is
 published.
 
+7. Lessons from other tuners
+----------------------------
+
+After the first release I read four other free tuners: Tuneo, by Braulio
+Ríos, a phone app for the guitar; Strobie, by Davorin Šego, a strobe tuner;
+pianito, by Axel Stevens, a piano tuner for the terminal; and Entropy Piano
+Tuner, by Haye Hinrichsen and Christoph Wick.  Their sources were read, not
+copied, and each is credited in [THIRD-PARTY.md](THIRD-PARTY.md) for what it
+taught.
+
+The most useful thing in Tuneo was not its code but eleven recordings of
+guitar strings, from a phone.  py-tuner had only been measured on synthetic
+strings, and those recordings showed what the synthetic ones never did:
+notes that were not there, an octave or a twelfth under the real one (the
+period shared by two partials of strings ringing in sympathy, or the thump
+of the pluck), and octave errors upwards on steel strings whose fundamental
+the phone hardly picked up.  To measure them I wrote `tools/evaluate.py`.
+It counts the notes that are more than 120 cents from any string the file
+should hold, and it borrows a trick from Strobie: the same recording,
+declared at another sample rate, sounds as many cents higher or lower as
+one wants, so the readings of the shifted copy must move by exactly that
+much, and what does not is error, without knowing how the guitar was tuned.
+In guitar mode py-tuner 0.1.0 heard 15 false notes, 9.1 seconds of them; in
+chromatic mode, 26.
+
+Four changes brought them to one (0.4 s) and two (0.7 s).  An octave
+decision scores the candidates around the coarse pitch (a third, a half,
+the pitch itself, twice and three times it) by how far their harmonics stand
+over the spectrum's local background, as Strobie's harmonic stack does,
+less what stands at their half-harmonics, as the negative weights of Entropy
+Piano Tuner's key recognizer; a candidate above the period is only taken if
+the sound also repeats at its lag.  The note sounding is preferred while it
+decays, as Tuneo narrows its search.  A new note without a pluck must hold
+for 0.3 s, or 0.6 s if it is a harmonic or an undertone of the note sounding
+or of one that has just ended; a pluck is the level rising 1.5 times over
+its envelope, as in Strobie.  And with an instrument's strings the search
+goes only from a fourth below the lowest to a fifth above the highest, as
+pianito and Tuneo clamp it.  The first version of the octave decision made
+things worse in one way: it flipped between candidates in the tails, and the
+shifted copies disagreed three times as often; the periodicity check and the
+continuity put that right, and in the end 95% of the shifted readings agree
+within 0.23 cents.
+
+The strobe became a real one.  Each band demodulates the sound at a partial
+of the target, as Entropy Piano Tuner's stroboscope does, and its stripes
+move with the phase of that partial, scaled so that a cent is a stripe per
+second, and fade when the partial does not stand over the noise between
+partials, as in Strobie.  A single average let the neighbouring partials
+leak in and the phase trembled by a degree; two averages in cascade made it
+steady.  The partials are looked for where the string's measured
+inharmonicity puts them, so on a stiff string in tune every band stands
+still.  Then came what the others offered and py-tuner lacked: a trace of
+the deviation over the last seconds, offsets of a few cents for each note,
+the transposition of the names, a capo, and a reference tone that sounds
+through the computer, as pianito plays one.
+
 Testing
 -------
 
-The program has 167 tests, which run all at once with `tools/test.py`,
+The program has 207 tests, which run all at once with `tools/test.py`,
 each file in a process of its own, in about eight seconds.  Most of them
 measure: the open strings of the four instruments must come out within a
 tenth of a cent of their known pitch, with noise the mean error must stay
 near zero, a weak or missing fundamental and a strongly inharmonic string
 must not change the result, and noise and silence must give no note.
-Others check the names and frequencies of the notes, the tunings, the
+Others check the octave decision on a string whose odd partials are weak
+(the period alone reads it an octave up), the waits for a new note with and
+without a pluck, the strobe's bands moving one, two and four stripes per
+second for each cent and standing still on a stiff string in tune, the
+offsets, the capo and the transposition, and the reference tone.  Others
+check the names and frequencies of the notes, the tunings, the
 reading's response to wrong values and new notes, the settings, the WAV
 files of 8 to 32 bits, the options of the command line, a whole recording
 analysed note by note, the terminal interface running in a
@@ -190,5 +251,7 @@ key made for the test.  I also looked at the window and at the terminal
 as a user sees them, in both languages, while a WAV file of six detuned
 guitar strings played; ran the command line with the computer's
 microphone; and ran the AppImage, which found the sound devices through its
-own PortAudio.  The program has 41 files of Python, around 6,900 lines, of
-which some 1,900 are tests.
+own PortAudio.  The real recordings, which cannot be distributed with it,
+measure it on this computer with `tools/evaluate.py`.  The program has 47
+files of Python, around 8,500 lines, of
+which some 2,300 are tests.
