@@ -5,7 +5,9 @@ the wheel and the source, are on
 [Codeberg](https://codeberg.org/nivaca/py-tuner/releases) and
 [GitHub](https://github.com/nivaca/py-tuner/releases).
 
-## Unreleased
+## 0.4.0 — 2026-11-27
+
+A steady response for the double bass.
 
 - A steady response for the double bass (`--response steady`, `r` in the
   terminal, Response in the settings): the first half second of each

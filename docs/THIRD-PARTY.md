@@ -6,7 +6,7 @@ Open-source software used by py-tuner
 py-tuner is free software, under the GNU General Public License, version 3
 or later (GPL-3.0-or-later). It is built on the open-source software listed
 here: the libraries it uses, and the tools that build, test and package it.
-The versions are those of py-tuner 0.3.0 (as `uv.lock` resolves them); `uv
+The versions are those of py-tuner 0.4.0 (as `uv.lock` resolves them); `uv
 tree` shows those of any later version. Licences are given as SPDX
 identifiers, as each project declares them.
 

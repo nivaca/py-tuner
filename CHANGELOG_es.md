@@ -5,7 +5,9 @@ AppImage, el wheel y el código, están en
 [Codeberg](https://codeberg.org/nivaca/py-tuner/releases) y en
 [GitHub](https://github.com/nivaca/py-tuner/releases).
 
-## Sin publicar
+## 0.4.0 — 2026-11-27
+
+Una respuesta estable para el contrabajo.
 
 - Una respuesta estable para el contrabajo (`--response steady`, `r` en la
   terminal, Respuesta en la configuración): se deja fuera el primer medio
