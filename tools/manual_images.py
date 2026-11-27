@@ -30,7 +30,15 @@ def main() -> int:
     os.environ["QT_QPA_PLATFORM"] = "offscreen"
     os.environ["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="py-tuner-images-")
     import shiboken6
+    from PySide6.QtCore import qInstallMessageHandler
     from PySide6.QtWidgets import QApplication
+
+    # La plataforma "offscreen" avisa con cada ventana que no sabe de tamaños sugeridos: no importa aquí.
+    def quiet(kind, context, message):
+        if "propagateSizeHints" not in message:
+            print(message, file=sys.stderr)
+
+    qInstallMessageHandler(quiet)
 
     from py_tuner import interface, notes
     from py_tuner.gui import window
