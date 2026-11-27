@@ -19,8 +19,11 @@ from .tuner import LiveTuner, Reading, Tuner
 
 # Una nota de un archivo cuenta si se sostiene al menos esto (segundos).
 MIN_NOTE = 0.15
-# Los cuadros que --once espera antes de dar una lectura por estable
-ONCE_FRAMES = 12
+# Los cuadros que --once espera, como mínimo, antes de dar una lectura por estable
+ONCE_FRAMES = 4
+# ... y los segundos de sonido que deben abarcar: se cuenta en tiempo, no en cuadros, porque una máquina lenta
+# analiza menos cuadros por segundo y con una docena fija no llegaba nunca
+ONCE_SECONDS = 0.3
 # Los primeros instantes de una cuerda pulsada suenan algo altos: se saltan.
 ATTACK = 0.1
 
@@ -122,7 +125,8 @@ def run(s: Settings, file: str | None = None, once: bool = False, realtime: bool
             time.sleep(0.05)
             r = live.reading
             # (una lectura de uno o dos cuadros no tiene dispersión: hace falta una docena para fiarse)
-            if once and r.active and r.count >= ONCE_FRAMES and r.spread <= s.tolerance / 2:
+            if (once and r.active and r.count >= ONCE_FRAMES and r.span >= ONCE_SECONDS
+                    and r.spread <= s.tolerance / 2):
                 print(line(r, s), file=out)
                 return 0
             now = time.monotonic()

@@ -33,11 +33,13 @@ MEMORY_S = 2.0
 @dataclass(frozen=True)
 class Smoothed:
     """The steady reading: frequency in Hz, its spread (cents, the half-width of
-    the central half of the recent values) and how many values it is made of."""
+    the central half of the recent values), how many values it is made of, and
+    the seconds of sound between the first of them and the last."""
 
     frequency: float
     spread: float
     count: int
+    span: float = 0.0
 
 
 class Stabilizer:
@@ -147,4 +149,4 @@ class Stabilizer:
         middle = cs[q:n - q] if n >= 4 else cs
         mean = sum(middle) / len(middle)
         spread = (middle[-1] - middle[0]) / 2
-        return Smoothed(440.0 * 2 ** (mean / 1200), spread, n)
+        return Smoothed(440.0 * 2 ** (mean / 1200), spread, n, self._values[-1][0] - self._values[0][0])

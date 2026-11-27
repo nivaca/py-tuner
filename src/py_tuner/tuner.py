@@ -56,6 +56,7 @@ class Reading:
     string: int | None = None
     spread: float = 0.0
     count: int = 0
+    span: float = 0.0  # los segundos de sonido que abarca la lectura
     level: float = float("-inf")
     clarity: float = 0.0
     inharmonicity: float = 0.0
@@ -150,7 +151,7 @@ class Tuner:
         target = self.target_frequency(midi)
         c = notes.cents(smooth.frequency, target)
         return Reading(frequency=smooth.frequency, raw=est.frequency, target_midi=midi,
-                       target_frequency=target, cents=c, string=string, spread=smooth.spread, count=smooth.count,
+                       target_frequency=target, cents=c, string=string, spread=smooth.spread, count=smooth.count, span=smooth.span,
                        level=est.level, clarity=est.clarity, inharmonicity=est.inharmonicity,
                        harmonics=est.harmonics, in_tune=abs(c) <= self.settings.tolerance, time=now)
 

@@ -226,3 +226,10 @@ def test_transpose_changes_only_the_names():
     r = last(tuner, string(notes.frequency(notes.parse("Bb3")), seconds=1.2))
     assert r.target_midi == notes.parse("Bb3")
     assert display.note_full(r.target_midi, s, unicode=False) == "C4"
+
+
+def test_readings_say_how_much_sound_they_span():
+    tuner = Tuner(Settings(), RATE)
+    r = [x for x in tuner.analyze_all(string(220.0, seconds=1.0)) if x.active]
+    assert r[0].span == 0.0
+    assert 0.4 < r[-1].span <= 0.5 + 1e-9  # (la ventana de 0,5 s)

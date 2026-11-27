@@ -21,9 +21,9 @@ AppImage, el wheel y el código, están en
   referencia (`py-tuner tone`, el botón Tono, `p` en la terminal).
 - El crédito a los afinadores de donde vienen estas ideas: Strobie, Entropy
   Piano Tuner, Tuneo y pianito (docs/TERCEROS_es.md).
-- `--once` espera una docena de cuadros antes de dar una lectura por
-  estable (con uno o dos, una errada podía pasar, como en una máquina
-  lenta), y un cuadro más corto de lo que pide el análisis, o cuyos
+- `--once` espera una lectura de al menos 0,3 segundos de sonido antes de
+  darla por estable (con uno o dos cuadros, una errada podía pasar, como en
+  una máquina lenta), y un cuadro más corto de lo que pide el análisis, o cuyos
   armónicos no concuerdan con su período, no da lectura en vez de dar una
   mala.
 - Imágenes de la interfaz de terminal y de la línea de órdenes, en los

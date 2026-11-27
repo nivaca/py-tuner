@@ -117,7 +117,7 @@ def test_cli_realtime_file_once(tmp_path):
     write_wav(tmp_path / "a.wav", string(110.0 * 2 ** (4 / 1200), seconds=3.0, decay=0.1))
     done = subprocess.run([sys.executable, "-m", "py_tuner", "cli", "--file", str(tmp_path / "a.wav"),
                            "--realtime", "--once", "-i", "guitar"],
-                          capture_output=True, text=True, timeout=30)
+                          capture_output=True, text=True, timeout=60)
     assert done.returncode == 0, done.stderr
     last = done.stdout.strip().splitlines()[-1]
     assert last.startswith("A2") and "+4.0" in last and "string 2" in last

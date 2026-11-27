@@ -21,8 +21,9 @@ the wheel and the source, are on
   (`py-tuner tone`, the Tone button, `p` in the terminal).
 - Credits to the tuners these ideas come from: Strobie, Entropy Piano
   Tuner, Tuneo and pianito (docs/THIRD-PARTY.md).
-- `--once` waits for a dozen frames before it takes a reading as steady
-  (with one or two, a wrong one could pass, as on a slow machine), and a
+- `--once` waits for a reading of at least 0.3 seconds of sound before it
+  takes it as steady (with one or two frames, a wrong one could pass, as on
+  a slow machine), and a
   frame shorter than the analysis needs, or whose harmonics disagree with
   its period, gives no reading instead of a poor one.
 - Pictures of the terminal interface and of the command line, in the
