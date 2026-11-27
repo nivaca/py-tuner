@@ -7,7 +7,7 @@ November 2026.  Its starting point was the study of FMIT (Free Music
 Instrument Tuner), the C++ and Qt tuner that Gilles Degottex wrote from
 2004; nothing of its code was copied, but reading it showed what a tuner
 needs and where its precision is lost.  Here I explain how it was made, in
-seven stages.
+eight stages.
 
 py-tuner is free software, under the GNU General Public License, version 3
 or later.  It uses numpy (BSD licence) for the analysis, sounddevice (MIT
@@ -224,10 +224,28 @@ the deviation over the last seconds, offsets of a few cents for each note,
 the transposition of the names, a capo, and a reference tone that sounds
 through the computer, as pianito plays one.
 
+8. Three more ideas
+-------------------
+
+Three ideas of the review were left for later, and came after 0.2.0.  The
+first is Strobie's noise floor: py-tuner learns the level of the room while
+nothing plays, following it when it moves and only creeping up under a
+sound, and never during a note, which would otherwise become the
+background; a sound must then stand 10 dB over it.  On the guitar
+recordings it took away the last false note in guitar mode.  It also ends
+sooner the very faint tail of a string that rings into the noise of a
+phone's microphone, which is why it can be turned off.  The second is a
+spectrum, as Strobie shows one: the sound on a logarithmic axis of
+frequency, its clearest peaks named as notes with their cents, and the
+harmonics of the note sought marked, in the window and, as a row of bars,
+in the terminal.  The third is Tuneo's gauge: a fine scale for the needle,
+an arctangent, on which the last five cents take half of each side and the
+rest up to fifty the other half.
+
 Testing
 -------
 
-The program has 207 tests, which run all at once with `tools/test.py`,
+The program has 218 tests, which run all at once with `tools/test.py`,
 each file in a process of its own, in about eight seconds.  Most of them
 measure: the open strings of the four instruments must come out within a
 tenth of a cent of their known pitch, with noise the mean error must stay
@@ -237,7 +255,10 @@ Others check the octave decision on a string whose odd partials are weak
 (the period alone reads it an octave up), the waits for a new note with and
 without a pluck, the strobe's bands moving one, two and four stripes per
 second for each cent and standing still on a stiff string in tune, the
-offsets, the capo and the transposition, and the reference tone.  Others
+offsets, the capo and the transposition, the reference tone, the noise
+floor (which learns the room, never a note, and lets through a tone 25 dB
+over the noise but not one 5 dB over it), the spectrum's peaks and the
+needle's scales.  Others
 check the names and frequencies of the notes, the tunings, the
 reading's response to wrong values and new notes, the settings, the WAV
 files of 8 to 32 bits, the options of the command line, a whole recording
@@ -253,5 +274,5 @@ guitar strings played; ran the command line with the computer's
 microphone; and ran the AppImage, which found the sound devices through its
 own PortAudio.  The real recordings, which cannot be distributed with it,
 measure it on this computer with `tools/evaluate.py`.  The program has 47
-files of Python, around 8,500 lines, of
-which some 2,300 are tests.
+files of Python, around 9,100 lines, of
+which some 2,450 are tests.

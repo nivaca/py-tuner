@@ -36,7 +36,12 @@ What it does
   vernier mode the clearest partial at one, two and four times the speed,
   in harmonics mode partials 1, 2 and 3, each where the string's own
   inharmonicity puts it.
-- The history of the deviation over the last seconds.
+- The history of the deviation over the last seconds, and the spectrum
+  with its clearest peaks named.
+- The needle on a linear scale or a fine one, where the last few cents
+  spread out.
+- Sounds that don't stand 10 dB over the room's noise, learned while
+  nothing plays, are ignored.
 - Offsets of a few cents for any note, the names transposed for a
   transposing instrument, a capo, and a reference tone.
 - Note names in English, Latin (Do Re Mi) or German (with H and B), with
@@ -101,6 +106,9 @@ Common options, for all three:
     --capo FRET          a capo, which raises every string
     --strobe MODE        vernier or harmonics
     --trace, --no-trace  the history of the deviation
+    --spectrum           the spectrum, with its peaks named
+    --needle SCALE       the needle's scale: linear or fine
+    --no-learn-noise     only the fixed level, not the room's learned noise
     -d, --device DEV     input device, by number or part of its name
     -f, --file WAV       read a WAV file instead of the sound card
     --language en|es     the language of the interface
@@ -119,7 +127,7 @@ In the terminal, the arrow keys change A4 (left and right by 0.1 Hz, up and
 down by 1 Hz), `0` puts it back to 440, `i` changes the instrument, `t` the
 tuning, `s` locks a string, `c` moves the capo, `n` the note names, `b`
 sharps, flats or both, `v` the view, `m` the strobe's mode, `h` the history,
-`p` plays the reference tone, `l` the language, and `q` quits. In the
+`f` the spectrum, `g` the needle's scale, `p` plays the reference tone, `l` the language, and `q` quits. In the
 window, a click on a string button locks that string, and a second click
 unlocks it; the Tone button plays the locked string, or the note shown.
 

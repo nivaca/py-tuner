@@ -5,6 +5,16 @@ the wheel and the source, are on
 [Codeberg](https://codeberg.org/nivaca/py-tuner/releases) and
 [GitHub](https://github.com/nivaca/py-tuner/releases).
 
+## Unreleased
+
+- The noise of the room, learned while nothing plays: what doesn't stand
+  10 dB over it is ignored (it can be turned off). On the guitar
+  recordings, no false note left in guitar mode.
+- The spectrum, with its clearest peaks named and the harmonics of the note
+  sought marked, in the window and in the terminal (`f`).
+- A fine scale for the needle, where the last 5 cents take half of each
+  side (`--needle fine`, `g` in the terminal).
+
 ## 0.2.0 — 2026-11-27
 
 The right note on real strings, and a real strobe.

@@ -32,6 +32,8 @@
       <li xml:lang="es">Un La de referencia de 380 a 480 Hz, en décimas de hercio</li>
       <li>A needle, a real strobe that follows the phase of each partial, or both, and the history of the deviation</li>
       <li xml:lang="es">Una aguja, un estroboscopio de verdad que sigue la fase de cada parcial, o los dos, y la historia de la desviación</li>
+      <li>The spectrum with its peaks named, a fine scale for the needle, and the room's noise learned and ignored</li>
+      <li xml:lang="es">El espectro con sus picos nombrados, una escala fina para la aguja, y el ruido del cuarto aprendido e ignorado</li>
       <li>Note offsets, transposition, a capo and a reference tone</li>
       <li xml:lang="es">Desviaciones por nota, transposición, cejilla y tono de referencia</li>
       <li>A window, a full-screen terminal interface and a command line, which can also measure a WAV recording note by note</li>

@@ -416,6 +416,15 @@ The needle shows the deviation at once, and is the easier to read from
 afar. It follows the reading with a little inertia, so that it does not
 tremble.
 
+\index{needle!fine scale}%
+Its scale is linear unless changed: a cent is a cent anywhere on it. On the
+fine scale, chosen in the settings, with \key{g} in the terminal or with
+\texttt{-{}-needle fine}, the last five cents either side take half of each
+side, and the rest up to fifty the other half; the last cents of the tuning
+can then be told apart, while a string far off is still on the scale. The
+idea is Tuneo's (Braulio Ríos), whose gauge is drawn so
+(figure~\ref{fig:spectrum_en}).
+
 \index{strobe}%
 The strobe is the more sensitive, and it is a real one. A mechanical strobe
 turns at the frequency of the note wanted and is lit by the sound: in tune,
@@ -455,6 +464,21 @@ seconds, the newest at the right, over the green band of the tolerance: a
 string settling after a turn of the peg, or a peg turned the wrong way, is
 seen at once. A gap is a moment without a note. It is hidden in the
 settings, with \key{h} in the terminal, or with \texttt{-{}-no-trace}.
+
+\section{The spectrum}
+\label{sec:spectrum}
+
+\index{spectrum}%
+Below the history, the window can show the spectrum of the sound: its
+frequencies from 30~Hz to 5~kHz on a logarithmic axis (the lines are the
+A's), its clearest peaks named as notes with their cents, and the harmonics
+of the note sought marked in green. It shows what the tuner hears: a weak
+fundamental, a buzz, another string ringing, the hum of the room. In the
+terminal it is a row of bars with the peaks named under it. It is shown in
+the settings, with \key{f} in the terminal or with \texttt{-{}-spectrum}.
+Strobie (Davorin Šego) has one so.
+
+\shot{spectrum_en}{0.75}{The fine scale of the needle and the spectrum: an A2 7.5 cents flat}
 
 \section{Offsets, transposition and capo}
 \label{sec:offsets}
@@ -520,6 +544,12 @@ command line:
 \item[Analysis frame] the length of each frame, in periods of the note (16
   unless changed): more is more precise, fewer reacts faster.
 \item[Strobe] vernier or harmonics (section~\ref{sec:strobe}).
+\item[Needle scale] linear or fine (section~\ref{sec:strobe}).
+\item[Show the spectrum] the spectrum and its peaks
+  (section~\ref{sec:spectrum}).
+\item[Learn the room's noise] (on unless changed) ignore what does not
+  stand 10~dB over the background noise, learned while nothing plays
+  (section~\ref{sec:how}).
 \item[Show the history] the history of the deviation
   (section~\ref{sec:history}).
 \item[Transpose, Capo, Offsets] section~\ref{sec:offsets}.
@@ -559,6 +589,8 @@ Key & What it does\\
 \key{m} & The strobe: vernier (one partial, three speeds) or harmonics (partials 1, 2, 3) \\
 \key{h} & Show or hide the history of the deviation \\
 \key{c} & Move the capo one fret up (after the 7th, off) \\
+\key{f} & Show or hide the spectrum, with its peaks named \\
+\key{g} & The needle's scale: linear, or fine (the centre spread out) \\
 \key{p} & Play the reference tone: the locked string, or the note shown, or A4 \\
 \key{l} & The next language of the interface \\
 \bottomrule
@@ -626,6 +658,10 @@ Option & What it does\\
 \texttt{-{}-capo FRET} & a capo, which raises every string\\
 \texttt{-{}-strobe} & \texttt{vernier} or \texttt{harmonics}\\
 \texttt{-{}-trace}, \texttt{-{}-no-trace} & the history of the deviation\\
+\texttt{-{}-spectrum} & the spectrum, with its peaks named (\texttt{-{}-no-spectrum} hides it)\\
+\texttt{-{}-needle} & \texttt{linear} or \texttt{fine}\\
+\texttt{-{}-learn-noise} & ignore what does not stand over the room's noise\\
+\texttt{-{}-no-learn-noise} & only the fixed level of \texttt{-{}-min-level}\\
 \texttt{-{}-language} & \texttt{en} or \texttt{es}\\
 \texttt{-{}-save} & keep the options given as the new settings\\
 \bottomrule
@@ -642,6 +678,14 @@ peak of its spectrum, and fits all of them at once to the model of a real,
 slightly stiff string, $f_n = n f_0 \sqrt{1 + B n^2}$. Strong harmonics
 count more than weak ones, and those buried in noise are left out. The
 reading shown is the trimmed mean of the last half second of frames.
+
+\index{noise}%
+Before any of this, a sound must be loud enough. Besides the fixed level of
+\menu{Ignore below}, py-tuner learns the noise of the room while nothing
+plays, as Strobie does: the floor follows the level when nothing sounds,
+only creeps up under a sound, and never rises during a note, which would
+otherwise become the background. A sound must stand 10~dB over that floor.
+The level bar marks the threshold in use.
 
 \index{octave}%
 A real string can fool a period: two strings ringing in sympathy share a
@@ -699,6 +743,9 @@ Deleting it brings back all the defaults.
   have the same reference A.
 \item[``Cannot open the input''] another program holds the sound card, or
   the device was unplugged; the message gives the reason.
+\item[The faint tail of a string ends too soon] the tail has sunk into the
+  noise of the room; turn off \menu{Learn the room's noise} to read it to
+  the end.
 \item[The tone does not sound] the computer's sound output is muted, or
   another program holds it; the message says why.
 \item[A setting is wrong] delete the settings file

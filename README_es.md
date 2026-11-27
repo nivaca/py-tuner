@@ -37,7 +37,12 @@ Lo que hace
   cuerda: en modo vernier, la parcial más clara a una, dos y cuatro veces la
   velocidad; en modo de armónicos, las parciales 1, 2 y 3, cada una donde la
   pone la inarmonicidad de la cuerda.
-- La historia de la desviación en los últimos segundos.
+- La historia de la desviación en los últimos segundos, y el espectro con
+  sus picos más claros nombrados.
+- La aguja en una escala lineal o en una fina, donde los últimos cents se
+  abren.
+- Se ignoran los sonidos que no sobresalen 10 dB del ruido del cuarto,
+  aprendido mientras no suena nada.
 - Desviaciones de unos cents para cualquier nota, los nombres transpuestos
   para un instrumento transpositor, una cejilla y un tono de referencia.
 - Nombres de las notas en inglés, latinos (Do Re Mi) o alemanes (con H y
@@ -102,6 +107,9 @@ Las opciones comunes, para los tres:
     --capo TRASTE        una cejilla, que sube todas las cuerdas
     --strobe MODO        vernier o harmonics
     --trace, --no-trace  la historia de la desviación
+    --spectrum           el espectro, con sus picos nombrados
+    --needle ESCALA      la escala de la aguja: linear (lineal) o fine (fina)
+    --no-learn-noise     solo el nivel fijo, no el ruido aprendido del cuarto
     -d, --device DISP    el dispositivo de entrada, por su número o parte de su nombre
     -f, --file WAV       leer un archivo WAV en lugar de la tarjeta de sonido
     --language en|es     el idioma de la interfaz
@@ -120,7 +128,8 @@ En la terminal, las flechas cambian el La (izquierda y derecha, 0,1 Hz;
 arriba y abajo, 1 Hz), `0` lo devuelve a 440, `i` cambia el instrumento,
 `t` la afinación, `s` fija una cuerda, `c` mueve la cejilla, `n` los
 nombres de las notas, `b` sostenidos, bemoles o ambos, `v` la vista, `m` el
-modo del estroboscopio, `h` la historia, `p` toca el tono de referencia, `l`
+modo del estroboscopio, `h` la historia, `f` el espectro, `g` la escala de
+la aguja, `p` toca el tono de referencia, `l`
 el idioma, y `q` sale. En la ventana, un clic en el botón de una cuerda la
 fija, y otro la suelta; el botón Tono toca la cuerda fija, o la nota que se
 muestra.

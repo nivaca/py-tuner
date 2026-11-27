@@ -5,6 +5,16 @@ AppImage, el wheel y el código, están en
 [Codeberg](https://codeberg.org/nivaca/py-tuner/releases) y en
 [GitHub](https://github.com/nivaca/py-tuner/releases).
 
+## Sin publicar
+
+- El ruido del cuarto, aprendido mientras no suena nada: lo que no lo supera
+  en 10 dB se ignora (se puede quitar). En las grabaciones de guitarra, ya
+  ninguna nota falsa en modo guitarra.
+- El espectro, con sus picos más claros nombrados y los armónicos de la
+  nota buscada marcados, en la ventana y en la terminal (`f`).
+- Una escala fina para la aguja, donde los últimos 5 cents ocupan la mitad
+  de cada lado (`--needle fine`, `g` en la terminal).
+
 ## 0.2.0 — 2026-11-27
 
 La nota correcta en cuerdas reales, y un estroboscopio de verdad.

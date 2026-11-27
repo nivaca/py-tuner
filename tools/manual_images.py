@@ -42,7 +42,7 @@ def main() -> int:
 
     qInstallMessageHandler(quiet)
 
-    from py_tuner import interface, notes
+    from py_tuner import display, interface, notes, tone
     from py_tuner.gui import window
     from py_tuner.settings import Settings
     from py_tuner.tuner import Reading
@@ -55,9 +55,12 @@ def main() -> int:
         return Reading(frequency=target * 2 ** (cents / 1200), target_midi=midi, target_frequency=target,
                        cents=cents, string=string, level=-24.0, clarity=0.98, in_tune=abs(cents) <= s.tolerance)
 
-    def shot(name: str, lang: str, s: Settings, r: Reading, phase: float = 0.3) -> None:
+    def shot(name: str, lang: str, s: Settings, r: Reading, phase: float = 0.3, sound=None) -> None:
+        """SOUND, if given: the samples whose spectrum the window shows."""
         win = window.Window(s, save=False)
-        win.resize(*SIZE)
+        win.resize(SIZE[0], SIZE[1] + (160 if s.show_spectrum else 0))
+        # (sin su reloj: sin sonido detrás, dibujaría una lectura vacía sobre la que se pone aquí)
+        win.timer.stop()
         win.show()
         # (la aguja llega a su sitio y el estroboscopio queda en una fase fija)
         for _ in range(60):
@@ -78,6 +81,8 @@ def main() -> int:
         win.trace.points = points
         win.strobe.update()
         win.status.setText("pipewire · 48000 Hz")
+        if sound is not None:
+            win.show_spectrum(sound, tone.RATE, r)
         app.processEvents()
         path = (ROOT / "docs" / "img" / f"main_{lang}.png") if name == "main" else OUT / f"{name}_{lang}.png"
         win.grab().save(str(path))
@@ -99,6 +104,10 @@ def main() -> int:
         shot("chromatic", lang, chromatic, reading(notes.parse("Bb3"), -1.8, None, chromatic))
         strobe = replace(guitar, display="strobe")
         shot("strobe", lang, strobe, reading(notes.parse("E2"), 0.7, 0, strobe), phase=0.55)
+        # La aguja en su escala fina y el espectro: un La 2 7,5 cents bajo (el tono de referencia del programa)
+        fine = replace(guitar, needle_scale="fine", show_spectrum=True)
+        a2 = reading(notes.parse("A2"), -7.5, 1, fine)
+        shot("spectrum", lang, fine, a2, sound=tone.pluck(a2.frequency, 1.0)[-display.SPECTRUM_SAMPLES:])
         off = window.OffsetsDialog({"B": -2.0, "G": 1.5, "E": -1.0}, ("english", "sharps"))
         off.show()
         app.processEvents()

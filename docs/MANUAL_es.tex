@@ -418,6 +418,15 @@ sostenidos, bemoles o ambos (F$\sharp$/G$\flat$); la octava es siempre la cient�
 La aguja muestra la desviación de inmediato, y es la más fácil de leer de
 lejos. Sigue la lectura con algo de inercia, para no temblar.
 
+\index{aguja!escala fina}%
+Su escala es lineal si no se cambia: un cent es un cent en toda ella. En la
+escala fina, que se elige en la configuración, con \key{g} en la terminal o
+con \texttt{-{}-needle fine}, los últimos cinco cents a cada lado ocupan la
+mitad de cada lado, y el resto hasta cincuenta la otra mitad; así se
+distinguen los últimos cents de la afinación, y una cuerda muy desafinada
+sigue en la escala. La idea es de Tuneo (Braulio Ríos), cuyo indicador se
+dibuja así (figura~\ref{fig:spectrum_es}).
+
 \index{estroboscopio}%
 El estroboscopio es el más sensible, y es uno de verdad. Un estroboscopio
 mecánico gira a la frecuencia de la nota buscada y lo ilumina el sonido:
@@ -461,6 +470,21 @@ tolerancia: una cuerda que se asienta tras girar la clavija, o una clavija
 girada al revés, se ve enseguida. Un hueco es un momento sin nota. Se
 oculta en la configuración, con \key{h} en la terminal o con
 \texttt{-{}-no-trace}.
+
+\section{El espectro}
+\label{sec:spectrum}
+
+\index{espectro}%
+Bajo la historia, la ventana puede mostrar el espectro del sonido: sus
+frecuencias de 30~Hz a 5~kHz en un eje logarítmico (las líneas son los La),
+sus picos más claros nombrados como notas con sus cents, y los armónicos de
+la nota buscada marcados en verde. Muestra lo que oye el afinador: una
+fundamental débil, un zumbido, otra cuerda que resuena, el ruido del
+cuarto. En la terminal es una fila de barras con los picos nombrados
+debajo. Se muestra en la configuración, con \key{f} en la terminal o con
+\texttt{-{}-spectrum}. Strobie (Davorin Šego) tiene uno así.
+
+\shot{spectrum_es}{0.75}{La escala fina de la aguja y el espectro: un La 2 7,5 cents bajo}
 
 \section{Desviaciones, transposición y cejilla}
 \label{sec:offsets}
@@ -529,6 +553,12 @@ lo mismo en la terminal. En la línea de órdenes:
 \item[Cuadro de análisis] la longitud de cada cuadro, en períodos de la
   nota (16 si no se cambia): más es más preciso, menos reacciona más rápido.
 \item[Estroboscopio] vernier o armónicos (sección~\ref{sec:strobe}).
+\item[Escala de la aguja] lineal o fina (sección~\ref{sec:strobe}).
+\item[Mostrar el espectro] el espectro y sus picos
+  (sección~\ref{sec:spectrum}).
+\item[Aprender el ruido del cuarto] (activo si no se cambia) ignorar lo que
+  no sobresale 10~dB del ruido de fondo, aprendido mientras no suena nada
+  (sección~\ref{sec:how}).
 \item[Mostrar la historia] la historia de la desviación
   (sección~\ref{sec:history}).
 \item[Transponer, Cejilla, Desviaciones] sección~\ref{sec:offsets}.
@@ -568,6 +598,8 @@ Tecla & Lo que hace\\
 \key{m} & El estroboscopio: vernier (una parcial, tres velocidades) o armónicos (parciales 1, 2, 3) \\
 \key{h} & Mostrar u ocultar la historia de la desviación \\
 \key{c} & Subir la cejilla un traste (tras el 7.º, se quita) \\
+\key{f} & Mostrar u ocultar el espectro, con sus picos nombrados \\
+\key{g} & La escala de la aguja: lineal, o fina (el centro abierto) \\
 \key{p} & Tocar el tono de referencia: la cuerda fija, o la nota que se muestra, o el La 4 \\
 \key{l} & El idioma siguiente de la interfaz \\
 \bottomrule
@@ -635,6 +667,10 @@ Opción & Lo que hace\\
 \texttt{-{}-capo TRASTE} & una cejilla, que sube todas las cuerdas\\
 \texttt{-{}-strobe} & \texttt{vernier} o \texttt{harmonics}\\
 \texttt{-{}-trace}, \texttt{-{}-no-trace} & la historia de la desviación\\
+\texttt{-{}-spectrum} & el espectro, con sus picos nombrados (\texttt{-{}-no-spectrum} lo oculta)\\
+\texttt{-{}-needle} & \texttt{linear} o \texttt{fine}\\
+\texttt{-{}-learn-noise} & ignorar lo que no sobresale del ruido del cuarto\\
+\texttt{-{}-no-learn-noise} & solo el nivel fijo de \texttt{-{}-min-level}\\
 \texttt{-{}-language} & \texttt{es} o \texttt{en}\\
 \texttt{-{}-save} & guardar las opciones dadas como la nueva configuración\\
 \bottomrule
@@ -651,6 +687,14 @@ espectro, y los ajusta todos a la vez al modelo de una cuerda real, algo
 rígida, $f_n = n f_0 \sqrt{1 + B n^2}$. Los armónicos fuertes cuentan más
 que los débiles, y los que se hunden en el ruido quedan fuera. La lectura
 que se muestra es la media recortada del último medio segundo de cuadros.
+
+\index{ruido}%
+Antes de todo esto, un sonido debe ser lo bastante fuerte. Además del
+nivel fijo de \menu{Ignorar por debajo de}, py-tuner aprende el ruido del
+cuarto mientras no suena nada, como Strobie: el piso sigue al nivel cuando
+no suena nada, solo sube despacio bajo un sonido y nunca sube durante una
+nota, que si no se volvería el fondo. Un sonido debe sobresalir 10~dB de
+ese piso. La barra de nivel marca el umbral que rige.
 
 \index{octava}%
 Una cuerda real puede engañar a un período: dos cuerdas que resuenan
@@ -709,6 +753,9 @@ arranca. Borrarlo devuelve toda la configuración de fábrica.
   dos tengan el mismo La de referencia.
 \item[``No se puede abrir la entrada''] otro programa tiene la tarjeta de
   sonido, o el dispositivo se desconectó; el mensaje dice la causa.
+\item[La cola débil de una cuerda acaba antes de tiempo] la cola se hundió
+  en el ruido del cuarto; quite \menu{Aprender el ruido del cuarto} para
+  leerla hasta el final.
 \item[El tono no suena] la salida de sonido del computador está
   silenciada, u otro programa la tiene; el mensaje dice la causa.
 \item[Un ajuste está mal] borre el archivo de configuración
