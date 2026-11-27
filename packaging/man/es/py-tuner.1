@@ -64,6 +64,12 @@ leer un archivo WAV en lugar de la tarjeta de sonido
 .B \-\-min\-level
 ignorar los sonidos más débiles que esto (por omisión \-60)
 .TP
+.B \-\-learn\-noise
+ignorar también lo que no sobresale 10 dB del ruido del cuarto, aprendido mientras no suena nada (por omisión)
+.TP
+.B \-\-no\-learn\-noise
+solo el nivel fijo de \-\-min\-level
+.TP
 .B \-\-smoothing
 segundos que promedia la lectura (por omisión 0.5)
 .TP
@@ -90,6 +96,15 @@ mostrar la historia de la desviación (gui, tui)
 .TP
 .B \-\-no\-trace
 ocultar la historia de la desviación
+.TP
+.B \-\-spectrum
+mostrar el espectro, con sus picos nombrados (gui, tui)
+.TP
+.B \-\-no\-spectrum
+ocultar el espectro
+.TP
+.B \-\-needle
+la escala de la aguja: lineal, o fina (el centro abierto) (uno de: linear, fine)
 .TP
 .B \-\-language
 el idioma de la interfaz (por omisión, el del sistema) (uno de: en, es)
@@ -142,6 +157,12 @@ Mostrar u ocultar la historia de la desviación
 .TP
 .B c
 Subir la cejilla un traste (tras el 7.º, se quita)
+.TP
+.B f
+Mostrar u ocultar el espectro, con sus picos nombrados
+.TP
+.B g
+La escala de la aguja: lineal, o fina (el centro abierto)
 .TP
 .B p
 Tocar el tono de referencia: la cuerda fija, o la nota que se muestra, o el La 4

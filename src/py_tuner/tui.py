@@ -22,7 +22,7 @@ from .tuner import LiveTuner, Reading
 # La ayuda de las teclas, en dos mitades (en inglés: las claves de su traducción)
 KEYS = ("q quit   ←→ A4 ±0.1 Hz   ↑↓ A4 ±1 Hz   0 A4 = 440",
         "i instrument   t tuning   s string   c capo   n names   b accidentals   v view   m strobe   h history   "
-        "p tone   l language")
+        "f spectrum   g scale   p tone   l language")
 
 # Las teclas, una por fila, para la página de manual y el manual (en inglés: las claves de su traducción)
 KEY_ROWS = (
@@ -39,6 +39,8 @@ KEY_ROWS = (
     ("m", "The strobe: vernier (one partial, three speeds) or harmonics (partials 1, 2, 3)"),
     ("h", "Show or hide the history of the deviation"),
     ("c", "Move the capo one fret up (after the 7th, off)"),
+    ("f", "Show or hide the spectrum, with its peaks named"),
+    ("g", "The needle's scale: linear, or fine (the centre spread out)"),
     ("p", "Play the reference tone: the locked string, or the note shown, or A4"),
     ("l", "The next language of the interface"),
 )
@@ -104,16 +106,17 @@ def wrap_keys(halves: list[str], width: int) -> list[str]:
     return lines
 
 
-def needle_row(cents: float | None, width: int) -> tuple[str, int | None]:
-    """The scale line and the column of the needle (None without a note)."""
+def needle_row(cents: float | None, width: int, scale: str = "linear") -> tuple[str, int | None]:
+    """The scale line and the column of the needle (None without a note), on the SCALE of display.py."""
     width = max(11, width | 1)
     half = width // 2
     cells = ["─"] * width
-    for c in range(-50, 51, 10):
-        cells[half + round(c / 50 * half)] = "┼" if c == 0 else "┬"
+    for c, major in display.needle_ticks(scale):
+        if major:
+            cells[half + round(display.needle_fraction(c, scale) * half)] = "┼" if c == 0 else "┬"
     if cents is None:
         return "".join(cells), None
-    pos = half + round(max(-1.0, min(1.0, cents / display.NEEDLE_RANGE)) * half)
+    pos = half + round(display.needle_fraction(cents, scale) * half)
     return "".join(cells), pos
 
 
@@ -139,6 +142,21 @@ def trace_rows(history: list[float | None], width: int, tolerance: float) -> lis
             band = 4
         rows[band][x] = "\u2022"
     return ["".join(r) for r in rows]
+
+
+BARS = "\u2581\u2582\u2583\u2584\u2585\u2586\u2587\u2588"
+
+
+def spectrum_rows(samples, rate: float, width: int, s: Settings) -> list[str]:
+    """The spectrum as one row of bars (log frequency, the loudest 60 dB), and a row naming its clearest peaks."""
+    freqs, levels = display.spectrum(samples, rate, points=max(10, width))
+    if not levels:
+        return [" " * width, ""]
+    top = max(levels)
+    bars = "".join(BARS[max(0, min(7, int((db - top + 60) / 60 * 8)))] if db > top - 60 else " "
+                   for db in levels)
+    named = "   ".join(display.peak_label(f, s) for f, _ in display.peaks(samples, rate, most=4))
+    return [bars[:width], (tr("peaks") + "  " + named)[:width] if named else ""]
 
 
 def strobe_row(phase: float, width: int, period: int = 8) -> str:
@@ -232,6 +250,11 @@ class App:
             self.change(show_trace=not s.show_trace)
         elif ch == ord("c"):
             self.change(capo=0 if s.capo >= 7 else s.capo + 1)
+        elif ch == ord("f"):
+            self.change(show_spectrum=not s.show_spectrum)
+        elif ch == ord("g"):
+            scales = settings_mod.NEEDLE_SCALES
+            self.change(needle_scale=scales[(scales.index(s.needle_scale) + 1) % len(scales)])
         elif ch == ord("p"):
             self.play_tone()
         return True
@@ -302,7 +325,7 @@ class App:
         width = min(w - 4, 81)
         left = (w - width) // 2
         if s.display in ("both", "needle"):
-            scale, pos = needle_row(r.cents if r.active else None, width)
+            scale, pos = needle_row(r.cents if r.active else None, width, s.needle_scale)
             self.put(y, left - 1, "-50", curses.A_DIM)
             self.put(y, left + width - 2, "+50", curses.A_DIM)
             self.put(y + 1, left, scale, curses.A_DIM)
@@ -326,6 +349,11 @@ class App:
                 colour = (3, 2, 1, 2, 3)[i]
                 self.put(y + i, left, row, curses.color_pair(colour) if self.colors else 0)
             y += 6
+        if s.show_spectrum:
+            src = self.live.source
+            for i, row in enumerate(spectrum_rows(src.buffer.latest(display.SPECTRUM_SAMPLES), src.rate, width, s)):
+                self.put(y + i, left, row, curses.A_DIM if i else 0)
+            y += 3
         labels = display.string_labels(s)
         if labels:
             x = left

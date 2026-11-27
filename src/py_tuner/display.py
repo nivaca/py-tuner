@@ -7,6 +7,8 @@ la misma velocidad.
 
 from __future__ import annotations
 
+import math
+
 from . import notes
 from .interface import number, tr
 from .settings import Settings
@@ -124,3 +126,100 @@ class Follower:
         """[(phase in 0..1, alpha), ...] of each band at NOW."""
         ahead = min(max(0.0, now - self._time), self.LIMIT)
         return [((b.position + v * ahead) % 1.0, b.alpha) for b, v in zip(self._bands, self._speed)]
+
+
+# The needle's scales: "linear" (a cent is a cent anywhere) and "fine" (an arctangent, as the gauge of Tuneo, by
+# Braulio Ríos: the cents near the centre spread out, the far ones close up, ±50 still at the ends).
+NEEDLE_SCALES = ("linear", "fine")
+# La rodilla de la escala fina (cents): a ±FINE_KNEE queda la mitad de cada lado de la escala
+FINE_KNEE = 5.0
+
+
+def needle_fraction(cents: float, scale: str = "linear") -> float:
+    """Where CENTS falls on the needle's scale, from -1 (-50 cents) to 1 (+50 cents)."""
+    c = max(-NEEDLE_RANGE, min(NEEDLE_RANGE, cents))
+    if scale == "fine":
+        return math.atan(c / FINE_KNEE) / math.atan(NEEDLE_RANGE / FINE_KNEE)
+    return c / NEEDLE_RANGE
+
+
+def needle_ticks(scale: str = "linear") -> list[tuple[float, bool]]:
+    """The marks of the scale: [(cents, major)], the majors labelled."""
+    if scale == "fine":
+        majors = (0, 1, 2, 5, 10, 20, 50)
+        minors = (3, 4, 30, 40)
+        marks = [(c, True) for c in majors] + [(c, False) for c in minors]
+    else:
+        marks = [(c, c % 10 == 0) for c in range(0, 51, 5)]
+    out = sorted({(s * c, major) for c, major in marks for s in (1, -1)})
+    return out
+
+
+# El espectro que se muestra: de dónde a dónde (Hz, en escala logarítmica) y cuántas muestras recientes
+SPECTRUM_LOW = 30.0
+SPECTRUM_HIGH = 5000.0
+SPECTRUM_SAMPLES = 16384
+# A peak named on the spectrum stands this far over its background (dB)
+PEAK_DB = 15.0
+
+
+def spectrum(samples, rate: float, points: int = 400) -> tuple[list[float], list[float]]:
+    """The spectrum of SAMPLES as POINTS (frequency, dBFS) pairs, log-spaced from SPECTRUM_LOW to SPECTRUM_HIGH:
+    the loudest bin around each point, so a narrow partial never falls between two points."""
+    import numpy as np
+
+    x = np.asarray(samples, dtype=np.float64)
+    if len(x) < 256:
+        return [], []
+    win = np.hanning(len(x))
+    mag = np.abs(np.fft.rfft((x - x.mean()) * win)) * 2 / win.sum()
+    db = 20 * np.log10(mag + 1e-12)
+    df = rate / len(x)
+    edges = np.geomspace(SPECTRUM_LOW, min(SPECTRUM_HIGH, 0.45 * rate), points + 1)
+    out_f, out_db = [], []
+    for lo, hi in zip(edges[:-1], edges[1:]):
+        a, b = int(lo / df), max(int(lo / df) + 1, int(np.ceil(hi / df)))
+        out_f.append(float(np.sqrt(lo * hi)))
+        out_db.append(float(db[a:b].max()) if a < len(db) else -240.0)
+    return out_f, out_db
+
+
+def peaks(samples, rate: float, most: int = 5) -> list[tuple[float, float]]:
+    """The clearest peaks of SAMPLES' spectrum, [(frequency, dBFS)] loudest first: those standing PEAK_DB over
+    the sound around them (the prominence of pitch.py, as Strobie's spectrum names its loudest peaks)."""
+    import numpy as np
+
+    from .pitch import prominence
+
+    x = np.asarray(samples, dtype=np.float64)
+    if len(x) < 1024:
+        return []
+    prom, df = prominence(x, rate)
+    size = int(round(rate / df))
+    win = np.hanning(len(x))
+    mag = np.abs(np.fft.rfft((x - x.mean()) * win, size)) * 2 / win.sum()
+    db = 20 * np.log10(mag + 1e-12)
+    lo, hi = int(SPECTRUM_LOW / df), min(len(db) - 2, int(SPECTRUM_HIGH / df))
+    found = []
+    for i in range(max(lo, 1), hi):
+        if prom[i] >= PEAK_DB and db[i] >= db[i - 1] and db[i] > db[i + 1]:
+            # el máximo entre casillas, por una parábola en dB
+            a, b, c = db[i - 1], db[i], db[i + 1]
+            shift = 0.5 * (a - c) / (a - 2 * b + c) if (a - 2 * b + c) < 0 else 0.0
+            found.append(((i + shift) * df, float(b)))
+    found.sort(key=lambda p: -p[1])
+    # (sin dos picos del mismo lóbulo: a menos de un cuarto de tono, el más fuerte)
+    kept: list[tuple[float, float]] = []
+    for f, level in found:
+        if all(abs(1200 * np.log2(f / g)) > 50 for g, _ in kept):
+            kept.append((f, level))
+        if len(kept) == most:
+            break
+    return kept
+
+
+def peak_label(frequency: float, s: Settings) -> str:
+    """A peak as the note nearest to it, with its cents: "E3 +2"."""
+    midi = notes.nearest(frequency, s.a4)
+    c = notes.cents(frequency, notes.frequency(midi, s.a4))
+    return f"{note_full(midi, s)} {c:+.0f}"

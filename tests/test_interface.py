@@ -24,7 +24,7 @@ def program_texts() -> set[str]:
 
     texts.update(interface.key_of(t) for t in (app.DESCRIPTION, app.EPILOG, *tui.KEYS,
                                                 *window.NAME_LABELS.values(), *window.DISPLAY_LABELS.values(),
-                                                *window.STROBE_LABELS.values()))
+                                                *window.STROBE_LABELS.values(), *window.SCALE_LABELS.values()))
     texts.update(what for _, what in tui.KEY_ROWS)
     for inst in instruments.INSTRUMENTS:
         texts.add(inst.name)

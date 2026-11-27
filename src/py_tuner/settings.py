@@ -16,6 +16,8 @@ from pathlib import Path
 from . import instruments, interface, notes
 
 DISPLAYS = ("both", "needle", "strobe")
+# (los de display.NEEDLE_SCALES: lineal, o fina, con el centro abierto)
+NEEDLE_SCALES = ("linear", "fine")
 # Note offsets go up to this many cents either way
 MAX_OFFSET = 50.0
 # (los de strobe.MODES: vernier, la parcial más clara a 1, 2 y 4 veces; harmonics, cada banda la suya)
@@ -31,12 +33,16 @@ class Settings:
     names, accidentals: how notes are written. device: the input device
     (index or part of its name; None: the default one). rate: sample rate
     (None: the device's). channel: "mix" or a channel number from 1.
-    min_level: the quietest sound analysed, dBFS. smoothing: seconds the
+    min_level: the quietest sound analysed, dBFS. learn_noise: also ignore
+    what does not stand 10 dB over the room's noise, learned while nothing
+    plays. smoothing: seconds the
     reading averages. periods: periods of the note in each fine frame.
     tolerance: cents within which a note counts as in tune.
     display: "both", "needle" or "strobe". strobe_mode: "vernier" (three
     speeds of the clearest partial) or "harmonics" (partials 1, 2 and 3).
-    show_trace: the history of the deviation. offsets: cents off equal
+    show_trace: the history of the deviation. needle_scale: "linear" or
+    "fine" (the centre spread out). show_spectrum: the spectrum, with its
+    peaks named. offsets: cents off equal
     temperament for each note name (C, C#, ... B), in every octave.
     transpose: semitones added to the names shown (a B-flat instrument: 2).
     capo: the fret of a capo, which raises every string. language: of the
@@ -54,12 +60,15 @@ class Settings:
     rate: int | None = None
     channel: str = "mix"
     min_level: float = -60.0
+    learn_noise: bool = True
     smoothing: float = 0.5
     periods: float = 16.0
     tolerance: float = 1.0
     display: str = "both"
     strobe_mode: str = "vernier"
     show_trace: bool = True
+    needle_scale: str = "linear"
+    show_spectrum: bool = False
     offsets: dict[str, float] = field(default_factory=dict)
     transpose: int = 0
     capo: int = 0
@@ -81,12 +90,15 @@ class Settings:
             "rate": lambda v: v is None or (isinstance(v, int) and 8000 <= v <= 384000),
             "channel": lambda v: v == "mix" or (str(v).isdigit() and int(v) >= 1),
             "min_level": lambda v: -120 <= float(v) <= 0,
+            "learn_noise": lambda v: isinstance(v, bool),
             "smoothing": lambda v: 0.05 <= float(v) <= 5,
             "periods": lambda v: 4 <= float(v) <= 64,
             "tolerance": lambda v: 0.1 <= float(v) <= 50,
             "display": lambda v: v in DISPLAYS,
             "strobe_mode": lambda v: v in STROBE_MODES,
             "show_trace": lambda v: isinstance(v, bool),
+            "needle_scale": lambda v: v in NEEDLE_SCALES,
+            "show_spectrum": lambda v: isinstance(v, bool),
             "offsets": lambda v: isinstance(v, dict) and all(
                 k in notes.OFFSET_NAMES and -MAX_OFFSET <= float(c) <= MAX_OFFSET for k, c in v.items()),
             "transpose": lambda v: isinstance(v, int) and not isinstance(v, bool) and -12 <= v <= 12,

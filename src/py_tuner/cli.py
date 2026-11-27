@@ -28,10 +28,10 @@ ONCE_SECONDS = 0.3
 ATTACK = 0.1
 
 
-def needle(cents: float, width: int = 21) -> str:
-    """A text needle: "[----------|----------]" with the mark where CENTS falls (±50)."""
+def needle(cents: float, width: int = 21, scale: str = "linear") -> str:
+    """A text needle: "[----------|----------]" with the mark where CENTS falls (±50), on SCALE."""
     half = width // 2
-    pos = half + round(max(-1.0, min(1.0, cents / display.NEEDLE_RANGE)) * half)
+    pos = half + round(display.needle_fraction(cents, scale) * half)
     cells = ["-"] * width
     cells[half] = "|"
     cells[pos] = "*" if pos != half else "#"
@@ -46,7 +46,7 @@ def line(r: Reading, s: Settings) -> str:
     name = display.note_full(r.target_midi, s)
     mark = " OK" if r.in_tune else ""
     text = (f"{name:5} {display.freq_text(r.frequency):>9} Hz  {display.cents_text(r):>6} {tr('cents')}  "
-            f"{needle(r.cents)}{mark}")
+            f"{needle(r.cents, scale=s.needle_scale)}{mark}")
     if r.string is not None:
         text += "  " + tr("string {number}", number=r.string + 1)
     return text

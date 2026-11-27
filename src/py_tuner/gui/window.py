@@ -24,9 +24,10 @@ from .. import settings as settings_mod
 from ..interface import tr
 from ..settings import Settings
 from ..tuner import LiveTuner, Reading
-from .widgets import GREEN, Level, Needle, Strobe, Trace, deviation_color
+from .widgets import GREEN, Level, Needle, Spectrum, Strobe, Trace, deviation_color
 
 # Los textos de las listas, en inglés (las claves de su traducción)
+SCALE_LABELS = {"linear": "Linear", "fine": "Fine (the centre spread out)"}
 STROBE_LABELS = {"vernier": "Vernier (one partial, three speeds)", "harmonics": "Harmonics (partials 1, 2, 3)"}
 NAME_LABELS = {"english": "English (C D E)", "latin": "Latin (Do Re Mi)", "german": "German (C D E … H)"}
 DISPLAY_LABELS = {"both": "Needle and strobe", "needle": "Needle", "strobe": "Strobe"}
@@ -117,6 +118,21 @@ class SettingsDialog(QDialog):
         self.trace = QCheckBox(tr("Show the history of the deviation"))
         self.trace.setChecked(s.show_trace)
         form.addRow("", self.trace)
+        self.spectrum = QCheckBox(tr("Show the spectrum, with its peaks named"))
+        self.spectrum.setChecked(s.show_spectrum)
+        form.addRow("", self.spectrum)
+        self.needle_scale = QComboBox()
+        for key in settings_mod.NEEDLE_SCALES:
+            self.needle_scale.addItem(tr(SCALE_LABELS[key]), key)
+        self.needle_scale.setCurrentIndex(self.needle_scale.findData(s.needle_scale))
+        self.needle_scale.setToolTip(tr("Fine: the last few cents take half of each side of the scale, and the "
+                                        "rest up to 50 the other half."))
+        form.addRow(tr("Needle scale"), self.needle_scale)
+        self.learn_noise = QCheckBox(tr("Learn the room's noise"))
+        self.learn_noise.setChecked(s.learn_noise)
+        self.learn_noise.setToolTip(tr("Ignore what does not stand 10 dB over the background noise, learned while "
+                                       "nothing plays. Turn it off to read the faintest tails of a note."))
+        form.addRow("", self.learn_noise)
 
         def whole(value: int, lo: int, hi: int) -> QSpinBox:
             box = QSpinBox()
@@ -159,7 +175,9 @@ class SettingsDialog(QDialog):
                        tolerance=self.tolerance.value(),
                        min_level=self.min_level.value(), smoothing=self.smoothing.value(),
                        periods=self.periods.value(), strobe_mode=self.strobe_mode.currentData(),
-                       show_trace=self.trace.isChecked(), transpose=self.transpose.value(),
+                       show_trace=self.trace.isChecked(), show_spectrum=self.spectrum.isChecked(),
+                       needle_scale=self.needle_scale.currentData(), learn_noise=self.learn_noise.isChecked(),
+                       transpose=self.transpose.value(),
                        capo=self.capo.value(), offsets=dict(self.offsets)).validated()
 
 
@@ -277,6 +295,9 @@ class Window(QMainWindow):
         layout.addWidget(self.strobe)
         self.trace = Trace()
         layout.addWidget(self.trace)
+        self.spectrum = Spectrum()
+        layout.addWidget(self.spectrum)
+        self._spectrum_time = 0.0
 
         # las cuerdas
         self.strings_row = QHBoxLayout()
@@ -329,11 +350,13 @@ class Window(QMainWindow):
         self.a4.setValue(s.a4)
         self.fill_strings(s)
         self.needle.tolerance = self.strobe.tolerance = s.tolerance
+        self.needle.scale = s.needle_scale
         self.level.gate = s.min_level
         self.needle.setVisible(s.display in ("both", "needle"))
         self.strobe.setVisible(s.display in ("both", "strobe"))
         self.trace.tolerance = s.tolerance
         self.trace.setVisible(s.show_trace)
+        self.spectrum.setVisible(s.show_spectrum)
         self._loading = False
 
     def fill_tunings(self, s: Settings) -> None:
@@ -469,11 +492,22 @@ class Window(QMainWindow):
         dt, self.last = now - self.last, now
         r = self.live.reading if self.live is not None else Reading()
         self.show_reading(r, dt)
+        # el espectro, diez veces por segundo, de las muestras más recientes
+        if self._s.show_spectrum and self.live is not None and now - self._spectrum_time >= 0.1:
+            self._spectrum_time = now
+            self.show_spectrum(self.live.source.buffer.latest(display.SPECTRUM_SAMPLES), self.live.source.rate, r)
         if self.live is not None and self.live.error:
             self.status.setText(self.live.error)
 
+    def show_spectrum(self, samples, rate: float, r: Reading) -> None:
+        freqs, levels = display.spectrum(samples, rate)
+        named = [(f, display.peak_label(f, self._s)) for f, _ in display.peaks(samples, rate)]
+        self.spectrum.set_data(freqs, levels, named, r.target_frequency if r.active else 0.0)
+
     def show_reading(self, r: Reading, dt: float) -> None:
         s = self._s
+        # (la marca del medidor: el nivel que debe alcanzar un sonido, el aprendido si lo hay)
+        self.level.gate = r.gate if r.gate > -200 else s.min_level
         self.level.set_level(r.level)
         cents = r.cents if r.active else None
         self.needle.set_cents(cents, dt)

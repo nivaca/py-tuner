@@ -37,6 +37,7 @@ class Needle(QWidget):
         self.cents: float | None = None
         self.shown = 0.0  # la posición dibujada, que sigue a la real con algo de inercia
         self.tolerance = 1.0
+        self.scale = "linear"  # o "fine" (display.needle_fraction)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.setMinimumHeight(140)
 
@@ -65,7 +66,7 @@ class Needle(QWidget):
         span = 60.0  # grados a cada lado del centro para ±50 cents
 
         def point(cents: float, radius: float) -> QPointF:
-            ang = math.radians(90 - cents / display.NEEDLE_RANGE * span)
+            ang = math.radians(90 - display.needle_fraction(cents, self.scale) * span)
             return QPointF(cx + radius * math.cos(ang), cy - radius * math.sin(ang))
 
         rect = QRectF(cx - r, cy - r, 2 * r, 2 * r)
@@ -74,7 +75,7 @@ class Needle(QWidget):
         zone = QColor(GREEN)
         zone.setAlphaF(0.25)
         p.setPen(QPen(zone, max(6.0, r * 0.08), Qt.PenStyle.SolidLine, Qt.PenCapStyle.FlatCap))
-        a_tol = tol / display.NEEDLE_RANGE * span
+        a_tol = display.needle_fraction(tol, self.scale) * span
         p.drawArc(rect.adjusted(r * 0.04, r * 0.04, -r * 0.04, -r * 0.04),
                   int((90 - a_tol) * 16), int(2 * a_tol * 16))
         # el arco y sus marcas
@@ -83,8 +84,7 @@ class Needle(QWidget):
         font = QFont(self.font())
         font.setPointSizeF(max(7.0, r / 22))
         p.setFont(font)
-        for c in range(-50, 51, 5):
-            major = c % 10 == 0
+        for c, major in display.needle_ticks(self.scale):
             p.setPen(QPen(fg if c == 0 else dim, 2.0 if major else 1.0))
             p.drawLine(point(c, r), point(c, r * (0.88 if major else 0.93)))
             if major:
@@ -257,3 +257,85 @@ class Trace(QWidget):
                 p.setPen(QPen(deviation_color(c, self.tolerance), 2.0))
                 p.drawLine(prev, pt)
             prev = pt
+
+
+class Spectrum(QWidget):
+    """The spectrum of the sound, on a logarithmic axis, with its clearest peaks named and the harmonics of the
+    note sought marked (as Strobie's spectrum display, by Davorin Šego)."""
+
+    def __init__(self, parent=None) -> None:
+        super().__init__(parent)
+        self.freqs: list[float] = []
+        self.levels: list[float] = []
+        self.peaks: list[tuple[float, str]] = []
+        self.target = 0.0
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.setFixedHeight(150)
+
+    def set_data(self, freqs: list[float], levels: list[float], peaks: list[tuple[float, str]], target: float):
+        self.freqs, self.levels, self.peaks, self.target = freqs, levels, peaks, target
+        self.update()
+
+    def x_of(self, f: float) -> float:
+        lo, hi = math.log(display.SPECTRUM_LOW), math.log(display.SPECTRUM_HIGH)
+        return (math.log(max(f, 1e-9)) - lo) / (hi - lo) * self.width()
+
+    def paintEvent(self, event) -> None:  # noqa: ARG002
+        p = QPainter(self)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        pal = self.palette()
+        w, h = self.width(), self.height()
+        p.fillRect(self.rect(), pal.color(QPalette.ColorRole.Base))
+        fg = pal.color(QPalette.ColorRole.WindowText)
+        dim = QColor(fg)
+        dim.setAlphaF(0.25)
+        font = QFont(self.font())
+        font.setPointSizeF(max(7.0, font.pointSizeF() * 0.85))
+        p.setFont(font)
+        # las octavas, en los La (55, 110, 220... Hz)
+        f = 55.0
+        while f < display.SPECTRUM_HIGH:
+            x = self.x_of(f)
+            p.setPen(QPen(dim, 1))
+            p.drawLine(QPointF(x, 0), QPointF(x, h))
+            p.drawText(QPointF(x + 2, h - 3), f"{f:g}")
+            f *= 2
+        if not self.levels:
+            return
+        top = max(self.levels)
+        floor = top - 70
+
+        def y_of(db: float) -> float:
+            return 14 + (1 - max(0.0, min(1.0, (db - floor) / 70))) * (h - 30)
+
+        # los armónicos de la nota buscada, en verde
+        if self.target > 0:
+            mark = QColor(GREEN)
+            mark.setAlphaF(0.5)
+            p.setPen(QPen(mark, 1, Qt.PenStyle.DashLine))
+            n = 1
+            while n * self.target < display.SPECTRUM_HIGH and n <= 16:
+                x = self.x_of(n * self.target)
+                p.drawLine(QPointF(x, 12), QPointF(x, h - 14))
+                n += 1
+        path = QPainterPath()
+        for i, (f, db) in enumerate(zip(self.freqs, self.levels)):
+            pt = QPointF(self.x_of(f), y_of(db))
+            if i == 0:
+                path.moveTo(pt)
+            else:
+                path.lineTo(pt)
+        p.setPen(QPen(fg, 1.4))
+        p.setBrush(Qt.BrushStyle.NoBrush)
+        p.drawPath(path)
+        # los picos más claros, con su nota; uno que taparía a otro más fuerte (ya puesto) se queda sin nombre
+        p.setPen(QPen(fg, 1))
+        metrics = p.fontMetrics()
+        placed: list[tuple[float, float]] = []
+        for f, label in self.peaks:
+            x = self.x_of(f)
+            half = metrics.horizontalAdvance(label) / 2 + 4
+            if any(abs(x - other) < half + other_half for other, other_half in placed):
+                continue
+            placed.append((x, half))
+            p.drawText(QRectF(x - half, 0, 2 * half, 14), Qt.AlignmentFlag.AlignCenter, label)

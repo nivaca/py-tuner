@@ -20,6 +20,7 @@ from . import notes
 from .audio import Source
 from .pitch import Detector, Estimate
 from .settings import Settings
+from .noise import NoiseFloor
 from .stabilizer import Stabilizer
 from .strobe import Strobe
 
@@ -58,6 +59,7 @@ class Reading:
     count: int = 0
     span: float = 0.0  # los segundos de sonido que abarca la lectura
     level: float = float("-inf")
+    gate: float = float("-inf")  # el nivel que debe alcanzar un sonido (el fijo, o el del ruido aprendido)
     clarity: float = 0.0
     inharmonicity: float = 0.0
     harmonics: int = 0
@@ -103,6 +105,8 @@ class Tuner:
                                  min_level=s.min_level)
         if old is None or (old.fmin, old.fmax, old.periods) != (fmin, fmax, s.periods):
             self.stabilizer = Stabilizer(window=s.smoothing)
+        if not hasattr(self, "noise"):
+            self.noise = NoiseFloor()
         self.stabilizer.window = s.smoothing
 
     @property
@@ -142,18 +146,25 @@ class Tuner:
         onset = self._onset(samples, now)
         # La nota que suena orienta la elección de la octava, salvo justo después de pulsar.
         prefer = None if self.stabilizer.recent_onset(now) else self.stabilizer.centre_frequency()
+        # La puerta: el nivel fijo, o el ruido del cuarto aprendido y 10 dB más, el mayor de los dos.
+        gate = self.settings.min_level
+        learned = self.noise.gate() if self.settings.learn_noise else None
+        if learned is not None:
+            gate = max(gate, learned)
+        self.detector.min_level = gate
         est: Estimate = self.detector.analyze(samples, prefer)
         smooth = self.stabilizer.push(now, est.frequency, onset)
+        self.noise.update(est.level, est.found or smooth is not None, now)
         if smooth is None:
             self._held = None
-            return Reading(raw=est.frequency, level=est.level, clarity=est.clarity, time=now)
+            return Reading(raw=est.frequency, level=est.level, clarity=est.clarity, time=now, gate=gate)
         midi, string = self.target(smooth.frequency)
         target = self.target_frequency(midi)
         c = notes.cents(smooth.frequency, target)
         return Reading(frequency=smooth.frequency, raw=est.frequency, target_midi=midi,
                        target_frequency=target, cents=c, string=string, spread=smooth.spread, count=smooth.count, span=smooth.span,
                        level=est.level, clarity=est.clarity, inharmonicity=est.inharmonicity,
-                       harmonics=est.harmonics, in_tune=abs(c) <= self.settings.tolerance, time=now)
+                       harmonics=est.harmonics, in_tune=abs(c) <= self.settings.tolerance, time=now, gate=gate)
 
     def target_frequency(self, midi: int) -> float:
         """The frequency MIDI is tuned to: equal temperament on A4, moved by its note's offset (as Strobie's

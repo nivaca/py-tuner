@@ -167,3 +167,10 @@ def test_tone_command_plays(monkeypatch, capsys):
     assert app.main(["tone", "E2"]) == 0
     assert played == [(82.407, True)]
     assert "E2" in capsys.readouterr().out
+
+
+def test_scale_spectrum_and_noise_options():
+    s = parse("--needle", "fine", "--spectrum", "--no-learn-noise")
+    assert (s.needle_scale, s.show_spectrum, s.learn_noise) == ("fine", True, False)
+    assert parse().learn_noise is True and parse().needle_scale == "linear"
+    assert cli.needle(2.0, scale="fine") != cli.needle(2.0)

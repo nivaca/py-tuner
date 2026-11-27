@@ -71,6 +71,11 @@ def parser() -> argparse.ArgumentParser:
     g.add_argument("-f", "--file", metavar="WAV", help=tr("read a WAV file instead of the sound card"))
     g.add_argument("--min-level", type=float, metavar="DBFS",
                    help=tr("ignore sounds quieter than this (default -60)"))
+    g.add_argument("--learn-noise", dest="learn_noise", action="store_const", const=True,
+                   help=tr("also ignore what does not stand 10 dB over the room's noise, learned while nothing "
+                           "plays (the default)"))
+    g.add_argument("--no-learn-noise", dest="learn_noise", action="store_const", const=False,
+                   help=tr("only the fixed level of --min-level"))
     g.add_argument("--smoothing", type=float, metavar="SECONDS",
                    help=tr("seconds the reading averages (default 0.5)"))
     g.add_argument("--periods", type=float, metavar="N",
@@ -90,6 +95,12 @@ def parser() -> argparse.ArgumentParser:
                    help=tr("show the history of the deviation (gui, tui)"))
     g.add_argument("--no-trace", dest="show_trace", action="store_const", const=False,
                    help=tr("hide the history of the deviation"))
+    g.add_argument("--spectrum", dest="show_spectrum", action="store_const", const=True,
+                   help=tr("show the spectrum, with its peaks named (gui, tui)"))
+    g.add_argument("--no-spectrum", dest="show_spectrum", action="store_const", const=False,
+                   help=tr("hide the spectrum"))
+    g.add_argument("--needle", dest="needle_scale", choices=settings_mod.NEEDLE_SCALES,
+                   help=tr("the needle's scale: linear, or fine (the centre spread out)"))
     g.add_argument("--language", choices=list(interface.names()),
                    help=tr("the language of the interface (default: the system's)"))
     g.add_argument("--once", action="store_true", help=tr("cli: print the first steady reading and exit"))
@@ -157,7 +168,8 @@ def apply(args: argparse.Namespace, base: Settings) -> Settings:
         if value is not None and not low <= value <= high:
             raise ValueError(tr("--{option} must be from {low} to {high}", option=name, low=low, high=high))
     for name in ("tolerance", "device", "rate", "min_level", "smoothing", "periods", "display", "language",
-                 "strobe_mode", "show_trace", "transpose", "capo"):
+                 "strobe_mode", "show_trace", "transpose", "capo", "show_spectrum", "needle_scale",
+                 "learn_noise"):
         value = getattr(args, name)
         if value is not None:
             setattr(s, name, value)

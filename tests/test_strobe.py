@@ -91,3 +91,27 @@ def test_follower_extrapolates_between_readings():
     assert f.phases(11.0)[0][0] == pytest.approx(0.1 + 4 * Follower.LIMIT)
     f.update((), 11.0)
     assert f.phases(11.0) == []
+
+
+def test_needle_scales():
+    from py_tuner import display
+
+    assert display.needle_fraction(50, "linear") == pytest.approx(1.0)
+    assert display.needle_fraction(-50, "fine") == pytest.approx(-1.0)
+    assert display.needle_fraction(5, "linear") == pytest.approx(0.1)
+    assert display.needle_fraction(5, "fine") > 0.5  # (en la fina, 5 cents son más de media escala)
+    assert display.needle_fraction(80, "fine") == pytest.approx(1.0)
+    assert (0, True) in display.needle_ticks("fine") and (-50, True) in display.needle_ticks("fine")
+
+
+def test_spectrum_and_peaks():
+    from conftest import string
+    from py_tuner import display
+    from py_tuner.settings import Settings
+
+    x = string(82.41, seconds=0.5, snr_db=60)[-16384:]
+    freqs, levels = display.spectrum(x, RATE, points=200)
+    assert len(freqs) == len(levels) == 200 and freqs[0] < 40 and freqs[-1] > 4000
+    found = display.peaks(x, RATE)
+    assert found and abs(1200 * np.log2(min(found, key=lambda p: p[0])[0] / 82.41)) < 15
+    assert display.peak_label(82.41, Settings()) == "E2 +0"

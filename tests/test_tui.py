@@ -105,3 +105,19 @@ def test_trace_rows():
     assert rows[2][3] == "•" and rows[1][4] == "•" and rows[4][5] == "•"
     assert rows[2][6] == "·" and rows[2][7] == "•"
     assert rows[0].strip() == ""
+
+
+def test_needle_row_fine_scale():
+    lin, _ = tui.needle_row(None, 41, "linear")
+    fine, pos = tui.needle_row(2.0, 41, "fine")
+    assert lin != fine and pos > 20 + round(2 / 50 * 20)  # (dos cents se ven más lejos del centro)
+
+
+def test_spectrum_rows():
+    from py_tuner.settings import Settings
+    from conftest import RATE
+
+    x = string(110.0, seconds=0.5, snr_db=60)
+    rows = tui.spectrum_rows(x[-16384:], RATE, 60, Settings())
+    assert len(rows[0]) == 60 and set(rows[0]) - set(tui.BARS + " ") == set()
+    assert "A2" in rows[1]

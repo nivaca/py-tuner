@@ -344,8 +344,8 @@
     <tr>gui (la ventana, por omisión), tui (la terminal a pantalla completa), cli (una línea de texto), tone (tocar una nota de referencia), devices (las entradas), instruments (las afinaciones)</tr>
   </text>
   <text>
-    <en>i instrument   t tuning   s string   c capo   n names   b accidentals   v view   m strobe   h history   p tone   l language</en>
-    <tr>i instrumento   t afinación   s cuerda   c cejilla   n nombres   b alteraciones   v vista   m estroboscopio   h historia   p tono   l idioma</tr>
+    <en>i instrument   t tuning   s string   c capo   n names   b accidentals   v view   m strobe   h history   f spectrum   g scale   p tone   l language</en>
+    <tr>i instrumento   t afinación   s cuerda   c cejilla   n nombres   b alteraciones   v vista   m estroboscopio   h historia   f espectro   g escala   p tono   l idioma</tr>
   </text>
   <text>
     <en>ignore sounds quieter than this (default -60)</en>
@@ -722,5 +722,65 @@
   <text>
     <en>{note}: {frequency} Hz</en>
     <tr>{note}: {frequency} Hz</tr>
+  </text>
+  <text>
+    <en>Fine: the last few cents take half of each side of the scale, and the rest up to 50 the other half.</en>
+    <tr>Fina: los últimos cents ocupan la mitad de cada lado de la escala, y el resto hasta 50 la otra mitad.</tr>
+  </text>
+  <text>
+    <en>Ignore what does not stand 10 dB over the background noise, learned while nothing plays. Turn it off to read the faintest tails of a note.</en>
+    <tr>Ignorar lo que no sobresale 10 dB del ruido de fondo, aprendido mientras no suena nada. Quítelo para leer las colas más débiles de una nota.</tr>
+  </text>
+  <text>
+    <en>Learn the room's noise</en>
+    <tr>Aprender el ruido del cuarto</tr>
+  </text>
+  <text>
+    <en>Needle scale</en>
+    <tr>Escala de la aguja</tr>
+  </text>
+  <text>
+    <en>Linear</en>
+    <tr>Lineal</tr>
+  </text>
+  <text>
+    <en>Fine (the centre spread out)</en>
+    <tr>Fina (el centro abierto)</tr>
+  </text>
+  <text>
+    <en>Show or hide the spectrum, with its peaks named</en>
+    <tr>Mostrar u ocultar el espectro, con sus picos nombrados</tr>
+  </text>
+  <text>
+    <en>Show the spectrum, with its peaks named</en>
+    <tr>Mostrar el espectro, con sus picos nombrados</tr>
+  </text>
+  <text>
+    <en>The needle's scale: linear, or fine (the centre spread out)</en>
+    <tr>La escala de la aguja: lineal, o fina (el centro abierto)</tr>
+  </text>
+  <text>
+    <en>also ignore what does not stand 10 dB over the room's noise, learned while nothing plays (the default)</en>
+    <tr>ignorar también lo que no sobresale 10 dB del ruido del cuarto, aprendido mientras no suena nada (por omisión)</tr>
+  </text>
+  <text>
+    <en>hide the spectrum</en>
+    <tr>ocultar el espectro</tr>
+  </text>
+  <text>
+    <en>only the fixed level of --min-level</en>
+    <tr>solo el nivel fijo de --min-level</tr>
+  </text>
+  <text>
+    <en>peaks</en>
+    <tr>picos</tr>
+  </text>
+  <text>
+    <en>show the spectrum, with its peaks named (gui, tui)</en>
+    <tr>mostrar el espectro, con sus picos nombrados (gui, tui)</tr>
+  </text>
+  <text>
+    <en>the needle's scale: linear, or fine (the centre spread out)</en>
+    <tr>la escala de la aguja: lineal, o fina (el centro abierto)</tr>
   </text>
 </interface>

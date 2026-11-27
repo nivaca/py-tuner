@@ -64,6 +64,12 @@ read a WAV file instead of the sound card
 .B \-\-min\-level
 ignore sounds quieter than this (default \-60)
 .TP
+.B \-\-learn\-noise
+also ignore what does not stand 10 dB over the room's noise, learned while nothing plays (the default)
+.TP
+.B \-\-no\-learn\-noise
+only the fixed level of \-\-min\-level
+.TP
 .B \-\-smoothing
 seconds the reading averages (default 0.5)
 .TP
@@ -90,6 +96,15 @@ show the history of the deviation (gui, tui)
 .TP
 .B \-\-no\-trace
 hide the history of the deviation
+.TP
+.B \-\-spectrum
+show the spectrum, with its peaks named (gui, tui)
+.TP
+.B \-\-no\-spectrum
+hide the spectrum
+.TP
+.B \-\-needle
+the needle's scale: linear, or fine (the centre spread out) (one of: linear, fine)
 .TP
 .B \-\-language
 the language of the interface (default: the system's) (one of: en, es)
@@ -142,6 +157,12 @@ Show or hide the history of the deviation
 .TP
 .B c
 Move the capo one fret up (after the 7th, off)
+.TP
+.B f
+Show or hide the spectrum, with its peaks named
+.TP
+.B g
+The needle's scale: linear, or fine (the centre spread out)
 .TP
 .B p
 Play the reference tone: the locked string, or the note shown, or A4
