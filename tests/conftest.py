@@ -50,6 +50,37 @@ def string(f1: float, seconds: float = 1.0, rate: int = RATE, b: float = 1e-4, h
     return x
 
 
+def phone_bass(f1: float = 41.2034, corner: float = 200.0, order: int = 4, snr_db: float = 20.0,
+               b: float = 3e-4, drift: float = 8.0, lead: float = 1.0, seconds: float = 4.0,
+               seed: int = 1) -> np.ndarray:
+    """A plucked bass E1 heard through a phone's microphone.
+
+    LEAD seconds of the room's white noise, then the string for SECONDS,
+    through a high-pass at CORNER Hz of ORDER (the microphone), with the
+    noise SNR_DB below the first second of the note. The string starts
+    DRIFT cents sharp and settles; its upper partials, which a stiff
+    string (B) puts sharp, die first. Its first partial is F1.
+    """
+    from py_tuner.pitch import highpass
+    rng = np.random.default_rng(seed)
+    pre = int(lead * RATE)
+    t = np.arange(int(seconds * RATE)) / RATE
+    f0 = f1 / np.sqrt(1 + b)
+    # la frecuencia instantánea se aparta DRIFT·e^(-t/0,4) cents; su fase, integrada
+    ratio = 2 ** (drift * np.exp(-t / 0.4) / 1200)
+    note = np.zeros_like(t)
+    for h in range(1, 41):
+        fn = h * f0 * np.sqrt(1 + b * h * h)
+        if fn > 0.45 * RATE:
+            break
+        phase = rng.uniform(0, 2 * np.pi) + 2 * np.pi * fn * np.cumsum(ratio) / RATE
+        note += h ** -0.7 * np.exp(-t * (1 + 0.25 * h) / 3) * np.minimum(1.0, t * 300) * np.sin(phase)
+    y = highpass(np.concatenate([np.zeros(pre), note]), RATE, corner, order)
+    first = y[pre:pre + RATE]
+    y *= 0.03 / np.sqrt(np.mean(first ** 2))  # unos -30 dBFS en el primer segundo
+    return y + rng.normal(0, 0.03 / 10 ** (snr_db / 20), len(y))
+
+
 def cents(f: float, ref: float) -> float:
     return 1200 * np.log2(f / ref)
 

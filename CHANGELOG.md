@@ -5,6 +5,24 @@ the wheel and the source, are on
 [Codeberg](https://codeberg.org/nivaca/py-tuner/releases) and
 [GitHub](https://github.com/nivaca/py-tuner/releases).
 
+## Unreleased
+
+Low notes through a weak microphone.
+
+- Low notes heard through a microphone that cuts the low end, as a
+  phone's or a laptop's does, such as the low E of a bass, are read at
+  once after the pluck and are no longer lost while they fade. The
+  fundamental of such a string comes weak, and its sharp upper partials
+  made the sound look less periodic than it is: the clarity is now also
+  judged on the lower partials of the pitch found. The level that the
+  noise gate compares is measured only in the band of the notes, where
+  the room's noise is lower. On a synthetic bass E1 through a high-pass
+  at 200 Hz, with noise 20 dB down, the first reading came after 0.1 s
+  instead of 0.6, and the note was shown 98 % of the time instead of
+  64 %. On the real guitar recordings nothing got worse.
+- The level bar shows that level in the band of the notes, which in a
+  noisy room is some decibels under the former one.
+
 ## 0.4.0 — 2026-11-27
 
 A steady response for the double bass.

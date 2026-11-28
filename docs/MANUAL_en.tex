@@ -680,8 +680,12 @@ by McLeod's method, which cannot be wrong by an octave; a fine one then
 locates every harmonic of the string, up to the sixteenth, at the exact
 peak of its spectrum, and fits all of them at once to the model of a real,
 slightly stiff string, $f_n = n f_0 \sqrt{1 + B n^2}$. Strong harmonics
-count more than weak ones, and those buried in noise are left out. The
-reading shown is the trimmed mean of the last half second of frames.
+count more than weak ones, and those buried in noise are left out. When
+the coarse step finds the sound less periodic than it should be, it looks
+again at its lower partials only: through a microphone that cuts the low
+end, the fundamental of a low string comes weak, and its stiff upper
+partials blur the period. The reading shown is the trimmed mean of the
+last half second of frames.
 
 \index{noise}%
 Before any of this, a sound must be loud enough. Besides the fixed level of
@@ -689,7 +693,9 @@ Before any of this, a sound must be loud enough. Besides the fixed level of
 plays, as Strobie does: the floor follows the level when nothing sounds,
 only creeps up under a sound, and never rises during a note, which would
 otherwise become the background. A sound must stand 10~dB over that floor.
-The level bar marks the threshold in use.
+Both are measured only in the band of the notes, up to twice the highest
+note searched, where a low note is not lost in the hiss of the room. The
+level bar shows that level, and marks the threshold in use.
 
 \index{octave}%
 A real string can fool a period: two strings ringing in sympathy share a

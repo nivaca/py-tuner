@@ -5,6 +5,25 @@ AppImage, el wheel y el código, están en
 [Codeberg](https://codeberg.org/nivaca/py-tuner/releases) y en
 [GitHub](https://github.com/nivaca/py-tuner/releases).
 
+## Sin publicar
+
+Las notas graves por un micrófono débil.
+
+- Las notas graves oídas por un micrófono que corta los graves, como el
+  de un teléfono o de un portátil, por ejemplo el Mi grave de un bajo, se
+  leen en seguida tras pulsar y ya no se pierden mientras se apagan. La
+  fundamental de esa cuerda llega débil, y sus parciales altas, que
+  suben, hacían parecer el sonido menos periódico de lo que es: ahora la
+  claridad se juzga también sobre las parciales bajas de la altura
+  hallada. El nivel que compara la puerta de ruido se mide solo en la
+  banda de las notas, donde el ruido del cuarto es menor. Con un Mi 1
+  sintético de bajo tras un paso alto a 200 Hz y ruido 20 dB abajo, la
+  primera lectura llegó a los 0,1 s y no a los 0,6, y la nota estuvo en
+  pantalla el 98 % del tiempo y no el 64 %. En las grabaciones reales de
+  guitarra nada empeoró.
+- La barra de nivel muestra ese nivel en la banda de las notas, que en un
+  cuarto ruidoso queda algunos decibelios bajo el de antes.
+
 ## 0.4.0 — 2026-11-27
 
 Una respuesta estable para el contrabajo.

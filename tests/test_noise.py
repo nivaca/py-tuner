@@ -45,17 +45,19 @@ def test_a_louder_room_is_caught_up_slowly():
 
 
 def test_quiet_tones_in_a_noisy_room():
-    # Un cuarto con ruido a -40 dBFS: un tono 5 dB sobre él no es nota; uno 25 dB sobre él, sí.
+    # Un cuarto con ruido a -40 dBFS: un tono 5 dB sobre el ruido de la banda de las notas (la que mide el
+    # nivel) no es nota; uno 25 dB sobre él, sí.
     rng = np.random.default_rng(0)
     room = 0.01 * rng.normal(size=2 * RATE)
+    band = np.sqrt(Tuner(Settings(), RATE).detector.band_top / (RATE / 2))
     for over, heard in ((5, False), (25, True)):
         tuner = Tuner(Settings(), RATE)
         tone = string(220.0, seconds=1.5, snr_db=None, decay=0.0)
-        tone *= 0.01 * 10 ** (over / 20) / np.sqrt(np.mean(tone ** 2))
+        tone *= 0.01 * band * 10 ** (over / 20) / np.sqrt(np.mean(tone ** 2))
         x = np.concatenate([room, tone + 0.01 * rng.normal(size=len(tone))])
         r = tuner.analyze_all(x)
         assert any(x.active for x in r) is heard, over
-        assert r[-1].gate > -45
+        assert r[-1].gate > -55
     # Sin aprender el ruido, el tono débil pasa (solo cuenta el nivel fijo, -60 dBFS).
     tuner = Tuner(Settings(learn_noise=False), RATE)
     tone = string(220.0, seconds=1.5, snr_db=None, decay=0.0)

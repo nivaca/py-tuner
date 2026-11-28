@@ -210,3 +210,15 @@ def test_prominence_marks_partials_not_noise():
     prom, df = pitch.prominence(x, RATE)
     assert prom[int(300 / df)] > 30
     assert np.median(prom) < 6
+
+
+def test_lowpass_keeps_what_is_under_the_corner():
+    # Un seno a 100 Hz pasa entero, uno a 1600 Hz (dos octavas sobre los 400 Hz del corte, cuarto orden) queda
+    # 48 dB abajo; y sin desfase.
+    t = np.arange(RATE) / RATE
+    low = 0.5 * np.sin(2 * np.pi * 100 * t)
+    y = pitch.lowpass(low, RATE, 400.0)
+    mid = slice(RATE // 4, 3 * RATE // 4)
+    assert np.max(np.abs(y[mid] - low[mid])) < 1e-3
+    high = 0.5 * np.sin(2 * np.pi * 1600 * t)
+    assert pitch.level_db(pitch.lowpass(high, RATE, 400.0)[mid]) < pitch.level_db(high) - 46

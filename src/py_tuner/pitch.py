@@ -276,6 +276,26 @@ def highpass(x: np.ndarray, rate: float, corner: float, order: int = 2) -> np.nd
     return np.fft.irfft(spec * gain, size)[:n]
 
 
+def lowpass(x: np.ndarray, rate: float, corner: float, order: int = 4) -> np.ndarray:
+    """X without what lies over CORNER Hz: a Butterworth low-pass of ORDER, applied as highpass() is (by its
+    magnitude in the frequency domain, with zeros behind, without phase shift)."""
+    n = len(x)
+    # ceros detrás, tantos como dura la respuesta del filtro (unos 4/CORNER segundos), para que no dé la vuelta
+    size = 1 << int(np.ceil(np.log2(n + int(np.ceil(4 * rate / corner)))))
+    spec = np.fft.rfft(x, size)
+    f = np.fft.rfftfreq(size, 1 / rate)
+    # The gain of the filter is real, so no bin moves its phase.
+    return np.fft.irfft(spec / np.sqrt(1 + (f / corner) ** (2 * order)), size)[:n]
+
+
+# The low-pass of the second look at the clarity: this many times the pitch found, and never under this (Hz)
+COARSE_HARMONICS = 12.0
+COARSE_LOWPASS_MIN = 200.0
+# El nivel se mide hasta tantas veces la nota más aguda del margen, y nunca por debajo de tantos Hz
+LEVEL_BAND = 2.0
+LEVEL_BAND_MIN = 500.0
+
+
 def prominence(x: np.ndarray, rate: float, cap: float = 40.0) -> tuple[np.ndarray, float]:
     """How far each bin of X's spectrum stands over the sound around it, in dB (0..CAP), and the bin width in Hz.
 
@@ -401,6 +421,22 @@ class Detector:
         return int(max(MIN_FINE, np.ceil(self.periods * self.rate / frequency)))
 
     @property
+    def band_top(self) -> float:
+        """The top of the band whose level is measured (Hz): a few times the highest note, so that the room's
+        noise counts only where the notes are."""
+        # (bajo el Nyquist, siempre: a 44,1 kHz el modo cromático llega a unos 3,5 kHz)
+        return min(0.45 * self.rate, max(LEVEL_BAND * self.fmax, LEVEL_BAND_MIN))
+
+    def band_level(self, x: np.ndarray, count: int) -> float:
+        """The level (dBFS) of the last COUNT samples of the high-passed X, in the band of the notes.
+
+        A low note through a phone's microphone has its sound in a few narrow partials: in the whole band its
+        level falls into the room's noise long before its partials do. Measured in the band, the note and the
+        learned noise floor are compared where the note is.
+        """
+        return level_db(lowpass(x[-count:], self.rate, self.band_top))
+
+    @property
     def history(self) -> int:
         """Samples a caller should keep: enough for both stages at the lowest note."""
         return max(self.coarse_size, self.fine_size(self.fmin))
@@ -410,14 +446,31 @@ class Detector:
         x = np.asarray(samples, dtype=np.float64)
         if len(x) == 0:
             return Estimate(0.0, 0.0, float("-inf"))
-        level = level_db(x[-min(len(x), MIN_FINE * 2):])
-        if level < self.min_level or len(x) < 4 * self.rate / self.fmax:
-            return Estimate(0.0, 0.0, level)
+        # the newest samples, which the level is measured on
+        last = min(len(x), MIN_FINE * 2)
+        if len(x) < 4 * self.rate / self.fmax:
+            # Too few samples for any period: only the level, as it comes.
+            return Estimate(0.0, 0.0, level_db(x[-last:]))
         # sin lo que queda bajo el margen (a 0,7 de la nota más grave): la continua y el retumbo
         x = highpass(x - x.mean(), self.rate, 0.7 * self.fmin)
+        # el nivel, medido solo donde están las notas (y el ruido que les toca)
+        level = self.band_level(x, last)
+        if level < self.min_level:
+            return Estimate(0.0, 0.0, level)
         coarse = x[-min(len(x), self.coarse_size):]
         coarse = coarse - coarse.mean()
         period, clarity = coarse_period(coarse, self.rate, self.fmin, self.fmax)
+        if period > 0:
+            # La claridad, otra vez, sobre los parciales bajos de la altura hallada. Por un micrófono de teléfono
+            # la fundamental de una cuerda grave llega débil y mandan los parciales altos, que suben por la
+            # inarmonicidad y se hunden antes en el ruido: el cuadro deja de parecer periódico aunque la nota esté
+            # clara. Como Strobie (Davorin Šego), que detecta bajo un pasabajos.
+            corner = max(COARSE_LOWPASS_MIN, COARSE_HARMONICS * self.rate / period)
+            # (una nota aguda no lo necesita: su corte quedaría sobre la banda entera)
+            if corner < 0.4 * self.rate:
+                # Only the clarity is taken from the filtered frame; the period stays the one of the whole band.
+                _, low_clarity = coarse_period(lowpass(coarse, self.rate, corner), self.rate, self.fmin, self.fmax)
+                clarity = max(clarity, low_clarity)
         if period <= 0 or clarity < self.min_clarity:
             return Estimate(0.0, clarity, level)
         # La periodicidad a una fracción del período, del mismo NSDF del paso grueso

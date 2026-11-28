@@ -689,8 +689,12 @@ el método de McLeod, que no puede errar la octava; uno fino ubica después
 cada armónico de la cuerda, hasta el decimosexto, en el máximo exacto de su
 espectro, y los ajusta todos a la vez al modelo de una cuerda real, algo
 rígida, $f_n = n f_0 \sqrt{1 + B n^2}$. Los armónicos fuertes cuentan más
-que los débiles, y los que se hunden en el ruido quedan fuera. La lectura
-que se muestra es la media recortada del último medio segundo de cuadros.
+que los débiles, y los que se hunden en el ruido quedan fuera. Cuando el
+paso grueso halla el sonido menos periódico de lo que debería, lo mira otra
+vez solo en sus parciales bajas: por un micrófono que corta los graves, la
+fundamental de una cuerda grave llega débil, y sus parciales altas, algo
+rígidas, borran el período. La lectura que se muestra es la media recortada
+del último medio segundo de cuadros.
 
 \index{ruido}%
 Antes de todo esto, un sonido debe ser lo bastante fuerte. Además del
@@ -698,7 +702,10 @@ nivel fijo de \menu{Ignorar por debajo de}, py-tuner aprende el ruido del
 cuarto mientras no suena nada, como Strobie: el piso sigue al nivel cuando
 no suena nada, solo sube despacio bajo un sonido y nunca sube durante una
 nota, que si no se volvería el fondo. Un sonido debe sobresalir 10~dB de
-ese piso. La barra de nivel marca el umbral que rige.
+ese piso. Los dos se miden solo en la banda de las notas, hasta el doble de
+la nota más aguda que se busca, donde una nota grave no se pierde en el
+soplido del cuarto. La barra de nivel muestra ese nivel y marca el umbral
+que rige.
 
 \index{octava}%
 Una cuerda real puede engañar a un período: dos cuerdas que resuenan

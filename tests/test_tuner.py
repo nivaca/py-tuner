@@ -6,7 +6,7 @@ import time
 
 import numpy as np
 import pytest
-from conftest import RATE, string
+from conftest import RATE, phone_bass, string
 
 from py_tuner import audio, notes
 from py_tuner.settings import Settings
@@ -273,3 +273,35 @@ def test_steady_response_holds_a_settling_double_bass_string():
     assert shown["steady"][0][0] >= 0.5 + STEADY_ATTACK
     assert np.ptp(steady) < 0.5 * np.ptp(normal)
     assert abs(steady[-1]) < 1.0
+
+
+def phone_e1(settings: Settings, x: np.ndarray):
+    """How a phone hears a bass's low E: when the first reading comes after the pluck (seconds, None: never), and
+    the share of the following three seconds the note is shown, and is E1."""
+    rs = [r for r in Tuner(settings, RATE).analyze_all(x) if r.time >= 1.0]
+    first = next((r.time - 1.0 for r in rs if r.active), None)
+    later = [r for r in rs if 0.5 <= r.time - 1.0 <= 3.5]
+    e1 = notes.parse("E1")
+    return (first, sum(r.active for r in later) / len(later),
+            sum(r.active and r.target_midi == e1 for r in later) / len(later))
+
+
+def test_low_e_through_a_phone_microphone():
+    # La fundamental cortada por el micrófono (pasaaltos de cuarto orden a 200 Hz), el ruido a 20 dB: la nota se
+    # lee en seguida y no se pierde mientras se apaga (antes: a los 0,6 s, y solo la mitad del tiempo).
+    x = phone_bass()
+    for s in (Settings(instrument="bass"), Settings()):
+        first, shown, right = phone_e1(s, x)
+        assert first is not None and first < 0.2, (s.instrument, first)
+        assert shown > 0.85, (s.instrument, shown)
+        assert right == shown, s.instrument
+    r = [r for r in Tuner(Settings(instrument="bass"), RATE).analyze_all(x) if r.active and r.time > 2.5][-1]
+    assert abs(r.cents) < 0.5
+
+
+def test_low_e_still_not_read_in_the_room_alone():
+    # El mismo cuarto, sin nota: ni el pasabajos de la claridad ni la puerta en banda hacen notas del ruido.
+    room = phone_bass()[:RATE]
+    for s in (Settings(instrument="bass", learn_noise=False, min_level=-90.0),
+              Settings(learn_noise=False, min_level=-90.0)):
+        assert not any(r.raw > 0 for r in Tuner(s, RATE).analyze_all(room))

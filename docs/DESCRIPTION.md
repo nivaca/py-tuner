@@ -7,7 +7,7 @@ November 2026.  Its starting point was the study of FMIT (Free Music
 Instrument Tuner), the C++ and Qt tuner that Gilles Degottex wrote from
 2004; nothing of its code was copied, but reading it showed what a tuner
 needs and where its precision is lost.  Here I explain how it was made, in
-nine stages.
+ten stages.
 
 py-tuner is free software, under the GNU General Public License, version 3
 or later.  It uses numpy (BSD licence) for the analysis, sounddevice (MIT
@@ -289,10 +289,63 @@ response gave no false note, and its largest error over the shifted
 recordings was 1.7 cents, against 4.0 with the normal one.  The normal
 response is what it was.
 
+10. Low notes through a weak microphone
+--------------------------------------
+
+The Android version of py-tuner, on a phone, read the low E of my bass
+guitar badly: late after the pluck, and lost again while the string
+still sounded, where other tuners on the same phone kept it.  The fault
+was in the analysis, which is the same here, so I made the problem again
+on the computer and fixed it in both.  The synthetic recording is a
+plucked E1, a little sharp at first, with stiff upper partials that die
+first, through the high-pass that a phone's microphone puts under 150 or
+200 Hz, and with white noise 20 dB under the note.  py-tuner never chose
+a wrong octave on it, but it showed the note only about two thirds of
+the time, and the first reading came after more than half a second.
+
+Two stages threw the frames away.  The first was the clarity of the
+coarse period.  With the fundamental 20 or 30 dB down, the upper
+partials rule the frame; a stiff string puts them sharp, which breaks
+the repetition of the waveform, and they are the first to sink into the
+noise.  The clarity in the attack was 0.46 to 0.79, under the 0.75 a
+frame needs, although the period found was right; low-passed at a few
+hundred hertz, the same frames gave 0.94 to 0.99.  The detector now
+measures the clarity a second time, on the frame low-passed at twelve
+times the pitch found (and never under 200 Hz), and keeps the higher of
+the two.  The period, and everything after it, still come from the whole
+band.  The new `lowpass` works as `highpass` already did, by its
+magnitude in the frequency domain, without any phase shift.
+
+The second stage was the level gate.  The level of a frame was its RMS
+over the whole band, and it had to stand 10 dB over the noise learned
+from the room; but a low note keeps its sound in a few narrow partials,
+and in the whole band its level falls into the noise long before they
+do.  The level is now measured only in the band of the notes, up to
+twice the highest note searched (and never under 500 Hz), both for the
+note and for the floor.
+
+Before choosing, I read how other free tuners treat low notes: Strobie,
+Tuner by Michael Moessner, Lingot, aubio, Tartini and Tuneo.  None needs
+the fundamental, and none asks for clarity over the whole band: Strobie
+low-passes what it detects at 5 kHz, and Lingot analyses only up to
+about three times its highest note.  The first versions were worse on
+the real guitar recordings of `tools/evaluate.py`, and I took back two
+things.  Taking the period too from the filtered frame, with the corner
+at eight times the pitch, gave one shifted reading 46 cents off and more
+false notes in the chromatic mode.  A third change, that the noise floor
+should not learn the fading tail of a note, let the tail of a noisy
+guitar E through as a false note; it went.  With what remains, the
+recordings give what they gave before in all four cases (guitar and
+chromatic, normal and steady), one shifted reading fewer on the guitar.
+On the synthetic bass, the first reading comes after 0.1 s and the note
+is shown 92 to 100 % of the time, in the bass's strings and in the
+chromatic mode; the room alone gives no pitch.
+
+
 Testing
 -------
 
-The program has 228 tests, which run all at once with `tools/test.py`,
+The program has 231 tests, which run all at once with `tools/test.py`,
 each file in a process of its own, in about eight seconds.  Most of them
 measure: the open strings of the four instruments must come out within a
 tenth of a cent of their known pitch, with noise the mean error must stay
@@ -302,8 +355,10 @@ Others check the octave decision on a string whose odd partials are weak
 (the period alone reads it an octave up), the waits for a new note with and
 without a pluck, the strobe's bands moving one, two and four stripes per
 second for each cent and standing still on a stiff string in tune, the
-offsets, the capo and the transposition, the reference tone, the noise
-floor (which learns the room, never a note, and lets through a tone 25 dB
+offsets, the capo and the transposition, the reference tone, a bass's low E
+through a phone's microphone (read within 0.2 s of the pluck and shown
+most of the time while it fades, and the room alone without a pitch), the
+low-pass, the noise floor (which learns the room, never a note, and lets through a tone 25 dB
 over the noise but not one 5 dB over it), the spectrum's peaks, the
 needle's scales, and the steady response (an attack left out from its
 first onset while the note stays, a new string taken at once after it
@@ -324,5 +379,5 @@ guitar strings played; ran the command line with the computer's
 microphone; and ran the AppImage, which found the sound devices through its
 own PortAudio.  The real recordings, which cannot be distributed with it,
 measure it on this computer with `tools/evaluate.py`, with either
-response.  The program has 49 files of Python, around 9,300 lines, of
-which some 2,600 are tests.
+response.  The program has 49 files of Python, around 9,450 lines, of
+which some 2,650 are tests.
