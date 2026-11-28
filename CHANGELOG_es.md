@@ -5,7 +5,7 @@ AppImage, el wheel y el código, están en
 [Codeberg](https://codeberg.org/nivaca/py-tuner/releases) y en
 [GitHub](https://github.com/nivaca/py-tuner/releases).
 
-## Sin publicar
+## 0.5.0 — 2026-11-28
 
 Las notas graves por un micrófono débil.
 

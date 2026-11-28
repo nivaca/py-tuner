@@ -1,6 +1,6 @@
 [project]
 name = "py-tuner"
-version = "0.4.0"
+version = "0.5.0"
 description = "An accurate tuner for guitar, bass, double bass and violin, with a needle and a strobe, in a window, a terminal or a command line"
 readme = "README.md"
 license = "GPL-3.0-or-later"

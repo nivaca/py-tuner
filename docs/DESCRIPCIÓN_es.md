@@ -1,4 +1,4 @@
-# py-tuner 0.4.0: descripción
+# py-tuner 0.5.0: descripción
 
 ## Análisis
 

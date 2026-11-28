@@ -10,7 +10,7 @@
 # Build with packaging/build-rpm.sh, which makes the source tarball.
 
 Name:           py-tuner
-Version:        0.4.0
+Version:        0.5.0
 Release:        1%{?dist}
 Summary:        An accurate tuner for guitar, bass, double bass and violin
 
@@ -90,6 +90,10 @@ export HOME="$PWD/check-home"
 %lang(es) %{_mandir}/es/man1/py-tuner.1*
 
 %changelog
+* Sat Nov 28 2026 Nicolas Vaughan <nicolasvaughan@proton.me> - 0.5.0-1
+- Low notes through a weak microphone: the clarity judged again on the lower
+  partials of the pitch found, the gate's level measured in the band of the notes
+
 * Fri Nov 27 2026 Nicolas Vaughan <nicolasvaughan@proton.me> - 0.4.0-1
 - A steady response for the double bass: the attack of each pluck left out,
   a longer average, the faint tail still read, a slower needle

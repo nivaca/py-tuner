@@ -5,7 +5,7 @@ the wheel and the source, are on
 [Codeberg](https://codeberg.org/nivaca/py-tuner/releases) and
 [GitHub](https://github.com/nivaca/py-tuner/releases).
 
-## Unreleased
+## 0.5.0 — 2026-11-28
 
 Low notes through a weak microphone.
 
